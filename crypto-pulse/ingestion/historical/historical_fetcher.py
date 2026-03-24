@@ -94,40 +94,44 @@ def upload_to_bigquery(df):
         print(f"BigQuery load failed: {e}")
 
 def run_historical_ingestion():
+    """ Loop through all symbols and trigger their data fetching and uploading. """
     for symbol in SYMBOLS:
+        # 1. Fetch raw list from Binance REST API
         raw_data = fetch_klines(symbol, START_DATE)
         
         if not raw_data:
-            print(f"No data found for {symbol}")
+            print(f"Skipping {symbol}: No data received.")
             continue
             
-        # Parse data to DataFrame
-        # Binance klines format: [Open time, Open, High, Low, Close, Volume, Close time, ...]
+        # 2. Convert to Pandas DataFrame for efficient data preparation
+        # Binance klines format: [Open time (0), Open (1), High (2), Low (3), Close (4), Volume (5), Close time (6), ...]
         df = pd.DataFrame(raw_data, columns=[
             "open_time", "open", "high", "low", "close", "volume", 
             "close_time", "quote_asset_vol", "num_trades", "taker_base_vol", "taker_quote_vol", "ignore"
         ])
         
-        # Keep relevant columns and convert types
+        # 3. Clean up the DataFrame: Keep only necessary columns
         df = df[["open_time", "open", "high", "low", "close", "volume", "close_time"]].copy()
         df["symbol"] = symbol
         
-        # Convert timestamps to datetime
+        # 4. Data Type Conversions:
+        # Convert millisecond timestamps to human-readable/BigQuery compatible TIMESTAMP format
         df["open_time"] = pd.to_datetime(df["open_time"], unit='ms')
         df["close_time"] = pd.to_datetime(df["close_time"], unit='ms')
         
-        # Convert numeric columns
+        # Convert numeric strings to actual Floats for calculations
         cols = ["open", "high", "low", "close", "volume"]
         df[cols] = df[cols].apply(pd.to_numeric)
         
-        # Reorder columns
+        # 5. Final Schema Alignment
         df = df[["symbol", "open_time", "open", "high", "low", "close", "volume", "close_time"]]
         
-        # Upload symbol data to BQ
+        # 6. Upload the cleaned data to Google BigQuery
         upload_to_bigquery(df)
 
 if __name__ == "__main__":
+    # Safety Check: Ensure BigQuery configuration exists before starting
     if not BQ_PROJECT_ID:
-        print("Error: BIGQUERY_PROJECT_ID not set in .env")
+        print("ERROR: BIGQUERY_PROJECT_ID is missing in the .env file. Execution stopped.")
     else:
         run_historical_ingestion()
