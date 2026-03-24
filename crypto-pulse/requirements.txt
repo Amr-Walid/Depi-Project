@@ -1,0 +1,7 @@
+confluent-kafka
+websockets
+requests
+google-cloud-bigquery
+pandas
+python-dotenv
+schedule
