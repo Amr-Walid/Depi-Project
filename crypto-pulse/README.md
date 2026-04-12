@@ -2,7 +2,7 @@
   <h1>🚀 Crypto-Pulse</h1>
   <p><b>A Highly Scalable, Real-Time & Historical Cryptocurrency Data Engineering Pipeline powered by Microsoft Azure.</b></p>
   <br>
-  <img src="docs/architecture.png" alt="Crypto Data Pipeline Architecture Preview" width="100%">
+  ![Crypto Data Pipeline Architecture](docs/image_6b784b2e-b866-4bee-b431-226755eea123.png)
 </div>
 
 <br>
