@@ -1,6 +1,8 @@
 <div align="center">
   <h1>🚀 Crypto-Pulse</h1>
   <p><b>A Highly Scalable, Real-Time & Historical Cryptocurrency Data Engineering Pipeline powered by Microsoft Azure.</b></p>
+  <br>
+  <img src="docs/architecture.png" alt="Crypto Data Pipeline Architecture Preview" width="100%">
 </div>
 
 <br>
@@ -128,6 +130,8 @@ Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital 
 - 🧑‍💻 **Amr Walid** — Data Ingestion & Bronze Layer Architecture
 - 🧑‍💻 **Yassin** — Data Processing (Databricks) & Azure Silver Layer
 - 🧑‍💻 **Mostafa** — Infrastructure, Azure Architecture & Orchestration
+- 🧑‍💻 **Karim Ahmed** — Database Engineering & Backend Schemas
+- 🧑‍💻 **Ahmed Ayman** — Data Analysis & API Research
 
 ---
 <div align="center">
