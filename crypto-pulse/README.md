@@ -1,139 +1,217 @@
 <div align="center">
-  <h1>🚀 Crypto-Pulse</h1>
-  <p><b>A Highly Scalable, Real-Time & Historical Cryptocurrency Data Engineering Pipeline powered by Microsoft Azure.</b></p>
-  <br>
-  ![Crypto Data Pipeline Architecture](docs/image_6b784b2e-b866-4bee-b431-226755eea123.png)
+
+# 🚀 Crypto-Pulse
+
+**A Highly Scalable, Real-Time & Historical Cryptocurrency Data Engineering Pipeline powered by Microsoft Azure.**
+
 </div>
 
-<br>
+![Crypto Data Pipeline Architecture](docs/image_6b784b2e-b866-4bee-b431-226755eea123.png)
 
-Welcome to **Crypto-Pulse**, an advanced data engineering project built from the ground up to ingest, process, and analyze cryptocurrency market data. Built entirely with the **Microsoft Azure Stack**, this pipeline ensures data is reliably captured, elegantly transformed, and robustly served for analytics and machine learning utilizing the **Medallion Architecture (Bronze ➔ Silver ➔ Gold)**.
-
----
-
-## 🧬 Project Architecture & The Azure Medallion Approach
-
-Crypto-Pulse is designed around a decoupled, event-driven architecture utilizing local engines that smoothly integrate into Azure's ecosystem:
-
-1. **🥉 Bronze Layer (Ingestion):** Local python agents capture raw JSON data directly from APIs (Schema-on-Read). This data is ultimately destined for **Azure Data Lake Storage Gen2 (ADLS Gen2)**.
-2. **🥈 Silver Layer (Processing):** Uses **Azure Databricks** or **Azure Synapse Analytics** to read the Bronze data, clean it, enforce schemas, and filter anomalies.
-3. **🥇 Gold Layer (Serving):** Highly aggregated business-level tables stored in Azure Synapse or Azure SQL, optimized for fast queries and native **Microsoft Power BI** Dashboards.
+Welcome to **Crypto-Pulse**, an advanced end-to-end data engineering project designed to ingest, process, and analyze cryptocurrency market data in real time. Built on the **Microsoft Azure Stack** and following the industry-standard **Medallion Architecture (Bronze ➔ Silver ➔ Gold)**, this pipeline ensures data flows reliably from source APIs all the way to analytics-ready dashboards.
 
 ---
 
-## 📡 The Ingestion Layer (Agents)
+## 🧬 Pipeline Architecture Overview
 
-Currently, our robust **Data Ingestion Layer** operates via three distinct and specialized Python agents located in `ingestion/`. 
+The system is built around 4 main environments working together:
 
-### 1. The Historian 🕰️ (`historical_fetcher.py`)
-* **Goal:** Downloads years of historical candlestick data (OHLCV) from Binance.
-* **Mechanics:** Utilizes `ThreadPoolExecutor` to concurrently pull thousands of records per second for the top 20 cryptocurrencies.
-* **Storage:** Dumps raw arrays directly into `.json` files inside `/data/historical/`, preserving the exact raw payload, ready to be ingested by **Azure Data Factory (ADF)** into the Data Lake.
+| Layer | Technology | Status |
+|-------|-----------|--------|
+| **Data Ingestion (Bronze)** | Python, Binance API, CoinGecko API, Apache Kafka | ✅ Complete |
+| **Data Processing (Silver/Gold)** | Apache Spark, dbt, Azure Databricks | 🚧 In Progress |
+| **Orchestration** | Apache Airflow | 🚧 In Progress |
+| **Serving** | FastAPI, PostgreSQL, Power BI | 🔜 Planned |
 
-### 2. The Live Reporter ⚡ (`producer_binance.py`)
-* **Goal:** Streams real-time, millisecond-level price and volume updates.
-* **Mechanics:** Subscribes to Binance **WebSockets**. Features a **Bulletproof Auto-Reconnect** engine with exponential backoff.
-* **Destination:** Pushes messages immediately to a **Kafka** topic (which maps natively to **Azure Event Hubs**): `crypto.realtime.prices`.
+### The Azure Medallion Layers:
+- 🥉 **Bronze Layer:** Raw JSON data captured directly from APIs, stored as-is in **Azure Data Lake Storage Gen2 (ADLS Gen2)** following the *Schema-on-Read* principle.
+- 🥈 **Silver Layer:** Data cleaned, typed, and normalized using **Apache Spark** running on **Azure Databricks**. Anomalies filtered, schemas enforced.
+- 🥇 **Gold Layer:** Business-level aggregations, KPIs, and metrics ready for **Power BI** dashboards and ML model training, stored in Azure Synapse or Azure SQL.
 
-### 3. The Strategic Analyst 📊 (`producer_coingecko.py`)
-* **Goal:** Periodically surveys the entire cryptocurrency market for macro-economic overviews.
-* **Mechanics:** Utilizes the `schedule` library to hit the CoinGecko REST API every 60 seconds, snagging the top 100 coins by Market Capitalization.
-* **Destination:** Pushes summarized market health messages to the Kafka topic: `crypto.market.data`.
+---
+
+## 📡 The Ingestion Layer
+
+Three specialized Python agents in `ingestion/` power the Bronze layer:
+
+### 🕰️ The Historian (`ingestion/historical/historical_fetcher.py`)
+> *"Captures the past so we can learn from it."*
+
+- **Does:** Downloads years of historical OHLCV (Open/High/Low/Close/Volume) candlestick data for the **Top 20 cryptocurrencies** starting from 2021.
+- **How:** Uses `ThreadPoolExecutor` (5 parallel workers) to run concurrent Binance API calls, significantly reducing fetch time. Implements automatic **Retry Logic** for Rate Limit errors (HTTP 429).
+- **Output:** Saves raw JSON arrays directly into `data/historical/<symbol>_raw_klines.json` — no transformation, no cleaning — ready for the Bronze layer.
+
+### ⚡ The Live Reporter (`ingestion/producers/producer_binance.py`)
+> *"Never misses a heartbeat of the market."*
+
+- **Does:** Maintains a persistent, live connection to Binance to capture every price tick in real-time.
+- **How:** Uses **WebSockets** for a continuous data stream with a **Bulletproof Auto-Reconnect** engine using exponential backoff (retries automatically if connection drops).
+- **Output:** Publishes every price update immediately to the Kafka topic: `crypto.realtime.prices`.
+
+### 📊 The Strategic Analyst (`ingestion/producers/producer_coingecko.py`)
+> *"Surveys the entire market every 60 seconds."*
+
+- **Does:** Periodically fetches macro-market data (Market Cap, Volume, Price Change %) for the **Top 100 coins**.
+- **How:** Uses the `schedule` library to poll the CoinGecko REST API every 60 seconds.
+- **Output:** Publishes market overview snapshots to the Kafka topic: `crypto.market.data`.
+
+### 📰 The News Watcher (`ingestion/producers/producer_news.py`)
+> *"Tracks what the world is saying about crypto."*
+
+- **Status:** 🔜 Planned (Ahmed Ayman)
+- **Goal:** Fetch news headlines and sentiment data from NewsAPI to correlate market movements with world events.
+
+---
+
+## ⚙️ Data Processing Layer
+
+Located in `processing/`, this layer handles transforming raw Bronze data into business-ready insights.
+
+### 🔥 Spark Jobs (`processing/spark_jobs/`)
+- **`bronze_consumer.py`** (🚧 In Progress - Yassin): Reads raw data from Kafka using **Spark Structured Streaming**, writes it as Parquet to the **Bronze** container in Azure Data Lake Gen2.
+- **`silver_processor.py`** (🔜 Planned - Yassin): Reads Bronze Parquet files, applies cleaning/transformation, and writes to the **Silver** container partitioned by date (`year/month/day`).
+
+### 🧱 dbt Models (`processing/dbt/`)
+- **Status:** 🔜 Planned
+- **Goal:** Transform Silver data into Gold-layer aggregations (daily averages, volatility metrics, trending coins) using dbt on top of Azure Synapse.
+
+---
+
+## 🎼 Orchestration (`dags/`)
+
+- **`etl_pipeline_dag.py`**: An Apache Airflow DAG (🚧 In Progress - Mostafa) that schedules and sequences the entire pipeline:
+  - Triggers historical fetcher nightly.
+  - Monitors Spark jobs.
+  - Alerts on failures.
+
+---
+
+## 🗄️ Backend & Database
+
+Located in `backend/app/`:
+
+- **`main.py`**: FastAPI application entry point.
+- **`models/schema.sql`**: PostgreSQL schema defining the tables for users, watchlists, alerts, and portfolios (✅ Complete - Karim Ahmed).
+- **`routers/`**: API route handlers (🔜 Planned).
+- **`services/`**: Business logic services (🔜 Planned).
 
 ---
 
 ## 📂 Repository Structure
 
-The project is structured to scale across multiple tracking environments:
-
 ```text
 crypto-pulse/
-├── ingestion/          # Source fetchers, REST API callers, WebSocket producers
-│   ├── historical/     # Batch scripts (historical_fetcher.py)
-│   └── producers/      # Real-time Kafka producers (Binance, CoinGecko)
-├── processing/         # Azure Databricks / Pyspark Jobs (In-Progress by Yassin)
-├── data/               # Local Bronze Layer JSONs (pre-ADLS upload)
-├── dags/               # Apache Airflow orchestration scripts
-├── orchestration/      # Data Factory / Airflow configurations 
-├── backend/            # Future API Layer for serving data 
-├── frontend/           # Future Analytics Dashboard
-├── ml/                 # Machine Learning models (Azure Machine Learning) 
-├── notebooks/          # Exploratory Data Analysis (EDA) Jupyter notebooks
-├── docs/               # Architecture diagrams and deep-dive documentation
-├── docker-compose.yml  # Local Kafka & Zookeeper testing
-├── requirements.txt    # Python dependencies
-└── .env                # Secrets and Azure Connection Strings
+├── ingestion/                          # Bronze layer data agents
+│   ├── historical/
+│   │   └── historical_fetcher.py       ✅ Fetches years of OHLCV data
+│   └── producers/
+│       ├── producer_binance.py         ✅ Real-time WebSocket price stream
+│       ├── producer_coingecko.py       ✅ Periodic market data poller
+│       └── producer_news.py            🔜 News & sentiment fetcher
+│
+├── processing/                         # Silver & Gold layer jobs
+│   ├── spark_jobs/
+│   │   ├── bronze_consumer.py          🚧 Kafka → Azure Bronze (Parquet)
+│   │   └── silver_processor.py         🔜 Bronze → Silver (Cleaned)
+│   └── dbt/                            🔜 Silver → Gold (Aggregations)
+│
+├── backend/                            # REST API
+│   └── app/
+│       ├── main.py                     🔜 FastAPI entrypoint
+│       ├── models/schema.sql           ✅ PostgreSQL schema
+│       ├── routers/                    🔜 API routes
+│       └── services/                   🔜 Business logic
+│
+├── dags/
+│   └── etl_pipeline_dag.py             🚧 Airflow orchestration DAG
+│
+├── data/historical/                    📦 Local Bronze JSON files (20 coins)
+├── docs/                               📖 Architecture diagrams & docs
+├── ml/                                 🔜 ML models (Azure ML)
+├── notebooks/                          📔 EDA Jupyter notebooks
+├── frontend/                           🔜 Web Dashboard
+├── docker-compose.yml                  🐳 Local: Kafka, Spark, Airflow, Postgres
+├── Makefile                            ⚡ make up / make down / make logs
+├── requirements.txt                    📦 Python dependencies
+├── .env.example                        🔑 Environment variables template
+└── README.md                           📖 This file
 ```
 
 ---
 
 ## 🛠️ Setup & Installation
 
-### 1. Prerequisites
-Ensure you have the following installed on your machine:
+### Prerequisites
 - **Python 3.10+**
 - **Docker** and **Docker Compose**
 - **Git**
 
-### 2. Clone the Repository
+### 1. Clone the Repository
 ```bash
 git clone https://github.com/Amr-Walid/Depi-Project.git
 cd Depi-Project/crypto-pulse
 ```
 
-### 3. Environment Variables
-Copy the example environment file and fill in your details (You will place your Azure Connection Strings here later).
+### 2. Configure Environment Variables
 ```bash
 cp .env.example .env
+# Edit .env with your Azure credentials and API keys
 ```
 
-### 4. Start Local Infrastructure
-Boot up the core local messaging backbone (Kafka) for testing before routing to Azure Event Hubs.
+### 3. Start Local Infrastructure (One Command!)
 ```bash
-docker-compose up -d
+make up
+# This starts: Kafka, Zookeeper, Spark, Airflow, PostgreSQL, Kafka-UI
 ```
 
-### 5. Install Python Dependencies
+### 4. Install Python Dependencies
 ```bash
 python -m venv venv
-# Windows: venv\Scripts\activate 
-# Mac/Linux: source venv/bin/activate
+venv\Scripts\activate        # Windows
+# source venv/bin/activate   # Mac/Linux
 
 pip install -r requirements.txt
 ```
 
 ---
 
-## 🚀 Running the Ingestion Agents
+## 🚀 Running the Pipeline
 
-**Fetch Historical Data (Local ➔ Bronze Azure Blob):**
 ```bash
+# 1. Pull historical data for all 20 cryptocurrencies (Bronze Layer)
 python ingestion/historical/historical_fetcher.py
-```
 
-**Start the Real-time Price Streamer (Local ➔ Azure Event Hubs):**
-```bash
+# 2. Start real-time price streaming to Kafka
 python ingestion/producers/producer_binance.py
+
+# 3. Start periodic market data polling (every 60s)
+python ingestion/producers/producer_coingecko.py
 ```
 
-**Start the Market Data Poller:**
+**Useful Docker commands:**
 ```bash
-python ingestion/producers/producer_coingecko.py
+make up       # Start all services
+make down     # Stop all services
+make logs     # Follow live logs
+make restart  # Restart everything
 ```
 
 ---
 
 ## 🤝 The Team
 
-Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital Egypt Pioneers Initiative)** program, leveraging the Microsoft Azure Data Engineering track.
+Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital Egypt Pioneers Initiative)** program — Microsoft Azure Data Engineering Track.
 
-- 🧑‍💻 **Amr Walid** — Data Ingestion & Bronze Layer Architecture
-- 🧑‍💻 **Yassin** — Data Processing (Databricks) & Azure Silver Layer
-- 🧑‍💻 **Mostafa** — Infrastructure, Azure Architecture & Orchestration
-- 🧑‍💻 **Karim Ahmed** — Database Engineering & Backend Schemas
-- 🧑‍💻 **Ahmed Ayman** — Data Analysis & API Research
+| Name | Role | Milestone 1 Status |
+|------|------|-------------------|
+| 🧑‍💻 **Amr Walid** | Data Ingestion & Bronze Layer Lead | ✅ Complete |
+| 🧑‍💻 **Mostafa Matar** | Infrastructure & DevOps (Docker/Airflow) | ✅ Complete |
+| 🧑‍💻 **Karim Ahmed** | Database Engineering & PostgreSQL Schema | ✅ Complete |
+| 🧑‍💻 **Yassin Mahmoud** | Data Processing (Spark/Databricks) | 🚧 In Progress |
+| 🧑‍💻 **Ahmed Ayman** | Data Analysis & News API Research | 🚧 In Progress |
 
 ---
+
 <div align="center">
-  <b>Built with ❤️ for Data Engineering & The Crypto Ecosystem.</b>
+  <b>Built with ❤️ for Data Engineering & The Crypto Ecosystem — DEPI 2024.</b>
 </div>
