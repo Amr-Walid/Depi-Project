@@ -18,12 +18,15 @@ services:
     environment:
       KAFKA_BROKER_ID: 1
       KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
-      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
       KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
       KAFKA_TRANSACTION_STATE_LOG_MIN_ISR: 1
       KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR: 1
     ports:
       - "9092:9092"
+      - "29092:29092"
     networks:
       - crypto-net
 
@@ -91,8 +94,13 @@ services:
       - crypto-net
 
   spark-master:
-    image: apache/spark:3.5.0
+    build:
+      context: ./spark-apps
+      dockerfile: Dockerfile.spark
+    image: crypto-pulse-spark:3.5.0
     container_name: spark-master
+    depends_on:
+      - kafka
     environment:
       SPARK_MASTER_HOST: spark-master
       SPARK_MASTER_PORT: 7077
@@ -106,7 +114,10 @@ services:
       - crypto-net
 
   spark-worker:
-    image: apache/spark:3.5.0
+    build:
+      context: ./spark-apps
+      dockerfile: Dockerfile.spark
+    image: crypto-pulse-spark:3.5.0
     container_name: spark-worker
     depends_on:
       - spark-master

@@ -38,9 +38,21 @@ def load_environment():
     Load environment variables from .env file.
     Returns a dict of all required configuration values.
     """
-    # Load .env file (search upward from the current working directory)
-    env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
-    load_dotenv(dotenv_path=env_path)
+    # Load .env file - try multiple locations:
+    # 1. Same directory as the script (Docker: /opt/spark-apps/.env)
+    # 2. Two levels up (local dev: processing/spark_jobs/../../.env)
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    env_candidates = [
+        os.path.join(script_dir, ".env"),
+        os.path.join(script_dir, "..", "..", ".env"),
+    ]
+    for env_path in env_candidates:
+        if os.path.exists(env_path):
+            load_dotenv(dotenv_path=env_path)
+            logger.info(f"Loaded .env from: {env_path}")
+            break
+    else:
+        logger.warning("No .env file found, relying on system environment variables")
 
     config = {
         # Azure Service Principal
@@ -51,7 +63,7 @@ def load_environment():
         "storage_account": os.getenv("AZURE_STORAGE_ACCOUNT_NAME", "stcryptopulsedev"),
         "container": os.getenv("AZURE_STORAGE_CONTAINER_NAME", "datalake"),
         # Kafka
-        "kafka_bootstrap_servers": os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"),
+        "kafka_bootstrap_servers": os.getenv("KAFKA_BOOTSTRAP_SERVERS", "kafka:29092"),
         "kafka_topic": os.getenv("KAFKA_TOPIC_REALTIME_PRICES", "crypto.realtime.prices"),
     }
 
