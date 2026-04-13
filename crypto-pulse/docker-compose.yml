@@ -30,6 +30,22 @@ services:
     networks:
       - crypto-net
 
+  kafka-init-topics:
+    image: confluentinc/cp-kafka:7.0.0
+    container_name: kafka-init-topics
+    depends_on:
+      - kafka
+    command: >
+      bash -c "
+        echo -e 'Waiting for Kafka to be ready...' &&
+        cub kafka-ready -b kafka:29092 1 40 &&
+        echo -e 'Creating topics...' &&
+        kafka-topics --create --if-not-exists --bootstrap-server kafka:29092 --partitions 1 --replication-factor 1 --topic crypto.realtime.prices &&
+        echo -e 'Topic created successfully'
+      "
+    networks:
+      - crypto-net
+
   kafka-ui:
     image: provectuslabs/kafka-ui:latest
     container_name: kafka-ui
