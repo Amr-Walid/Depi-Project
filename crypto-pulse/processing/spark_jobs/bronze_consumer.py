@@ -98,8 +98,8 @@ def create_spark_session(config):
             ]),
         )
         # ── Delta Lake (optional, for future use) ──
-        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        # .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        # .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
         # ── Azure ADLS Gen2 - OAuth2 / Service Principal ──
         .config(
             f"fs.azure.account.auth.type.{storage_account}.dfs.core.windows.net",
