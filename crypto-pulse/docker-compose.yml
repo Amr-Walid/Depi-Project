@@ -114,9 +114,6 @@ services:
       - crypto-net
 
   spark-worker:
-    build:
-      context: ./spark-apps
-      dockerfile: Dockerfile.spark
     image: crypto-pulse-spark:3.5.0
     container_name: spark-worker
     depends_on:
