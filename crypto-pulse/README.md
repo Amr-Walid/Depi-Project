@@ -139,7 +139,7 @@ All services are defined on a shared `crypto-net` network:
 | airflow-scheduler | — | ✅ Configured |
 | spark-master | 7077 / 8082 | ✅ Configured |
 | spark-worker | 8083 | ✅ Configured |
-| backend (FastAPI) | 8000 | ❌ Not added yet |
+| backend (FastAPI) | 8000 | ✅ Configured |
 
 > **⚠️ Known Issue:** `KAFKA_ADVERTISED_LISTENERS` is set to `localhost:9092`. For internal Docker communication between services (e.g., Spark → Kafka), this needs to be `kafka:9092`. Update required.
 
@@ -173,7 +173,7 @@ crypto-pulse/
 │
 ├── backend/                            # REST API
 │   └── app/
-│       ├── main.py                     ❌ Empty — FastAPI not implemented
+│       ├── main.py                     ✅ Basic FastAPI setup with /health endpoint
 │       ├── models/schema.sql           ✅ PostgreSQL schema (users, watchlists, alerts, portfolios)
 │       ├── routers/                    ❌ Not started
 │       └── services/                   ❌ Not started
@@ -235,7 +235,7 @@ AZURE_STORAGE_CONTAINER_NAME=datalake
 ### 3. Start Local Infrastructure
 ```bash
 make up
-# Starts: Kafka, Zookeeper, Spark, Airflow, PostgreSQL, Kafka-UI
+# Starts: Kafka, Zookeeper, Spark, Airflow, PostgreSQL, Kafka-UI, Backend API
 ```
 
 ### 4. Install Python Dependencies
@@ -282,6 +282,7 @@ make restart  # Restart everything
 | Kafka UI | http://localhost:8080 |
 | Airflow | http://localhost:8081 |
 | Spark Master | http://localhost:8082 |
+| FastAPI Backend | http://localhost:8000/docs |
 
 ---
 
@@ -293,8 +294,8 @@ Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital 
 |------|------|---------------|
 | 🧑‍💻 **Amr Walid** | Team Lead & Lead Data Engineer | ✅ Milestone 1 Complete |
 | 🧑‍💻 **Yassin Mahmoud** | DataOps & Spark Engineer | 🚧 Bronze ✅ · Silver ❌ · DAG ❌ |
-| 🧑‍💻 **Mostafa Matar** | Backend Engineer & Docker Owner | 🚧 Docker ✅ · FastAPI ❌ |
-| 🧑‍💻 **Karim Ahmed** | Analytics Engineer (dbt & PostgreSQL) | 🚧 Schema ✅ · dbt ❌ |
+| 🧑‍💻 **Mostafa Matar** | Backend Engineer & Docker Owner | ✅ Milestone 1 Complete |
+| 🧑‍💻 **Karim Ahmed** | Analytics Engineer (dbt & PostgreSQL) | 🚧 Schema ✅ · dbt Setup ⏳ |
 | 🧑‍💻 **Ahmed Ayman** | Data Analyst & ML Engineer | ❌ Not Started |
 
 ---
