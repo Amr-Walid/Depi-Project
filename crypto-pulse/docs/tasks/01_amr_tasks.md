@@ -90,18 +90,18 @@
 
 ---
 
-### ❌ Task 2.1 — رسم البنية التحتية (Architecture Diagram)
+### ✅ Task 2.1 — رسم البنية التحتية (Architecture Diagram)
 
 **الملفات المتأثرة:**
 - `docs/architecture.png`
 
 **ما يجب فعله:**
-- [ ] إنشاء رسم بياني احترافي يوضح تدفق البيانات الكامل:
+- [x] إنشاء رسم بياني احترافي يوضح تدفق البيانات الكامل:
   ```
   APIs → Kafka → Spark (Bronze) → Spark (Silver) → dbt (Gold) → FastAPI → Frontend
   ```
-- [ ] يشمل الرسم: أسماء الـ topics في Kafka، مسارات ADLS Gen2، اسم كل Service
-- [ ] رفعه في `docs/architecture.png`
+- [x] يشمل الرسم: أسماء الـ topics في Kafka، مسارات ADLS Gen2، اسم كل Service
+- [x] رفعه في `docs/architecture.png`
 
 **أدوات مقترحة:** draw.io, Lucidchart, Mermaid (في README)
 
@@ -154,7 +154,7 @@
 | 1.3 | البنية التحتية على Azure | ✅ مكتمل |
 | 1.4 | سكريبتات Ingestion الأساسية | ✅ مكتمل |
 | 1.5 | مراجعة Pull Requests | ⏳ مستمر |
-| 2.1 | رسم البنية التحتية | ❌ لم يبدأ |
+| 2.1 | رسم البنية التحتية | ✅ مكتمل |
 | 2.2 | تحديث README.md | ⏳ جزئي |
 | 2.3 | اختبار التكامل الشامل | ❌ لم يبدأ |
 | 2.4 | تقرير الحالة النهائي | ❌ لم يبدأ |

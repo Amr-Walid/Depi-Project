@@ -6,7 +6,7 @@
 
 </div>
 
-![Crypto Data Pipeline Architecture](docs/image_6b784b2e-b866-4bee-b431-226755eea123.png)
+![Crypto Data Pipeline Architecture](docs/architecture.png)
 
 Welcome to **Crypto-Pulse**, an advanced end-to-end data engineering project designed to ingest, process, and analyze cryptocurrency market data in real time. Built on the **Microsoft Azure Stack** and following the industry-standard **Medallion Architecture (Bronze ➔ Silver ➔ Gold)**, this pipeline ensures data flows reliably from source APIs all the way to analytics-ready dashboards.
 
