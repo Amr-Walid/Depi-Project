@@ -45,7 +45,7 @@ crypto-pulse/
 │
 ├── 📁 backend/
 │   ├── 📁 app/
-│   │   ├── 📄 main.py                  ← نقطة دخول FastAPI [مصطفى] ⏳
+│   │   ├── 📄 main.py                  ← نقطة دخول FastAPI [مصطفى] ✅
 │   │   ├── 📄 __init__.py
 │   │   ├── 📁 routers/                 ← API Endpoints [مصطفى] ❌
 │   │   ├── 📁 models/
@@ -68,7 +68,7 @@ crypto-pulse/
 │
 ├── 📁 docs/
 │   ├── 📄 project_proposal.pdf         ← مقترح المشروع
-│   ├── 📄 architecture.png             ← رسم البنية التحتية [عمرو] ⏳
+│   ├── 📄 architecture.png             ← رسم البنية التحتية [عمرو] ✅
 │   └── 📁 tasks/                   ← ← أنت هنا (ملفات التاسكات)
 │
 ├── 📁 frontend/                    ← واجهة المستخدم (مرحلة لاحقة) ❌
