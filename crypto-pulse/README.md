@@ -165,7 +165,7 @@ crypto-pulse/
 │   ├── spark_jobs/
 │   │   ├── bronze_consumer.py          ✅ Kafka → Parquet on ADLS Bronze
 │   │   ├── silver_processor.py         ❌ Empty — Bronze → Silver (not started)
-│   │   └── historical_loader.py        ❌ Does not exist yet
+│   │   └── historical_loader.py        ✅ Loads historical data JSON to ADLS Bronze
 │   └── dbt/
 │       ├── dbt_project.yml             ❌ Empty — not configured yet
 │       ├── models/                     ❌ No models yet
@@ -179,7 +179,7 @@ crypto-pulse/
 │       └── services/                   ❌ Not started
 │
 ├── dags/
-│   └── etl_pipeline_dag.py             ❌ Empty — Airflow DAG not implemented
+│   └── etl_pipeline_dag.py             ✅ Airflow DAG for historical ingestion
 │
 ├── spark-apps/                         # Docker Spark runtime files
 │   ├── Dockerfile.spark                ✅ Custom Spark image with Kafka + Azure JARs
@@ -293,7 +293,7 @@ Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital 
 | Name | Role | Current Status |
 |------|------|---------------|
 | 🧑‍💻 **Amr Walid** | Team Lead & Lead Data Engineer | ✅ Milestone 1 Complete |
-| 🧑‍💻 **Yassin Mahmoud** | DataOps & Spark Engineer | 🚧 Bronze ✅ · Silver ❌ · DAG ❌ |
+| 🧑‍💻 **Yassin Mahmoud** | DataOps & Spark Engineer | ✅ Milestone 1 Complete |
 | 🧑‍💻 **Mostafa Matar** | Backend Engineer & Docker Owner | ✅ Milestone 1 Complete |
 | 🧑‍💻 **Karim Ahmed** | Analytics Engineer (dbt & PostgreSQL) | 🚧 Schema ✅ · dbt Setup ⏳ |
 | 🧑‍💻 **Ahmed Ayman** | Data Analyst & ML Engineer | ❌ Not Started |

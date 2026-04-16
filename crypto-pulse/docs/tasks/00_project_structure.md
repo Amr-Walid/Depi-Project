@@ -34,14 +34,14 @@ crypto-pulse/
 │   ├── 📁 spark_jobs/
 │   │   ├── 📄 bronze_consumer.py       ← Spark Streaming → Bronze Layer [ياسين] ✅
 │   │   ├── 📄 silver_processor.py      ← Spark Batch → Silver Layer [ياسين] ⏳
-│   │   └── 📄 historical_loader.py     ← تحميل البيانات التاريخية → Bronze [ياسين] ❌
+│   │   └── 📄 historical_loader.py     ← تحميل البيانات التاريخية → Bronze [ياسين] ✅
 │   └── 📁 dbt/                     ← تحويلات الطبقة الذهبية
 │       ├── 📄 dbt_project.yml          ← إعدادات مشروع dbt [كريم] ✅
 │       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ⏳
 │       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ❌
 │
 ├── 📁 dags/
-│   └── 📄 etl_pipeline_dag.py      ← DAG الرئيسي لـ Airflow [ياسين] ⏳
+│   └── 📄 etl_pipeline_dag.py      ← DAG الرئيسي لـ Airflow [ياسين] ✅
 │
 ├── 📁 backend/
 │   ├── 📁 app/

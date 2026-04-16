@@ -28,8 +28,8 @@
 ### ياسين محمود
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ⏳ 50% | ❌ 0% |
-| الأولوية | historical_loader.py | silver_processor.py |
+| نسبة الإنجاز | ✅ 100% | ❌ 0% |
+| الأولوية | (مكتمل) | silver_processor.py |
 
 ### مصطفى مطر
 | | Milestone 1 | Milestone 2 |
@@ -71,7 +71,7 @@
 
 ## 🚨 أولويات هذا الأسبوع
 
-1. **ياسين** ← اكتب `historical_loader.py` + ابدأ `silver_processor.py`
+1. **ياسين** ← ابدأ معالجة الـ Silver Layer `silver_processor.py`
 2. **كريم** ← كمل ملفات الـ Staging و الـ Gold Models.
 3. **أحمد** ← اكتب `producer_news.py` فورًا (producers/producer_news.py فارغ!)
 4. **مصطفى** ← ابدأ في بناء نظام الـ JWT Authentication.

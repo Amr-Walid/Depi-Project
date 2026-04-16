@@ -150,8 +150,8 @@ silver/
 
 **Milestone 1:**
 - `processing/spark_jobs/bronze_consumer.py` ✅ (مرفوع)
-- `processing/spark_jobs/historical_loader.py` ← **الأولوية الأولى الآن**
-- `dags/etl_pipeline_dag.py` (نسخة أولى للـ historical)
+- `processing/spark_jobs/historical_loader.py` ✅ (مرفوع)
+- `dags/etl_pipeline_dag.py` ✅ (مرفوع)
 - `spark-apps/Dockerfile.spark` ✅ (مرفوع)
 
 **Milestone 2:**
