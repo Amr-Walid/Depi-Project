@@ -56,10 +56,10 @@
   );
   ```
 
-**⚠️ ما يحتاج إضافة:**
-- [ ] `refresh_tokens` جدول لتخزين JWT Refresh Tokens
-- [ ] `user_sessions` للتتبع (اختياري)
-- [ ] إضافة indexes على الأعمدة المستخدمة كثيرًا (مثل `user_id`, `symbol`)
+**⚠️ ما تم إضافته:**
+- [x] `refresh_tokens` جدول لتخزين JWT Refresh Tokens
+- [x] `user_sessions` للتتبع (اختياري)
+- [x] إضافة indexes على الأعمدة المستخدمة كثيرًا (مثل `user_id`, `symbol`)
 
 ---
 

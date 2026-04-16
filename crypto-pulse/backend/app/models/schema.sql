@@ -28,3 +28,38 @@ CREATE TABLE portfolios (
     quantity DECIMAL(18, 8) NOT NULL,
     avg_buy_price DECIMAL(18, 8) NOT NULL
 );
+
+-- Refresh Tokens for JWT Authentication
+CREATE TABLE refresh_tokens (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    token VARCHAR(512) UNIQUE NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    revoked BOOLEAN DEFAULT FALSE
+);
+
+-- User Sessions for tracking (Optional but recommended)
+CREATE TABLE user_sessions (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    session_token VARCHAR(512) UNIQUE NOT NULL,
+    ip_address VARCHAR(45),
+    user_agent TEXT,
+    last_active TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+-- Performance Indexes
+CREATE INDEX idx_watchlists_user_id ON watchlists(user_id);
+CREATE INDEX idx_watchlists_symbol ON watchlists(symbol);
+
+CREATE INDEX idx_alerts_user_id ON alerts(user_id);
+CREATE INDEX idx_alerts_symbol ON alerts(symbol);
+CREATE INDEX idx_alerts_is_active ON alerts(is_active);
+
+CREATE INDEX idx_portfolios_user_id ON portfolios(user_id);
+CREATE INDEX idx_portfolios_symbol ON portfolios(symbol);
+
+CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
