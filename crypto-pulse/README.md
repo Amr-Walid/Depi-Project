@@ -20,8 +20,8 @@ The system is built around 4 main environments working together:
 |-------|-----------|--------|
 | **Data Ingestion (Bronze)** | Python, Binance API, CoinGecko API, Apache Kafka | ✅ Complete |
 | **Spark Processing (Bronze→Silver)** | Apache Spark 3.5, Spark Structured Streaming, Parquet/Delta | 🚧 Bronze Done · Silver Pending |
-| **Orchestration** | Apache Airflow 2.7 | ❌ Not Started |
-| **Gold Layer & Analytics** | dbt, Azure Synapse | ❌ Not Started |
+| **Orchestration** | Apache Airflow 2.7 | 🚧 In Progress |
+| **Gold Layer & Analytics** | dbt, Azure Synapse | 🚧 In Progress |
 | **Serving** | FastAPI, PostgreSQL | ❌ Not Started |
 
 ### The Azure Medallion Layers:
@@ -94,20 +94,21 @@ Kafka → Spark Structured Streaming → Bronze Layer (ADLS Gen2)
 #### `silver_processor.py` ❌ Not Started (Yassin Mahmoud)
 - Will read Bronze Parquet files, apply cleaning/transformation, and write to the Silver container partitioned by `year/month/day`
 
-#### `historical_loader.py` ❌ Not Created (Yassin Mahmoud)
-- Will batch-load historical JSON files from `data/historical/` into Bronze ADLS as a one-time Spark job
+#### `historical_loader.py` ✅ Complete (Yassin Mahmoud)
+- Batch-loads historical JSON files from `data/historical/` into Bronze ADLS as a Spark job using Delta Lake.
 
 ### 🧱 dbt Models (`processing/dbt/`)
-- **`dbt_project.yml`**: Empty — config not yet added (Karim)
-- **`models/`**: Empty — no staging or gold models yet (Karim)
-- **Status:** ❌ Not Started
+- **`dbt_project.yml`**: ✅ Configured (Karim)
+- **`models/`**: 🚧 First Gold models (Skeleton) & sources defined
+- **Status:** 🚧 In Progress
 
 ---
 
 ## 🎼 Orchestration (`dags/`)
 
-- **`etl_pipeline_dag.py`**: ❌ Empty — Airflow DAG not yet implemented (Yassin)
-  - Will orchestrate: historical load → bronze streaming trigger → silver batch → dbt gold models
+- **`etl_pipeline_dag.py`**: 🚧 In Progress (Yassin)
+  - Currently orchestrates: historical load.
+  - Next steps: bronze streaming trigger → silver batch → dbt gold models
 
 ---
 
