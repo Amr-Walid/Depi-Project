@@ -46,8 +46,8 @@
 ### كريم
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ⏳ 50% | ❌ 0% |
-| الأولوية | dbt_project.yml | Staging & Gold Models |
+| نسبة الإنجاز | ✅ 100% | ⏳ 20% |
+| الأولوية | (مكتمل) | Staging & Gold Models |
 
 ---
 
@@ -72,7 +72,7 @@
 ## 🚨 أولويات هذا الأسبوع
 
 1. **ياسين** ← اكتب `historical_loader.py` + ابدأ `silver_processor.py`
-2. **كريم** ← اكتب `dbt_project.yml` وجهز ملفات الـ Staging.
+2. **كريم** ← كمل ملفات الـ Staging و الـ Gold Models.
 3. **أحمد** ← اكتب `producer_news.py` فورًا (producers/producer_news.py فارغ!)
 4. **مصطفى** ← ابدأ في بناء نظام الـ JWT Authentication.
 5. **عمرو** ← راجع الـ PRs و حدّث الـ README الرئيسي.

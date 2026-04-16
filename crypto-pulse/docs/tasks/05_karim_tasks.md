@@ -63,45 +63,16 @@
 
 ---
 
-### ⏳ Task 1.2 — إعداد مشروع dbt
+### ✅ Task 1.2 — إعداد مشروع dbt
 
-**الملف:** `processing/dbt/dbt_project.yml` *(حاليًا فارغ)*
+**الملف:** `processing/dbt/dbt_project.yml`
 
-**ما يجب فعله:**
-- [ ] ملء `dbt_project.yml`:
-  ```yaml
-  name: 'crypto_pulse'
-  version: '1.0.0'
-  config-version: 2
-  
-  profile: 'crypto_pulse'
-  
-  model-paths: ["models"]
-  test-paths: ["tests"]
-  
-  models:
-    crypto_pulse:
-      silver:
-        +materialized: view
-      gold:
-        +materialized: table
-  ```
-- [ ] إنشاء `processing/dbt/profiles.yml` (لا يُرفع على GitHub — يحتوي credentials):
-  ```yaml
-  crypto_pulse:
-    target: dev
-    outputs:
-      dev:
-        type: spark  # أو postgres للاختبار المحلي
-        host: "localhost"
-        ...
-  ```
-- [ ] إضافة `dbt` إلى `requirements.txt`:
-  ```
-  dbt-spark>=1.7.0
-  # أو
-  dbt-postgres>=1.7.0  # للاختبار المحلي
-  ```
+**ما تم إنجازه:**
+- [x] ملء `dbt_project.yml` بالإعدادات الأساسية والـ materialization
+- [x] إعداد هيكل المجلدات (staging, gold, models)
+- [x] إضافة `dbt-spark` و `dbt-postgres` إلى `requirements.txt`
+- [x] إنشاء ملف `.gitignore` خاص بـ dbt لاستثناء ملفات الـ target والـ packages
+
 
 ---
 
@@ -113,7 +84,7 @@
 
 ---
 
-### ❌ Task 2.1 — بناء نماذج Bronze (Staging)
+### ⏳ Task 2.1 — بناء نماذج Bronze (Staging)
 
 **المجلد:** `processing/dbt/models/`
 
@@ -142,28 +113,21 @@
   WHERE price IS NOT NULL
     AND price > 0
   ```
-- [ ] إنشاء `models/sources.yml` لتعريف مصادر البيانات:
-  ```yaml
-  version: 2
-  sources:
-    - name: silver
-      schema: silver
-      tables:
-        - name: prices
-        - name: news
-        - name: social
-  ```
+- [x] إنشاء `models/sources.yml` لتعريف مصادر البيانات (Silver Layer)
+- [ ] إنشاء ملفات الـ `.sql` لكل مصدر (prices, news, social)
+
 
 ---
 
-### ❌ Task 2.2 — بناء نماذج Gold (التحليلية)
+### ⏳ Task 2.2 — بناء نماذج Gold (التحليلية)
 
 **المجلد:** `processing/dbt/models/gold/`
 
 **ما يجب فعله:**
 
 **الجدول 1: `gold/coin_daily_summary.sql`**
-- [ ] ملخص يومي لكل عملة:
+- [x] إنشاء الهيكل الأولي للجدول (Placeholder)
+- [ ] كتابة المنطق الفعلي للحسابات بناءً على الـ Staging Models
   ```sql
   {{ config(materialized='table') }}
   
@@ -277,9 +241,9 @@
 | Task | الوصف | الحالة |
 |------|--------|--------|
 | 1.1 | schema.sql (PostgreSQL tables) | ✅ مكتمل |
-| 1.2 | إعداد dbt_project.yml | ⏳ ملف فارغ |
-| 2.1 | Staging Models (stg_prices, stg_news) | ❌ لم يبدأ |
-| 2.2 | Gold Models (coin_daily_summary, sentiment) | ❌ لم يبدأ |
+| 1.2 | إعداد dbt_project.yml | ✅ مكتمل |
+| 2.1 | Staging Models (stg_prices, stg_news) | ⏳ قيد التنفيذ |
+| 2.2 | Gold Models (coin_daily_summary, sentiment) | ⏳ قيد التنفيذ |
 | 2.3 | اختبارات جودة البيانات | ❌ لم يبدأ |
 | 2.4 | توثيق النماذج | ❌ لم يبدأ |
 | 2.5 | تكامل dbt مع Airflow DAG | ❌ لم يبدأ |
@@ -288,15 +252,15 @@
 
 ## 📂 ما يجب رفعه على GitHub (Deliverables)
 
-**Milestone 1:**
-- `backend/app/models/schema.sql` ✅ (مرفوع)
-- `processing/dbt/dbt_project.yml` (مكتمل) ← **الأولوية الأولى**
-- `processing/dbt/models/staging/stg_prices.sql` ← **الأولوية الثانية**
-- `processing/dbt/models/staging/stg_news.sql`
-- `processing/dbt/models/gold/coin_daily_summary.sql`
-- `processing/dbt/models/sources.yml`
+Milestone 1 (Complete):
+- `backend/app/models/schema.sql` ✅
+- `processing/dbt/dbt_project.yml` ✅
+- `processing/dbt/.gitignore` ✅
 
-**Milestone 2:**
+Milestone 2 (In Progress):
+- `processing/dbt/models/staging/sources.yml` ✅
+- `processing/dbt/models/gold/daily_market_summary.sql` ✅ (Skeleton)
+- `processing/dbt/models/staging/stg_prices.sql`
 - `processing/dbt/models/gold/market_sentiment.sql`
 - `processing/dbt/tests/schema.yml`
 - تحديثات على `dags/etl_pipeline_dag.py`

@@ -37,7 +37,7 @@ crypto-pulse/
 │   │   └── 📄 historical_loader.py     ← تحميل البيانات التاريخية → Bronze [ياسين] ❌
 │   └── 📁 dbt/                     ← تحويلات الطبقة الذهبية
 │       ├── 📄 dbt_project.yml          ← إعدادات مشروع dbt [كريم] ✅
-│       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ❌
+│       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ⏳
 │       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ❌
 │
 ├── 📁 dags/
