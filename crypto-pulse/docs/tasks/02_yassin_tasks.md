@@ -24,49 +24,35 @@
   - ربط `client_id`, `client_secret`, `tenant_id`
 - [x] تحويل الـ Binary Kafka value إلى STRING مع الحفاظ على الـ metadata:
   - `kafka_key`, `raw_value`, `topic`, `partition`, `offset`, `kafka_timestamp`, `ingested_at`
-- [x] الكتابة إلى Bronze Layer بتنسيق **Parquet**:
+- [x] الكتابة إلى Bronze Layer بتنسيق **Delta Lake**:
   - المسار: `abfss://datalake@stcryptopulsedev.dfs.core.windows.net/bronze/prices`
   - Checkpoint: `abfss://...dfs.core.windows.net/checkpoints/bronze/prices`
   - trigger كل 30 ثانية
-- [x] إدارة نقاط التفتيش (Checkpointing) لضمان عدم فقدان رسائل عند إعادة التشغيل
-- [x] معالجة الأخطاء (KeyboardInterrupt, Exception) وإيقاف Spark بشكل نظيف
 
-**⚠️ ملاحظة مهمة:** النسخة الحالية تستخدم **Parquet** وليس **Delta Lake** — التحويل لـ Delta مطلوب في نسخة قادمة.
+**🚀 تم ترقية التخزين إلى Delta Lake لضمان جودة البيانات.**
 
 ---
 
-### ❌ Task 1.2 — كتابة محمل البيانات التاريخية (Historical Loader)
+### ✅ Task 1.2 — كتابة محمل البيانات التاريخية (Historical Loader)
 
 **الملف المطلوب إنشاؤه:** `processing/spark_jobs/historical_loader.py`
 
 **ما يجب فعله:**
-- [ ] قراءة ملفات JSON الخام من `data/historical/` (التي أنشأها `historical_fetcher.py`)
-- [ ] تحليل بنية الـ JSON (مصفوفة OHLCV من Binance):
-  ```python
-  # كل سجل: [open_time, open, high, low, close, volume, close_time, ...]
-  ```
-- [ ] تحويلها إلى DataFrame منظم مع أعمدة واضحة
-- [ ] الكتابة إلى Bronze Layer كـ **Batch Job** (مرة واحدة وليس streaming):
-  - المسار: `abfss://datalake@stcryptopulsedev.dfs.core.windows.net/bronze/historical`
-  - التنسيق: Delta Lake (أو Parquet كبداية)
-  - Partitioning: `year`, `month`, `day`
-- [ ] استخدام `overwrite` mode لتجنب التكرار عند إعادة التشغيل
+- [x] قراءة ملفات JSON الخام من `data/historical/`.
+- [x] تحليل مصفوفة OHLCV وإضافة أعمدة `symbol` و `ingested_at`.
+- [x] الكتابة إلى Bronze Layer بتنسيق **Delta Lake**.
+- [x] استخدام `overwrite` mode لتجنب التكرار.
 
 ---
 
-### ⏳ Task 1.3 — إنشاء DAG لتشغيل Historical Loader
+### ✅ Task 1.3 — إنشاء DAG لتشغيل Historical Loader
 
 **الملف:** `dags/etl_pipeline_dag.py` *(حاليًا فارغ)*
 
 **ما يجب فعله:**
-- [ ] إنشاء DAG أساسي في Airflow:
-  ```python
-  from airflow import DAG
-  from airflow.providers.apache.spark.operators.spark_submit import SparkSubmitOperator
-  ```
-- [ ] تشغيل `historical_loader.py` كـ SparkSubmitOperator
-- [ ] إعداد schedule_interval مناسب (مثلاً `@once` للتحميل الأول)
-- [ ] إضافة logging واضح لكل خطوة
+- [x] إنشاء DAG شامل باسم `crypto_pulse_bronze_layer`.
+- [x] تشغيل `historical_loader.py` عبر `BashOperator`.
+- [x] إعداد الجدولة (Schedule) والـ Logging.
 
 ---
 
@@ -129,7 +115,7 @@ silver/
 
 ---
 
-### ❌ Task 2.3 — التحويل إلى Delta Lake (تحديث Bronze Consumer)
+### ✅ Task 2.3 — التحويل إلى Delta Lake (مكتمل)
 
 **الملف:** `processing/spark_jobs/bronze_consumer.py`
 
@@ -151,12 +137,12 @@ silver/
 
 | Task | الوصف | الحالة |
 |------|--------|--------|
-| 1.1 | Bronze Consumer (Streaming) | ✅ مكتمل (Parquet) |
-| 1.2 | Historical Loader (Batch) | ❌ لم يبدأ |
-| 1.3 | DAG — Historical Load | ⏳ ملف فارغ |
-| 2.1 | Silver Processor (Cleaning) | ❌ ملف فارغ |
+| 1.1 | Bronze Consumer (Streaming) | ✅ مكتمل (Delta) |
+| 1.2 | Historical Loader (Batch) | ✅ مكتمل |
+| 1.3 | DAG — Historical Load | ✅ مكتمل |
+| 2.1 | Silver Processor (Cleaning) | ❌ لم يبدأ |
 | 2.2 | DAG — Bronze >> Silver Chain | ❌ لم يبدأ |
-| 2.3 | ترقية Bronze إلى Delta Format | ❌ لم يبدأ |
+| 2.3 | ترقية Bronze إلى Delta Format | ✅ مكتمل |
 
 ---
 
