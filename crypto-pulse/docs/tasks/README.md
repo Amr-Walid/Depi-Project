@@ -22,8 +22,8 @@
 ### عمرو وليد
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ✅ 95% | ❌ 10% |
-| الأولوية | مراجعة PRs | رسم Architecture |
+| نسبة الإنجاز | ✅ 100% | ⏳ 25% |
+| الأولوية | (مكتمل) | تحديث README.md |
 
 ### ياسين محمود
 | | Milestone 1 | Milestone 2 |
@@ -34,8 +34,8 @@
 ### مصطفى مطر
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ⏳ 60% | ❌ 0% |
-| الأولوية | backend/Dockerfile | JWT Auth |
+| نسبة الإنجاز | ✅ 100% | ❌ 0% |
+| الأولوية | (مكتمل) | JWT Auth |
 
 ### أحمد أيمن
 | | Milestone 1 | Milestone 2 |
@@ -46,8 +46,8 @@
 ### كريم
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ⏳ 20% | ❌ 0% |
-| الأولوية | dbt_project.yml | Gold Models |
+| نسبة الإنجاز | ⏳ 50% | ❌ 0% |
+| الأولوية | dbt_project.yml | Staging & Gold Models |
 
 ---
 
@@ -72,7 +72,7 @@
 ## 🚨 أولويات هذا الأسبوع
 
 1. **ياسين** ← اكتب `historical_loader.py` + ابدأ `silver_processor.py`
-2. **مصطفى** ← أنشئ `backend/Dockerfile` + اكتب `backend/app/main.py`
+2. **كريم** ← اكتب `dbt_project.yml` وجهز ملفات الـ Staging.
 3. **أحمد** ← اكتب `producer_news.py` فورًا (producers/producer_news.py فارغ!)
-4. **كريم** ← اكتب `dbt_project.yml` + أول staging model
-5. **عمرو** ← ارسم `docs/architecture.png`
+4. **مصطفى** ← ابدأ في بناء نظام الـ JWT Authentication.
+5. **عمرو** ← راجع الـ PRs و حدّث الـ README الرئيسي.

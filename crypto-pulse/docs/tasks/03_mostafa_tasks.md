@@ -27,11 +27,11 @@
 - [x] إعداد network مشتركة `crypto-net` لكل الخدمات
 - [x] إعداد volumes: `postgres_data`, `airflow_logs`
 
-**⚠️ ما يحتاج تحديث في docker-compose.yml:**
-- [ ] إضافة خدمة `backend` لتشغيل FastAPI على port `8000`
-- [ ] إضافة topics جديدة في `kafka-init-topics`: `crypto.market.data`, `crypto.news`, `crypto.social`
-- [ ] تمرير متغيرات البيئة من `.env` إلى خدمات Spark و Backend
-- [ ] ربط volume لمجلد `processing/spark_jobs/` إلى خدمة Spark
+**⚠️ ما تم تحديثه في docker-compose.yml:**
+- [x] إضافة خدمة `backend` لتشغيل FastAPI على port `8000`
+- [x] إضافة topics جديدة في `kafka-init-topics`: `crypto.market.data`, `crypto.news`, `crypto.social`
+- [x] تمرير متغيرات البيئة من `.env` إلى خدمات Spark و Backend
+- [x] ربط volume لمجلد `processing/spark_jobs/` إلى خدمة Spark
 
 ---
 
@@ -45,27 +45,11 @@
 - [x] أمر `logs`: `docker compose logs -f`
 - [x] أمر `restart`: `docker compose down && docker compose up -d`
 
-**ما يجب إضافته:**
-- [ ] `make rebuild-backend` — لإعادة بناء image الـ backend فقط:
-  ```makefile
-  rebuild-backend:
-      docker compose up -d --build backend
-  ```
-- [ ] `make test` — لتشغيل الاختبارات:
-  ```makefile
-  test:
-      docker compose exec backend pytest /app/tests/ -v
-  ```
-- [ ] `make shell-backend` — للدخول إلى container الـ backend:
-  ```makefile
-  shell-backend:
-      docker compose exec backend bash
-  ```
-- [ ] `make spark-submit` — لتشغيل Bronze Consumer:
-  ```makefile
-  spark-submit:
-      docker compose exec spark-master spark-submit /opt/spark-apps/bronze_consumer.py
-  ```
+**ما تم إضافته:**
+- [x] `make rebuild-backend` — لإعادة بناء image الـ backend فقط:
+- [x] `make test` — لتشغيل الاختبارات:
+- [x] `make shell-backend` — للدخول إلى container الـ backend:
+- [x] `make spark-submit` — لتشغيل Bronze Consumer:
 
 ---
 
@@ -78,78 +62,30 @@
 
 ---
 
-### ❌ Task 1.4 — Dockerfile لـ Backend (FastAPI)
+### ✅ Task 1.4 — Dockerfile لـ Backend (FastAPI)
 
-**الملف المطلوب إنشاؤه:** `backend/Dockerfile`
+**الملف:** `backend/Dockerfile`
 
-**ما يجب فعله:**
-- [ ] إنشاء `backend/Dockerfile`:
-  ```dockerfile
-  FROM python:3.11-slim
-  
-  WORKDIR /app
-  
-  # Install dependencies
-  COPY requirements.txt .
-  RUN pip install --no-cache-dir -r requirements.txt
-  
-  # Copy application code
-  COPY app/ ./app/
-  
-  EXPOSE 8000
-  
-  CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
-  ```
-- [ ] إنشاء `backend/requirements.txt` يحتوي على:
-  - `fastapi>=0.104.0`
-  - `uvicorn[standard]>=0.24.0`
-  - `sqlalchemy>=2.0.0`
-  - `psycopg2-binary>=2.9.9`
-  - `python-jose[cryptography]>=3.3.0`
-  - `passlib[bcrypt]>=1.7.4`
-  - `python-dotenv>=1.0.0`
-  - `httpx>=0.25.0` (للاختبارات)
-  - `pytest>=7.4.0`
-- [ ] إنشاء `.dockerignore` في مجلد backend (أو الجذر) يستثني:
-  ```
-  __pycache__/
-  *.pyc
-  .env
-  .git/
-  tests/
-  ```
+**ما تم إنجازه:**
+- [x] إنشاء `backend/Dockerfile`
+- [x] إنشاء `backend/requirements.txt`
+- [x] إنشاء `.dockerignore` في مجلد backend
 
 ---
 
-### ⏳ Task 1.5 — بناء الهيكل الأولي للـ Backend
+### ✅ Task 1.5 — بناء الهيكل الأولي للـ Backend
 
 **الملفات:**
-- `backend/app/main.py` *(حاليًا فارغ)*
-- `backend/app/routers/` *(فارغ - `.gitkeep` فقط)*
-- `backend/app/models/` *(يحتوي على `schema.sql` فقط)*
-- `backend/app/services/` *(فارغ)*
+- `backend/app/main.py`
+- `backend/app/routers/`
+- `backend/app/models/`
+- `backend/app/services/`
 
-**ما يجب فعله:**
-- [ ] ملء `backend/app/main.py`:
-  ```python
-  from fastapi import FastAPI
-  from fastapi.middleware.cors import CORSMiddleware
-  
-  app = FastAPI(
-      title="CryptoPulse API",
-      description="Real-time cryptocurrency analytics platform",
-      version="1.0.0"
-  )
-  
-  app.add_middleware(CORSMiddleware, allow_origins=["*"], ...)
-  
-  @app.get("/health")
-  def health_check():
-      return {"status": "ok", "service": "CryptoPulse API"}
-  ```
-- [ ] إنشاء `backend/app/routers/__init__.py`
-- [ ] إنشاء `backend/app/services/__init__.py`
-- [ ] إنشاء `backend/app/models/__init__.py`
+**ما تم إنجازه:**
+- [x] ملء `backend/app/main.py` ووضع endpoint للصحة Health check
+- [x] إنشاء `backend/app/routers/__init__.py`
+- [x] إنشاء `backend/app/services/__init__.py`
+- [x] إنشاء `backend/app/models/__init__.py`
 
 ---
 
@@ -237,11 +173,11 @@
 
 | Task | الوصف | الحالة |
 |------|--------|--------|
-| 1.1 | docker-compose.yml الأساسي | ✅ مكتمل (يحتاج تحديثات) |
-| 1.2 | Makefile الأساسي | ✅ مكتمل (يحتاج أوامر جديدة) |
+| 1.1 | docker-compose.yml الأساسي | ✅ مكتمل |
+| 1.2 | Makefile الأساسي | ✅ مكتمل |
 | 1.3 | Dockerfile.spark | ✅ مكتمل |
-| 1.4 | backend/Dockerfile | ❌ لم يُنشأ بعد |
-| 1.5 | هيكل backend/app/ الأولي | ⏳ مجلدات فارغة |
+| 1.4 | backend/Dockerfile | ✅ مكتمل |
+| 1.5 | هيكل backend/app/ الأولي | ✅ مكتمل |
 | 2.1 | نظام Authentication (JWT) | ❌ لم يبدأ |
 | 2.2 | Data Endpoints | ❌ لم يبدأ |
 | 2.3 | اختبارات pytest | ❌ لم يبدأ |
@@ -251,11 +187,11 @@
 ## 📂 ما يجب رفعه على GitHub (Deliverables)
 
 **Milestone 1:**
-- `docker-compose.yml` (نسخة محدثة مع backend service) ← **الأولوية الأولى**
-- `Makefile` (نسخة محدثة مع أوامر جديدة)
-- `backend/Dockerfile` ← **مطلوب فورًا**
-- `backend/app/main.py` (نسخة تعمل مع `/health` endpoint)
-- `backend/app/__init__.py`, `routers/__init__.py`, `services/__init__.py`
+- `docker-compose.yml` ✅ (مرفوع ومحدث)
+- `Makefile` ✅ (مرفوع ومحدث)
+- `backend/Dockerfile` ✅ (مرفوع)
+- `backend/app/main.py` ✅ (مرفوع)
+- `backend/app/__init__.py`, `routers/__init__.py`, `services/__init__.py` ✅ (مرفوع)
 
 **Milestone 2:**
 - `backend/app/routers/auth.py`
