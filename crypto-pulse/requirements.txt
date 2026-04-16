@@ -5,3 +5,5 @@ google-cloud-bigquery
 pandas
 python-dotenv
 schedule
+pyspark==3.5.0
+delta-spark==3.2.0

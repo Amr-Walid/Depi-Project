@@ -95,11 +95,12 @@ def create_spark_session(config):
                 "org.apache.hadoop:hadoop-azure:3.3.4",
                 "org.wildfly.openssl:wildfly-openssl:1.1.3.Final",
                 "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0",
+                "io.delta:delta-spark_2.12:3.2.0",
             ]),
         )
-        # ── Delta Lake (optional, for future use) ──
-        # .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-        # .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        # ── Delta Lake ──
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
+        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
         # ── Azure ADLS Gen2 - OAuth2 / Service Principal ──
         .config(
             f"fs.azure.account.auth.type.{storage_account}.dfs.core.windows.net",
@@ -191,7 +192,7 @@ def write_to_bronze(raw_df, config):
 
     query = (
         raw_df.writeStream
-        .format("parquet")
+        .format("delta")
         .outputMode("append")
         .option("path", bronze_path)
         .option("checkpointLocation", checkpoint_path)
