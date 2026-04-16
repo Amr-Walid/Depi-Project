@@ -1,0 +1,11 @@
+version: 2
+
+sources:
+  - name: silver
+    description: "Silver layer data from Azure"
+    database: spark_catalog
+    schema: silver
+    tables:
+      - name: prices
+      - name: news
+      - name: social
