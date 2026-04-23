@@ -57,6 +57,7 @@ def create_spark_session(config):
     spark = (
         SparkSession.builder
         .appName("HistoricalLoader")
+        .master("spark://spark-master:7077")
         .config("spark.jars.packages", ",".join([
             "org.apache.hadoop:hadoop-azure:3.3.4",
             "org.wildfly.openssl:wildfly-openssl:1.1.3.Final",
