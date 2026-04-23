@@ -37,14 +37,23 @@ with DAG(
             'io.delta:delta-spark_2.12:3.2.0 '
             '--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" '
             '--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" '
-            '/opt/spark-apps/historical_loader.py'
+            '/opt/spark/jobs/historical_loader.py'
         ),
     )
 
-    # Task 2: Verify Bronze Layer (Placeholder for future data quality checks)
-    verify_bronze = BashOperator(
-        task_id='verify_bronze_data',
-        bash_command='echo "Bronze layer ingestion verified successfully."',
+    # Task 3: Process Silver Layer (Cleaning & Normalization)
+    process_silver = BashOperator(
+        task_id='process_silver_data',
+        bash_command=(
+            'spark-submit '
+            '--master spark://spark-master:7077 '
+            '--packages org.apache.hadoop:hadoop-azure:3.3.4,'
+            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
+            'io.delta:delta-spark_2.12:3.2.0 '
+            '--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" '
+            '--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" '
+            '/opt/spark/jobs/silver_processor.py'
+        ),
     )
 
-    ingest_historical >> verify_bronze
+    ingest_historical >> verify_bronze >> process_silver
