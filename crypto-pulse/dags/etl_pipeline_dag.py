@@ -24,27 +24,15 @@ with DAG(
 ) as dag:
 
     # Task 1: Load Historical Data (Batch)
-    # Note: For this to work in Docker, Airflow needs access to spark-submit 
-    # or we trigger it via SparkSubmitOperator with a connection to spark-master.
-    # Here we use BashOperator as a placeholder that can be adjusted.
     ingest_historical = BashOperator(
         task_id='ingest_historical_data',
-        bash_command=(
-            'spark-submit '
-            '--master spark://spark-master:7077 '
-            '--packages org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
-            'io.delta:delta-spark_2.12:3.2.0 '
-            '--conf "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension" '
-            '--conf "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog" '
-            '/opt/spark-apps/historical_loader.py'
-        ),
+        bash_command='python3 /opt/airflow/jobs/historical_loader.py',
     )
 
-    # Task 2: Verify Bronze Layer (Placeholder for future data quality checks)
-    verify_bronze = BashOperator(
-        task_id='verify_bronze_data',
-        bash_command='echo "Bronze layer ingestion verified successfully."',
+    # Task 3: Process Silver Layer (Cleaning & Normalization)
+    process_silver = BashOperator(
+        task_id='process_silver_data',
+        bash_command='python3 /opt/airflow/jobs/silver_processor.py',
     )
 
-    ingest_historical >> verify_bronze
+    ingest_historical >> process_silver
