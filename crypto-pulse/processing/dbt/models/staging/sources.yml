@@ -2,10 +2,9 @@ version: 2
 
 sources:
   - name: silver
-    description: "Silver layer data from Azure"
-    database: spark_catalog
-    schema: silver
+    description: "Silver layer data (temporary from PostgreSQL for testing)"
+    schema: public
     tables:
-      - name: prices
-      - name: news
-      - name: social
+      - name: bronze_historical_prices
+      - name: bronze_news
+      - name: bronze_social
