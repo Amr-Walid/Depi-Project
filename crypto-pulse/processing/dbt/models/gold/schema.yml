@@ -1,0 +1,43 @@
+version: 2
+
+models:
+  - name: daily_market_summary
+    description: "Daily market summary for each cryptocurrency"
+    columns:
+      - name: symbol
+        tests:
+          - not_null
+      - name: date
+        tests:
+          - not_null
+      - name: close_price
+        tests:
+          - not_null
+      - name: open_price
+        tests:
+          - not_null
+      - name: high_price
+        tests:
+          - not_null
+      - name: low_price
+        tests:
+          - not_null
+      - name: total_volume
+        tests:
+          - not_null
+
+  - name: market_sentiment
+    description: "Market sentiment from news and social media"
+    columns:
+      - name: sentiment_date
+        tests:
+          - not_null
+      - name: source_type
+        tests:
+          - not_null
+      - name: mentions
+        tests:
+          - not_null
+      - name: sentiment_score
+        tests:
+          - not_null
