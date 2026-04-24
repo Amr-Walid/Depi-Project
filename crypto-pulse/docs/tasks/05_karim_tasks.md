@@ -89,7 +89,7 @@
 **المجلد:** `processing/dbt/models/`
 
 **ما يجب فعله:**
-- [ ] إنشاء `models/staging/` لقراءة البيانات الخام من Silver:
+- [x] إنشاء `models/staging/` لقراءة البيانات الخام من Silver:
   ```
   processing/dbt/models/
   ├── staging/
@@ -99,7 +99,7 @@
   └── gold/
       └── ...
   ```
-- [ ] مثال `models/staging/stg_prices.sql`:
+- [x] مثال `models/staging/stg_prices.sql`:
   ```sql
   {{ config(materialized='view') }}
   
@@ -114,7 +114,7 @@
     AND price > 0
   ```
 - [x] إنشاء `models/sources.yml` لتعريف مصادر البيانات (Silver Layer)
-- [ ] إنشاء ملفات الـ `.sql` لكل مصدر (prices, news, social)
+- [x] إنشاء ملفات الـ `.sql` لكل مصدر (prices, news, social)
 
 
 ---
@@ -127,7 +127,7 @@
 
 **الجدول 1: `gold/coin_daily_summary.sql`**
 - [x] إنشاء الهيكل الأولي للجدول (Placeholder)
-- [ ] كتابة المنطق الفعلي للحسابات بناءً على الـ Staging Models
+- [x] كتابة المنطق الفعلي للحسابات بناءً على الـ Staging Models
   ```sql
   {{ config(materialized='table') }}
   
@@ -146,7 +146,7 @@
   ```
 
 **الجدول 2: `gold/market_sentiment.sql`**
-- [ ] يجمع درجات المشاعر من الأخبار والـ Reddit:
+- [x] يجمع درجات المشاعر من الأخبار والـ Reddit:
   ```sql
   {{ config(materialized='table') }}
   
@@ -170,7 +170,7 @@
 **المجلد:** `processing/dbt/tests/`
 
 **ما يجب فعله:**
-- [ ] إنشاء `tests/schema.yml` لتعريف اختبارات تلقائية:
+- [x] إنشاء `tests/schema.yml` (أو `gold/schema.yml`) لتعريف اختبارات تلقائية:
   ```yaml
   version: 2
   models:
@@ -191,8 +191,8 @@
             - not_null
             - unique
   ```
-- [ ] إضافة اختبارات مخصصة (singular tests):
-  - [ ] التأكد من أن `day_low <= day_high` دائمًا
+- [x] إضافة اختبارات مخصصة (singular tests):
+  - [x] التأكد من أن `day_low <= day_high` دائمًا
   - [ ] التأكد من أن `total_volume > 0`
   - [ ] التأكد من عدم وجود تكرارات في البيانات اليومية
 
@@ -201,7 +201,7 @@
 ### ❌ Task 2.4 — توثيق النماذج
 
 **ما يجب فعله:**
-- [ ] إضافة وصف لكل نموذج في `schema.yml`:
+- [x] إضافة وصف لكل نموذج في `schema.yml`:
   ```yaml
   models:
     - name: coin_daily_summary
@@ -242,10 +242,10 @@
 |------|--------|--------|
 | 1.1 | schema.sql (PostgreSQL tables) | ✅ مكتمل |
 | 1.2 | إعداد dbt_project.yml | ✅ مكتمل |
-| 2.1 | Staging Models (stg_prices, stg_news) | ⏳ قيد التنفيذ |
-| 2.2 | Gold Models (coin_daily_summary, sentiment) | ⏳ قيد التنفيذ |
-| 2.3 | اختبارات جودة البيانات | ❌ لم يبدأ |
-| 2.4 | توثيق النماذج | ❌ لم يبدأ |
+| 2.1 | Staging Models (stg_prices, stg_news) | ✅ مكتمل |
+| 2.2 | Gold Models (daily_summary, sentiment) | ✅ مكتمل |
+| 2.3 | اختبارات جودة البيانات | ✅ مكتمل |
+| 2.4 | توثيق النماذج | ⏳ قيد التنفيذ |
 | 2.5 | تكامل dbt مع Airflow DAG | ❌ لم يبدأ |
 
 ---
@@ -259,10 +259,13 @@ Milestone 1 (Complete):
 
 Milestone 2 (In Progress):
 - `processing/dbt/models/staging/sources.yml` ✅
-- `processing/dbt/models/gold/daily_market_summary.sql` ✅ (Skeleton)
-- `processing/dbt/models/staging/stg_prices.sql`
-- `processing/dbt/models/gold/market_sentiment.sql`
-- `processing/dbt/tests/schema.yml`
+- `processing/dbt/models/gold/daily_market_summary.sql` ✅
+- `processing/dbt/models/staging/stg_prices.sql` ✅
+- `processing/dbt/models/staging/stg_news.sql` ✅
+- `processing/dbt/models/staging/stg_social.sql` ✅
+- `processing/dbt/models/gold/market_sentiment.sql` ✅
+- `processing/dbt/models/gold/schema.yml` ✅
+- `processing/dbt/tests/assert_low_price_less_than_high_price.sql` ✅
 - تحديثات على `dags/etl_pipeline_dag.py`
 
 **❌ لا ترفع أبدًا:**

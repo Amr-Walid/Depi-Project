@@ -13,7 +13,7 @@
 
 ### ❌ Task 1.1 — كتابة منتج بيانات الأخبار (News Producer)
 
-**الملف:** `ingestion/producers/producer_news.py` *(حاليًا فارغ)*
+**الملف:** `ingestion/producers/producer_news.py` *(ملف فارغ تماماً — لم يبدأ بعد)*
 
 **ما يجب فعله:**
 - [ ] الاتصال بـ NewsAPI (مفتاح API يضاف في `.env` كـ `NEWS_API_KEY`)
@@ -245,10 +245,10 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 | Task | الوصف | الحالة |
 |------|--------|--------|
-| 1.1 | producer_news.py | ❌ ملف فارغ |
+| 1.1 | producer_news.py | ❌ ملف فارغ تماماً |
 | 1.2 | producer_reddit.py | ❌ لم يُنشأ |
 | 1.3 | تحديث .env.example و requirements.txt | ❌ لم يبدأ |
-| 1.4 | العمل على notebooks/01 (EDA) | ⏳ ملف موجود فارغ |
+| 1.4 | العمل على notebooks/01 (EDA) | ❌ ملف فارغ |
 | 2.1 | نموذج Sentiment Analysis (FinBERT) | ❌ لم يبدأ |
 | 2.2 | نموذج التنبؤ بالأسعار (LSTM) | ❌ لم يبدأ |
 | 2.3 | لوحة POC Dashboard في Notebook | ❌ ملف فارغ |

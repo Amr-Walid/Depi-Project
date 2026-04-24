@@ -22,57 +22,57 @@
 ### عمرو وليد
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ✅ 100% | ⏳ 25% |
-| الأولوية | (مكتمل) | تحديث README.md |
+| نسبة الإنجاز | ✅ 100% | ⏳ 40% |
+| الأولوية | (مكتمل) | تحديث README + Integration Testing |
 
 ### ياسين محمود
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ✅ 100% | ❌ 0% |
-| الأولوية | (مكتمل) | silver_processor.py |
+| نسبة الإنجاز | ✅ 100% | ✅ 100% |
+| الأولوية | (مكتمل) | ✅ مكتمل — Silver Layer + Airflow DAG |
 
 ### مصطفى مطر
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
 | نسبة الإنجاز | ✅ 100% | ❌ 0% |
-| الأولوية | (مكتمل) | JWT Auth |
+| الأولوية | (مكتمل) | JWT Authentication |
 
 ### أحمد أيمن
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ❌ 10% | ❌ 0% |
-| الأولوية | producer_news.py | FinBERT Sentiment |
+| نسبة الإنجاز | ❌ 0% | ❌ 0% |
+| الأولوية | producer_news.py (فارغ!) | FinBERT Sentiment |
 
 ### كريم
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| نسبة الإنجاز | ✅ 100% | ⏳ 20% |
-| الأولوية | (مكتمل) | Staging & Gold Models |
+| نسبة الإنجاز | ✅ 100% | ✅ 85% |
+| الأولوية | (مكتمل) | dbt docs generate + Airflow integration |
 
 ---
 
 ## ⛓️ تسلسل التبعيات
 
 ```
-عمرو (Azure + Kafka) 
+عمرو (Azure + Kafka ✅)
     ↓
-  ياسين (Bronze) ──► ياسين (Silver)
-                          ↓
-                      كريم (Gold dbt)
-                          ↓
-                     مصطفى (FastAPI)
-                          
-أحمد (News/Reddit) ──► ياسين (Silver يضم Sentiment)
-                          ↓
-                      كريم (gold/market_sentiment)
+  ياسين (Bronze ✅) ──► ياسين (Silver ✅)
+                            ↓
+                        كريم (Gold dbt ✅ 85%)
+                            ↓
+                       مصطفى (FastAPI ← الأولوية الآن!)
+
+أحمد (News/Reddit ← لم يبدأ! 🔴) ──► ياسين (Silver يضم Sentiment)
+                            ↓
+                        كريم (gold/market_sentiment ✅)
 ```
 
 ---
 
 ## 🚨 أولويات هذا الأسبوع
 
-1. **ياسين** ← ابدأ معالجة الـ Silver Layer `silver_processor.py`
-2. **كريم** ← كمل ملفات الـ Staging و الـ Gold Models.
-3. **أحمد** ← اكتب `producer_news.py` فورًا (producers/producer_news.py فارغ!)
-4. **مصطفى** ← ابدأ في بناء نظام الـ JWT Authentication.
-5. **عمرو** ← راجع الـ PRs و حدّث الـ README الرئيسي.
+1. **أحمد** ← 🔴 اكتب `producer_news.py` فورًا — ملف فارغ تماماً ومعطّل جزء كبير من الـ pipeline!
+2. **مصطفى** ← ابدأ في بناء نظام الـ JWT Authentication (الـ Gold Layer جاهزة الآن).
+3. **كريم** ← أكمل توثيق الـ dbt (`dbt docs generate`) واربطه مع Airflow.
+4. **عمرو** ← راجع الـ PRs وأكمل تحديث الـ README الرئيسي + اختبار التكامل الشامل.
+5. **ياسين** ← ✅ أنهى كل مهامه — يمكنه مساعدة أحمد أو مصطفى.

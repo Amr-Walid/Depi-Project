@@ -62,31 +62,26 @@
 
 ---
 
-### ❌ Task 2.1 — كتابة معالج الطبقة الفضية (Silver Processor)
+### ✅ Task 2.1 — كتابة معالج الطبقة الفضية (Silver Processor)
 
-**الملف المطلوب:** `processing/spark_jobs/silver_processor.py` *(حاليًا فارغ)*
+**الملف:** `processing/spark_jobs/silver_processor.py`
 
-**ما يجب فعله:**
-- [ ] قراءة البيانات من Bronze Layer:
+**ما تم إنجازه:**
+- [x] قراءة البيانات من Bronze Layer (Delta format):
   ```python
-  spark.read.format("parquet").load("abfss://.../bronze/prices")
+  spark.read.format("delta").load("abfss://.../bronze/prices")
   ```
-- [ ] تطبيق قواعد التنظيف:
-  - [ ] **إزالة التكرارات:** `dropDuplicates(["kafka_key", "kafka_timestamp"])`
-  - [ ] **معالجة القيم المفقودة:** `fillna()` أو حذف الصفوف الناقصة حسب الأعمدة الحرجة
-  - [ ] **توحيد الـ Timestamps:** تحويل كل التواريخ إلى UTC
-  - [ ] **تحليل JSON:** استخراج الأعمدة من `raw_value`:
-    ```python
-    from pyspark.sql.functions import from_json, col
-    schema = StructType([...])  # تعريف schema لبيانات الأسعار
-    df = df.withColumn("data", from_json(col("raw_value"), schema))
-    ```
-  - [ ] **توحيد أسماء الأعمدة:** `price` بدلاً من `p` أو `last_price`
-- [ ] الكتابة إلى Silver Layer:
+- [x] تطبيق قواعد التنظيف الكاملة:
+  - [x] **تحليل JSON:** استخراج الأعمدة باستخدام `from_json` مع Schema محدد
+  - [x] **إزالة التكرارات:** `dropDuplicates(["symbol", "event_time"])`
+  - [x] **فلترة DQ:** حذف الأسعار الصفر والسالبة والقيم الـ Null
+  - [x] **توحيد الـ Timestamps:** تحويل Unix timestamp إلى UTC Timestamp
+  - [x] **إضافة أعمدة Partitioning:** `year`, `month`, `day`
+- [x] الكتابة إلى Silver Layer بـ **Delta MERGE (Upsert)**:
   - المسار: `abfss://datalake@stcryptopulsedev.dfs.core.windows.net/silver/prices`
-  - التنسيق: **Delta Lake** (مطلوب لدعم Upserts)
+  - Smart Merge: لو السجل موجود يُحدَّث، لو جديد يُضاف
   - Partitioning: `year`, `month`, `day`
-  - Output Mode: `overwrite` أو `merge` (Delta UPSERT)
+- [x] تشغيل `OPTIMIZE` تلقائياً بعد الكتابة
 
 **مثال هيكل Silver:**
 ```
@@ -100,17 +95,17 @@ silver/
 
 ---
 
-### ❌ Task 2.2 — تحديث DAG للأتمتة الكاملة
+### ✅ Task 2.2 — تحديث DAG للأتمتة الكاملة
 
 **الملف:** `dags/etl_pipeline_dag.py`
 
-**ما يجب فعله:**
-- [ ] إضافة Task جديد لتشغيل `silver_processor.py`
-- [ ] إنشاء **Dependency Chain**:
+**ما تم إنجازه:**
+- [x] إضافة Task جديد لتشغيل `silver_processor.py`
+- [x] إنشاء **Dependency Chain** الكاملة:
   ```python
-  bronze_task >> silver_task  # Silver لا تبدأ إلا بعد نجاح Bronze
+  ingest_historical >> process_silver  # Silver لا تبدأ إلا بعد نجاح Bronze
   ```
-- [ ] تشغيل Silver بشكل دوري (مثلاً كل ساعة): `schedule_interval="@hourly"`
+- [ ] تشغيل Silver بشكل دوري (مثلاً كل ساعة): `schedule_interval="@hourly"` ← لسه Manual
 - [ ] إضافة **Email/Slack alert** عند فشل أي مهمة (اختياري)
 
 ---
@@ -140,8 +135,8 @@ silver/
 | 1.1 | Bronze Consumer (Streaming) | ✅ مكتمل (Delta) |
 | 1.2 | Historical Loader (Batch) | ✅ مكتمل |
 | 1.3 | DAG — Historical Load | ✅ مكتمل |
-| 2.1 | Silver Processor (Cleaning) | ❌ لم يبدأ |
-| 2.2 | DAG — Bronze >> Silver Chain | ❌ لم يبدأ |
+| 2.1 | Silver Processor (Cleaning + Delta MERGE) | ✅ مكتمل |
+| 2.2 | DAG — Bronze >> Silver Chain | ✅ مكتمل |
 | 2.3 | ترقية Bronze إلى Delta Format | ✅ مكتمل |
 
 ---
@@ -155,9 +150,8 @@ silver/
 - `spark-apps/Dockerfile.spark` ✅ (مرفوع)
 
 **Milestone 2:**
-- `processing/spark_jobs/silver_processor.py` ← **الأولوية الثانية**
-- `dags/etl_pipeline_dag.py` (نسخة كاملة مع Bronze >> Silver)
-- تحديثات على `requirements.txt` لإضافة `pyspark`, `delta-spark`
+- `processing/spark_jobs/silver_processor.py` ✅ (مرفوع - Delta MERGE كامل)
+- `dags/etl_pipeline_dag.py` (نسخة كاملة مع Bronze >> Silver) ✅
 
 ---
 
