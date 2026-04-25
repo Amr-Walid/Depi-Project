@@ -106,26 +106,37 @@ def process_historical_files(spark, config):
         file_path = os.path.join(historical_dir, file_name)
         logger.info(f"  Loading {symbol} from {file_name}")
 
-        # Read JSON file into a single-column DataFrame containing the array
-        raw_json_df = spark.read.option("multiline", "true").json(file_path)
+        import json
+        with open(file_path, 'r') as f:
+            data = json.load(f)
+            
+        df_data = []
+        for item in data:
+            df_data.append([str(x) for x in item[:12]])
+            
+        schema = [
+            "raw_open_time", "raw_open", "raw_high", "raw_low", "raw_close", "raw_volume", 
+            "raw_close_time", "quote_asset_volume", "number_of_trades", 
+            "taker_buy_base_asset_volume", "taker_buy_quote_asset_volume", "ignore"
+        ]
+        from pyspark.sql.types import StructType, StructField, StringType
+        spark_schema = StructType([StructField(name, StringType(), True) for name in schema])
         
-        # Explode the outer list to get rows of klines
-        from pyspark.sql.functions import explode
-        klines_df = raw_json_df.select(explode(col("element")).alias("kline"))
+        symbol_df = spark.createDataFrame(df_data, schema=spark_schema)
 
         # Extract fields from the array
-        parsed_df = klines_df.select(
-            (col("kline")[0].cast(LongType()) / 1000).cast("timestamp").alias("open_time"),
-            col("kline")[1].cast(DoubleType()).alias("open"),
-            col("kline")[2].cast(DoubleType()).alias("high"),
-            col("kline")[3].cast(DoubleType()).alias("low"),
-            col("kline")[4].cast(DoubleType()).alias("close"),
-            col("kline")[5].cast(DoubleType()).alias("volume"),
-            (col("kline")[6].cast(LongType()) / 1000).cast("timestamp").alias("close_time"),
-            col("kline")[7].cast(DoubleType()).alias("quote_asset_volume"),
-            col("kline")[8].cast(LongType()).alias("number_of_trades"),
-            col("kline")[9].cast(DoubleType()).alias("taker_buy_base_asset_volume"),
-            col("kline")[10].cast(DoubleType()).alias("taker_buy_quote_asset_volume"),
+        parsed_df = symbol_df.select(
+            (col("raw_open_time").cast(LongType()) / 1000).cast("timestamp").alias("open_time"),
+            col("raw_open").cast(DoubleType()).alias("open"),
+            col("raw_high").cast(DoubleType()).alias("high"),
+            col("raw_low").cast(DoubleType()).alias("low"),
+            col("raw_close").cast(DoubleType()).alias("close"),
+            col("raw_volume").cast(DoubleType()).alias("volume"),
+            (col("raw_close_time").cast(LongType()) / 1000).cast("timestamp").alias("close_time"),
+            col("quote_asset_volume").cast(DoubleType()).alias("quote_asset_volume"),
+            col("number_of_trades").cast(LongType()).alias("number_of_trades"),
+            col("taker_buy_base_asset_volume").cast(DoubleType()).alias("taker_buy_base_asset_volume"),
+            col("taker_buy_quote_asset_volume").cast(DoubleType()).alias("taker_buy_quote_asset_volume"),
             lit(symbol).alias("symbol"),
             current_timestamp().alias("ingested_at")
         )
