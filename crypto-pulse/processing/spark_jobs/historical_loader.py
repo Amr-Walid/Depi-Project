@@ -95,9 +95,7 @@ def process_historical_files(spark, config):
 
     logger.info(f"Processing {len(json_files)} files...")
 
-    # Define schema for the list of lists in JSON
-    # Binance Kline: list of [open_time, open, high, low, close, volume, close_time, quote_asset_vol, trades, buy_base, buy_quote, ignore]
-    raw_schema = ArrayType(ArrayType(StringType()))
+
 
     final_df = None
 
