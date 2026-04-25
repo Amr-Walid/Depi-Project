@@ -17,7 +17,7 @@ with DAG(
     'crypto_pulse_bronze_layer',
     default_args=default_args,
     description='Orchestrates the Bronze layer ingestion (Historical & Streaming)',
-    schedule_interval=None,  # Manual trigger for Milestone 1
+    schedule_interval='@daily',  # Runs once a day automatically
     start_date=datetime(2024, 1, 1),
     catchup=False,
     tags=['crypto', 'bronze', 'milestone1'],

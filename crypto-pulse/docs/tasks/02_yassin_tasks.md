@@ -105,7 +105,7 @@ silver/
   ```python
   ingest_historical >> process_silver  # Silver لا تبدأ إلا بعد نجاح Bronze
   ```
-- [ ] تشغيل Silver بشكل دوري (مثلاً كل ساعة): `schedule_interval="@hourly"` ← لسه Manual
+- [x] تشغيل Silver بشكل دوري: `schedule_interval="@daily"`
 - [ ] إضافة **Email/Slack alert** عند فشل أي مهمة (اختياري)
 
 ---
