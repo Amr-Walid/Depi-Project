@@ -89,15 +89,37 @@ def process_bronze_to_silver(spark, config):
     
     bronze_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/bronze/historical"
     silver_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/silver/historical"
-    
-    logger.info(f"Step 1: Reading raw data from Bronze Delta table at {bronze_path}")
-    bronze_df = spark.read.format("delta").load(bronze_path)
-    initial_count = bronze_df.count()
-    logger.info(f"Total rows found in Bronze: {initial_count}")
 
-    # Transform and Clean
+    # Step 1: Read all Bronze data
+    logger.info(f"Step 1: Reading Bronze Delta table at {bronze_path}")
+    bronze_df = spark.read.format("delta").load(bronze_path)
+
+    # Step 2: Check if Silver exists and get last processed date
+    try:
+        last_silver_time = spark.sql(f"SELECT MAX(open_time) FROM delta.`{silver_path}`").collect()[0][0]
+        silver_exists = True
+        logger.info(f"Silver table found. Last processed open_time: {last_silver_time}")
+    except Exception:
+        last_silver_time = None
+        silver_exists = False
+        logger.info("Silver table does not exist. Will perform full initial load.")
+
+    # Step 3: Filter only NEW data from Bronze
+    if silver_exists and last_silver_time is not None:
+        new_bronze_df = bronze_df.filter(col("open_time") > last_silver_time)
+        new_count = new_bronze_df.count()
+        if new_count == 0:
+            logger.info("No new data found in Bronze. Silver is already up to date. Exiting.")
+            return
+        logger.info(f"Found {new_count} new rows to add to Silver.")
+        source_df = new_bronze_df
+    else:
+        source_df = bronze_df
+        logger.info(f"Full load: {source_df.count()} rows from Bronze.")
+
+    # Step 4: Transform and Clean
     processed_df = (
-        bronze_df
+        source_df
         .withColumn("year", year(col("open_time")))
         .withColumn("month", month(col("open_time")))
         .withColumn("day", day(col("open_time")))
@@ -105,28 +127,23 @@ def process_bronze_to_silver(spark, config):
         .filter((col("open") > 0) & (col("symbol").isNotNull()))
         .dropDuplicates(["symbol", "open_time"])
     )
-    
-    valid_count = processed_df.count()
-    dropped_count = initial_count - valid_count
-    logger.info(f"Data Quality Check: {valid_count} valid rows, {dropped_count} rows dropped.")
 
-    # Step 5: Upsert to Silver using MERGE
-    logger.info(f"Step 2: Performing Delta MERGE (Upsert) via Spark SQL into {silver_path}")
-    
-    # Create temporary view for processed data
-    processed_df.createOrReplaceTempView("source_silver")
-    
-    try:
-        spark.sql(f"""
-            MERGE INTO delta.`{silver_path}` AS target
-            USING source_silver AS source
-            ON target.symbol = source.symbol AND target.open_time = source.open_time
-            WHEN MATCHED THEN UPDATE SET *
-            WHEN NOT MATCHED THEN INSERT *
-        """)
-        logger.info("Delta MERGE completed.")
-    except Exception as e:
-        logger.info("Initial write or Silver table does not exist. Performing full load.")
+    valid_count = processed_df.count()
+    logger.info(f"Data Quality Check: {valid_count} valid rows after cleaning.")
+
+    # Step 5: Write to Silver (append only new rows)
+    if silver_exists:
+        logger.info(f"Step 2: Appending new rows to Silver at {silver_path}")
+        (
+            processed_df.write
+            .format("delta")
+            .mode("append")
+            .partitionBy("year")
+            .save(silver_path)
+        )
+        logger.info("Append completed.")
+    else:
+        logger.info(f"Step 2: Writing initial Silver table at {silver_path}")
         (
             processed_df.write
             .format("delta")
@@ -135,6 +152,7 @@ def process_bronze_to_silver(spark, config):
             .partitionBy("year")
             .save(silver_path)
         )
+        logger.info("Initial load completed.")
 
     # Step 6: Maintenance - OPTIMIZE
     logger.info("Step 3: Running Delta OPTIMIZE for better query performance.")
