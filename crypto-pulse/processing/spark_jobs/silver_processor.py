@@ -111,30 +111,15 @@ def process_bronze_to_silver(spark, config):
     logger.info(f"Data Quality Check: {valid_count} valid rows, {dropped_count} rows dropped.")
 
     # Step 5: Upsert to Silver using MERGE
-    logger.info(f"Step 2: Performing Delta MERGE (Upsert) via Spark SQL into {silver_path}")
-    
-    # Create temporary view for processed data
-    processed_df.createOrReplaceTempView("source_silver")
-    
-    try:
-        spark.sql(f"""
-            MERGE INTO delta.`{silver_path}` AS target
-            USING source_silver AS source
-            ON target.symbol = source.symbol AND target.open_time = source.open_time
-            WHEN MATCHED THEN UPDATE SET *
-            WHEN NOT MATCHED THEN INSERT *
-        """)
-        logger.info("Delta MERGE completed.")
-    except Exception as e:
-        logger.info("Initial write or Silver table does not exist. Performing full load.")
-        (
-            processed_df.write
-            .format("delta")
-            .mode("overwrite")
-            .option("overwriteSchema", "true")
-            .partitionBy("year")
-            .save(silver_path)
-        )
+    logger.info(f"Forcing full overwrite to update partition schema into {silver_path}")
+    (
+        processed_df.write
+        .format("delta")
+        .mode("overwrite")
+        .option("overwriteSchema", "true")
+        .partitionBy("year")
+        .save(silver_path)
+    )
 
     # Step 6: Maintenance - OPTIMIZE
     logger.info("Step 3: Running Delta OPTIMIZE for better query performance.")
