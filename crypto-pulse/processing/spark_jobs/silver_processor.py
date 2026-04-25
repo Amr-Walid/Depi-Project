@@ -131,6 +131,7 @@ def process_bronze_to_silver(spark, config):
             processed_df.write
             .format("delta")
             .mode("overwrite")
+            .option("overwriteSchema", "true")
             .partitionBy("year")
             .save(silver_path)
         )
