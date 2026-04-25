@@ -133,16 +133,31 @@ def process_historical_files(spark, config):
             final_df = final_df.union(parsed_df)
 
     if final_df:
+        from delta.tables import DeltaTable
         output_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/bronze/historical"
-        logger.info(f"Writing all historical data to Delta at {output_path}")
         
-        (
-            final_df.write
-            .format("delta")
-            .mode("overwrite")
-            .partitionBy("symbol")
-            .save(output_path)
-        )
+        if DeltaTable.isDeltaTable(spark, output_path):
+            logger.info(f"Performing Delta MERGE (Upsert) to {output_path}")
+            delta_table = DeltaTable.forPath(spark, output_path)
+            (
+                delta_table.alias("target")
+                .merge(
+                    final_df.alias("source"),
+                    "target.symbol = source.symbol AND target.open_time = source.open_time"
+                )
+                .whenMatchedUpdateAll()
+                .whenNotMatchedInsertAll()
+                .execute()
+            )
+        else:
+            logger.info(f"Delta table does not exist. Writing initial load to {output_path}")
+            (
+                final_df.write
+                .format("delta")
+                .mode("overwrite")
+                .partitionBy("symbol")
+                .save(output_path)
+            )
         logger.info("Historical data ingestion completed successfully.")
 
 

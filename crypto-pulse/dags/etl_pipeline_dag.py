@@ -23,7 +23,13 @@ with DAG(
     tags=['crypto', 'bronze', 'milestone1'],
 ) as dag:
 
-    # Task 1: Load Historical Data (Batch)
+    # Task 1: Fetch Historical Data from Binance (Incremental)
+    fetch_historical = BashOperator(
+        task_id='fetch_historical_data',
+        bash_command='python3 /opt/airflow/ingestion/historical/historical_fetcher.py',
+    )
+
+    # Task 2: Load Historical Data to Bronze (Batch)
     ingest_historical = BashOperator(
         task_id='ingest_historical_data',
         bash_command='python3 /opt/airflow/jobs/historical_loader.py',
@@ -35,4 +41,4 @@ with DAG(
         bash_command='python3 /opt/airflow/jobs/silver_processor.py',
     )
 
-    ingest_historical >> process_silver
+    fetch_historical >> ingest_historical >> process_silver

@@ -84,17 +84,43 @@ def fetch_klines_for_symbol(symbol, start_time, interval="1d"):
         
     return symbol, all_data
 
-def save_raw_data_to_json(symbol, raw_data, output_dir):
-    """Saves the raw klines data to a local JSON file."""
-    if not raw_data:
-        logger.warning(f"No data to save for {symbol}.")
+def get_start_date(symbol, output_dir):
+    """Determines the start date by reading the last timestamp from the existing JSON file."""
+    filename = os.path.join(output_dir, f"{symbol.lower()}_raw_klines.json")
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'r') as f:
+                data = json.load(f)
+                if data:
+                    last_timestamp = data[-1][0]
+                    logger.info(f"Found existing data for {symbol}. Resuming from timestamp: {last_timestamp}")
+                    return last_timestamp + 1
+        except Exception as e:
+            logger.warning(f"Could not read existing data for {symbol}. Starting from default date. Error: {e}")
+    return START_DATE
+
+def save_raw_data_to_json(symbol, new_data, output_dir):
+    """Saves the raw klines data to a local JSON file, appending to existing data if present."""
+    if not new_data:
+        logger.info(f"No new data to save for {symbol}. It is already up to date.")
         return False
         
+    filename = os.path.join(output_dir, f"{symbol.lower()}_raw_klines.json")
+    existing_data = []
+    
+    if os.path.exists(filename):
+        try:
+            with open(filename, 'r') as f:
+                existing_data = json.load(f)
+        except Exception as e:
+            logger.error(f"Error reading existing data for {symbol}: {e}")
+            
+    existing_data.extend(new_data)
+    
     try:
-        filename = os.path.join(output_dir, f"{symbol.lower()}_raw_klines.json")
         with open(filename, 'w') as f:
-            json.dump(raw_data, f)
-        logger.info(f"Successfully saved {len(raw_data)} raw records for {symbol} to {filename}")
+            json.dump(existing_data, f)
+        logger.info(f"Successfully saved {len(new_data)} new records for {symbol} to {filename} (Total: {len(existing_data)})")
         return True
     except Exception as e:
         logger.error(f"Failed to save {symbol} data: {e}")
@@ -112,10 +138,11 @@ def run_historical_ingestion(max_workers=5):
     logger.info(f"Output directory: {output_dir}")
     
     with ThreadPoolExecutor(max_workers=max_workers) as executor:
-        future_to_symbol = {
-            executor.submit(fetch_klines_for_symbol, symbol, START_DATE, "1d"): symbol 
-            for symbol in SYMBOLS
-        }
+        future_to_symbol = {}
+        for symbol in SYMBOLS:
+            start_date = get_start_date(symbol, output_dir)
+            future = executor.submit(fetch_klines_for_symbol, symbol, start_date, "1d")
+            future_to_symbol[future] = symbol
         
         for future in as_completed(future_to_symbol):
             symbol = future_to_symbol[future]

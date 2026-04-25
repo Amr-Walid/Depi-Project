@@ -87,7 +87,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
       AIRFLOW__WEBSERVER__RBAC: 'True'
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
-      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0'
+      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
     command: webserver
     ports:
       - "8081:8080"
@@ -95,6 +95,8 @@ services:
       - ./dags:/opt/airflow/dags
       - airflow_logs:/opt/airflow/logs
       - ./processing/spark_jobs:/opt/airflow/jobs
+      - ./ingestion:/opt/airflow/ingestion
+      - ./data:/opt/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - crypto-net
@@ -108,11 +110,14 @@ services:
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
+      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
     command: scheduler
     volumes:
       - ./dags:/opt/airflow/dags
       - ./logs:/opt/airflow/logs
       - ./processing/spark_jobs:/opt/airflow/jobs
+      - ./ingestion:/opt/airflow/ingestion
+      - ./data:/opt/data
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - crypto-net
