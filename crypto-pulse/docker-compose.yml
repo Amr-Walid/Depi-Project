@@ -135,6 +135,7 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./processing/spark_jobs:/opt/spark/jobs
+      - ./data:/opt/data
     networks:
       - crypto-net
 
@@ -152,6 +153,7 @@ services:
     volumes:
       - ./spark-apps:/opt/spark-apps
       - ./processing/spark_jobs:/opt/spark/jobs
+      - ./data:/opt/data
     networks:
       - crypto-net
 
