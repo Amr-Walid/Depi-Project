@@ -31,6 +31,9 @@ logger = logging.getLogger("HistoricalLoader")
 def load_environment():
     """Load and validate environment variables."""
     env_path = os.path.join(os.path.dirname(__file__), "..", "..", ".env")
+    if not os.path.exists(env_path):
+        env_path = os.path.join("/opt", "spark-apps", ".env")
+        
     load_dotenv(dotenv_path=env_path)
 
     config = {
