@@ -2,9 +2,10 @@ FROM apache/spark:3.5.0
 
 USER root
 
-# Install Python dependencies needed by bronze_consumer.py
+# Install Python dependencies needed by bronze_consumer.py and Delta Merge
 RUN pip install --no-cache-dir \
-    python-dotenv==1.0.1
+    python-dotenv==1.0.1 \
+    delta-spark==3.2.0
 
 # Download required JARs into Spark's jars directory
 # -- Azure ADLS Gen2 Connectivity --
