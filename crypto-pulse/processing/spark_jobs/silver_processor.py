@@ -19,7 +19,7 @@ from pyspark.sql.functions import (
 from pyspark.sql.types import (
     StructType, StructField, StringType, DoubleType, LongType
 )
-from delta.tables import DeltaTable
+
 
 # =====================================================================
 # Logging Configuration
@@ -129,25 +129,22 @@ def process_bronze_to_silver(spark, config):
     logger.info(f"Data Quality Check: {valid_count} valid rows, {dropped_count} rows dropped.")
 
     # Step 5: Upsert to Silver using MERGE
-    logger.info(f"Step 2: Performing Delta MERGE (Upsert) into {silver_path}")
+    logger.info(f"Step 2: Performing Delta MERGE (Upsert) via Spark SQL into {silver_path}")
     
-    # Check if Silver table exists to perform MERGE, otherwise write new
-    if DeltaTable.isDeltaTable(spark, silver_path):
-        silver_table = DeltaTable.forPath(spark, silver_path)
-        
-        (
-            silver_table.alias("target")
-            .merge(
-                processed_df.alias("source"),
-                "target.symbol = source.symbol AND target.event_time = source.event_time"
-            )
-            .whenMatchedUpdateAll()
-            .whenNotMatchedInsertAll()
-            .execute()
-        )
+    # Create temporary view for processed data
+    processed_df.createOrReplaceTempView("source_silver")
+    
+    try:
+        spark.sql(f"""
+            MERGE INTO delta.`{silver_path}` AS target
+            USING source_silver AS source
+            ON target.symbol = source.symbol AND target.event_time = source.event_time
+            WHEN MATCHED THEN UPDATE SET *
+            WHEN NOT MATCHED THEN INSERT *
+        """)
         logger.info("Delta MERGE completed.")
-    else:
-        logger.info("Silver table does not exist. Performing initial write.")
+    except Exception as e:
+        logger.info("Initial write or Silver table does not exist. Performing full load.")
         (
             processed_df.write
             .format("delta")
