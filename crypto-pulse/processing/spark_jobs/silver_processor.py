@@ -87,44 +87,23 @@ def create_spark_session(config):
 def process_bronze_to_silver(spark, config):
     """Read from Bronze, transform with DQ, and Upsert to Silver."""
     
-    bronze_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/bronze/prices"
-    silver_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/silver/prices"
+    bronze_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/bronze/historical"
+    silver_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/silver/historical"
     
     logger.info(f"Step 1: Reading raw data from Bronze Delta table at {bronze_path}")
     bronze_df = spark.read.format("delta").load(bronze_path)
     initial_count = bronze_df.count()
     logger.info(f"Total rows found in Bronze: {initial_count}")
 
-    # Define Schema for JSON parsing
-    json_schema = StructType([
-        StructField("symbol", StringType(), True),
-        StructField("price", DoubleType(), True),
-        StructField("volume_24h", DoubleType(), True),
-        StructField("timestamp", LongType(), True),
-        StructField("source", StringType(), True)
-    ])
-    
     # Transform and Clean
     processed_df = (
         bronze_df
-        .withColumn("data", from_json(col("raw_value"), json_schema))
-        .select(
-            col("data.symbol").alias("symbol"),
-            col("data.price").alias("price"),
-            col("data.volume_24h").alias("volume_24h"),
-            (col("data.timestamp") / 1000).cast("timestamp").alias("event_time"),
-            col("data.source").alias("source"),
-            col("kafka_timestamp"),
-            current_timestamp().alias("processed_at")
-        )
-        # 1. Data Quality: Filter out negative or zero prices
-        .filter((col("price") > 0) & (col("symbol").isNotNull()))
-        # 2. Add partitioning columns
-        .withColumn("year", year(col("event_time")))
-        .withColumn("month", month(col("event_time")))
-        .withColumn("day", day(col("event_time")))
-        # 3. Deduplication within the batch
-        .dropDuplicates(["symbol", "event_time"])
+        .withColumn("year", year(col("open_time")))
+        .withColumn("month", month(col("open_time")))
+        .withColumn("day", day(col("open_time")))
+        .withColumn("processed_at", current_timestamp())
+        .filter((col("open") > 0) & (col("symbol").isNotNull()))
+        .dropDuplicates(["symbol", "open_time"])
     )
     
     valid_count = processed_df.count()
@@ -141,7 +120,7 @@ def process_bronze_to_silver(spark, config):
         spark.sql(f"""
             MERGE INTO delta.`{silver_path}` AS target
             USING source_silver AS source
-            ON target.symbol = source.symbol AND target.event_time = source.event_time
+            ON target.symbol = source.symbol AND target.open_time = source.open_time
             WHEN MATCHED THEN UPDATE SET *
             WHEN NOT MATCHED THEN INSERT *
         """)
