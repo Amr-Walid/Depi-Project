@@ -1,4 +1,4 @@
-.PHONY: up down logs restart
+.PHONY: up down logs restart rebuild-backend test test-local shell-backend spark-submit db-reset
 
 up:
 	docker compose up -d
@@ -18,8 +18,15 @@ rebuild-backend:
 test:
 	docker compose exec backend pytest /app/tests/ -v
 
+test-local:
+	cd backend && python -m pytest tests/ -v --tb=short
+
 shell-backend:
 	docker compose exec backend bash
 
 spark-submit:
 	docker compose exec spark-master spark-submit /opt/spark-apps/bronze_consumer.py
+
+db-reset:
+	docker compose exec postgres psql -U admin -d cryptopulse -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
+	@echo "Database reset complete. Restart backend to re-create tables."

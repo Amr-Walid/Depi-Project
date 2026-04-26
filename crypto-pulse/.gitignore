@@ -35,6 +35,12 @@ env/
 .vscode/
 .idea/
 
+# Testing
+test.db
+.pytest_cache/
+htmlcov/
+.coverage
+
 # OS
 .DS_Store
 Thumbs.db
