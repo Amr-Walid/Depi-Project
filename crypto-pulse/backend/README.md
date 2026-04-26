@@ -101,3 +101,14 @@ If the data resides as Parquet/Delta files in ADLS Gen2:
    ```
 
 By isolating this logic inside `data_service.py`, the transition from Mock Data to Real Data will be entirely seamless for the Frontend.
+
+---
+
+## 🚦 Current Status of Data Layers (Post-Rebase)
+
+As of the latest rebase from `main` (which brought in 26 new commits):
+
+1. **Silver Layer**: The code (`silver_processor.py`) is complete and uses Spark to write Delta tables to Azure Data Lake incrementally.
+2. **Gold Layer**: The `dbt` SQL models (`daily_market_summary.sql` etc.) have been written by Karim, **but the Airflow orchestration to run them is not yet complete.**
+
+**Conclusion:** We cannot switch away from Mock Data yet. The Gold tables do not physically exist in the database because the pipeline hasn't been executed. Once the Data Engineering team confirms the pipeline is fully running and the tables are populated, the Backend team can execute the transition steps outlined above.
