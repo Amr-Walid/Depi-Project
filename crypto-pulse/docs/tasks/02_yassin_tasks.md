@@ -64,9 +64,12 @@
 
 ### ✅ Task 2.1 — كتابة معالج الطبقة الفضية (Silver Processor)
 
-**الملف:** `processing/spark_jobs/silver_processor.py`
+**الملفات المتأثرة:** 
+- `processing/spark_jobs/silver_prices_processor.py` (Real-time Streaming)
+- `processing/spark_jobs/silver_historical_processor.py` (Batch)
 
 **ما تم إنجازه:**
+- [x] تحويل مسار الـ Prices إلى مسار **Streaming متواصل** يقرأ من Bronze عبر `readStream` ويستخدم `foreachBatch` لتطبيق الـ Upsert.
 - [x] قراءة البيانات من Bronze Layer (Delta format):
   ```python
   spark.read.format("delta").load("abfss://.../bronze/prices")
@@ -150,7 +153,8 @@ silver/
 - `spark-apps/Dockerfile.spark` ✅ (مرفوع)
 
 **Milestone 2:**
-- `processing/spark_jobs/silver_processor.py` ✅ (مرفوع - Delta MERGE كامل)
+- `processing/spark_jobs/silver_prices_processor.py` ✅ (مرفوع - Streaming + Delta MERGE كامل)
+- `processing/spark_jobs/silver_historical_processor.py` ✅ (مرفوع)
 - `dags/etl_pipeline_dag.py` (نسخة كاملة مع Bronze >> Silver) ✅
 
 ---
