@@ -1,306 +1,568 @@
 <div align="center">
 
-# 🚀 Crypto-Pulse
+# Crypto-Pulse
 
-**A Highly Scalable, Real-Time & Historical Cryptocurrency Data Engineering Pipeline powered by Microsoft Azure.**
+### A Real-Time & Historical Cryptocurrency Data Engineering Pipeline on Microsoft Azure
+
+*DEPI — Digital Egypt Pioneers Initiative · Microsoft Azure Data Engineering Track*
 
 </div>
 
-![Crypto Data Pipeline Architecture](docs/architecture.png)
+---
 
-Welcome to **Crypto-Pulse**, an advanced end-to-end data engineering project designed to ingest, process, and analyze cryptocurrency market data in real time. Built on the **Microsoft Azure Stack** and following the industry-standard **Medallion Architecture (Bronze ➔ Silver ➔ Gold)**, this pipeline ensures data flows reliably from source APIs all the way to analytics-ready dashboards.
+![Architecture Diagram](docs/architecture.png)
+
+Crypto-Pulse is a production-grade, end-to-end data engineering project that ingests live and historical cryptocurrency market data, processes it through a layered data lakehouse (Medallion Architecture), exposes it via a REST API, and stores user-specific data in a relational database.
+
+The system is designed to handle high-frequency streaming data from Binance, batch historical OHLCV data from Binance's Klines API, and serve the results to a frontend through a secured FastAPI backend.
 
 ---
 
-## 🧬 Pipeline Architecture Overview
+## Table of Contents
 
-The system is built around 4 main environments working together:
-
-| Layer | Technology | Status |
-|-------|-----------|--------|
-| **Data Ingestion (Bronze)** | Python, Binance API, CoinGecko API, Apache Kafka | ✅ Complete |
-| **Spark Processing (Bronze→Silver)** | Apache Spark 3.5, Spark Structured Streaming, Parquet/Delta | 🚧 Bronze Done · Silver Pending |
-| **Orchestration** | Apache Airflow 2.7 | 🚧 In Progress |
-| **Gold Layer & Analytics** | dbt, Azure Synapse | 🚧 In Progress |
-| **Serving** | FastAPI, PostgreSQL | ❌ Not Started |
-
-### The Azure Medallion Layers:
-- 🥉 **Bronze Layer:** Raw JSON data captured directly from APIs, stored as-is in **Azure Data Lake Storage Gen2 (ADLS Gen2)** using **Parquet** format (schema-on-read). Delta Lake upgrade is planned.
-- 🥈 **Silver Layer:** Data cleaned, typed, and normalized using **Apache Spark**. Deduplication, timestamp normalization, and JSON parsing applied. **(Pending — `silver_processor.py` not yet implemented.)**
-- 🥇 **Gold Layer:** Business-level aggregations, KPIs, and metrics built via **dbt** models, serving the API and dashboards. **(Pending.)**
+1. [Architecture Overview](#1-architecture-overview)
+2. [Repository Structure](#2-repository-structure)
+3. [Layer 1 — Data Ingestion](#3-layer-1--data-ingestion)
+4. [Layer 2 — Bronze Layer (Raw Storage)](#4-layer-2--bronze-layer)
+5. [Layer 3 — Silver Layer (Cleaned & Structured)](#5-layer-3--silver-layer)
+6. [Layer 4 — Gold Layer (dbt Analytics)](#6-layer-4--gold-layer-dbt)
+7. [Backend API (FastAPI)](#7-backend-api-fastapi)
+8. [Orchestration (Airflow)](#8-orchestration-airflow)
+9. [Docker Infrastructure](#9-docker-infrastructure)
+10. [Environment Configuration](#10-environment-configuration)
+11. [Running the Project](#11-running-the-project)
+12. [Team](#12-team)
 
 ---
 
-## 📡 The Ingestion Layer
+## 1. Architecture Overview
 
-Three specialized Python agents in `ingestion/` power the Bronze layer:
+```
+Binance WebSocket ──► Kafka (crypto.realtime.prices)
+                          │
+                          ▼
+                   bronze_consumer.py
+                   (Spark Structured Streaming)
+                          │
+                          ▼
+              ADLS Gen2 ── bronze/prices  (Delta Lake)
+                          │
+                          ▼
+               silver_prices_processor.py
+               (Spark Streaming + foreachBatch)
+                          │
+                          ▼
+              ADLS Gen2 ── silver/prices  (Delta Lake, Upserted)
+                          │
+                    ┌─────┴──────────────────┐
+                    ▼                        ▼
+               stg_prices.sql          stg_news.sql
+               (dbt Staging Views)
+                    │
+                    ▼
+           daily_market_summary.sql
+           market_sentiment.sql
+           (dbt Gold Tables → PostgreSQL / Synapse)
+                    │
+                    ▼
+              FastAPI Backend
+              (Authentication + CRUD Endpoints)
+                    │
+                    ▼
+                Frontend (Pending)
+```
 
-### ⚡ The Live Reporter (`ingestion/producers/producer_binance.py`)
-> *"Never misses a heartbeat of the market."*
+**Binance Historical API** runs a separate batch path:
 
-- **Status:** ✅ Complete
-- **Does:** Maintains a persistent, live connection to Binance to capture every price tick in real-time for **10 major crypto pairs** (BTC, ETH, BNB, XRP, ADA, SOL, DOT, DOGE, MATIC, LINK).
-- **How:** Uses **WebSockets** (`wss://stream.binance.com:9443/ws`) with a **Bulletproof Auto-Reconnect** engine using exponential backoff (1s → 2s → 4s → ... → 60s max).
-- **Output:** Publishes every price update to Kafka topic: `crypto.realtime.prices`
-  ```json
-  {"symbol": "BTCUSDT", "price": 68500.0, "volume_24h": 12345.6, "timestamp": 1712750400000, "source": "binance"}
-  ```
-
-### 📊 The Strategic Analyst (`ingestion/producers/producer_coingecko.py`)
-> *"Surveys the entire market every 60 seconds."*
-
-- **Status:** ✅ Complete
-- **Does:** Periodically fetches macro-market data (Market Cap, Total Volume, Price Change %) for the **Top 100 coins by market cap**.
-- **How:** Uses the `schedule` library to poll the CoinGecko REST API every 60 seconds. Handles Rate Limiting (HTTP 429) gracefully.
-- **Output:** Publishes market overview snapshots to Kafka topic: `crypto.market.data`
-
-### 🕰️ The Historian (`ingestion/historical/historical_fetcher.py`)
-> *"Captures the past so we can learn from it."*
-
-- **Status:** ✅ Complete
-- **Does:** Downloads years of historical OHLCV candlestick data for the **Top 20 cryptocurrencies** starting from January 2021.
-- **How:** Uses `ThreadPoolExecutor` (5 parallel workers) for concurrent API calls with **Retry Logic** for Rate Limit errors (HTTP 429).
-- **Output:** Saves raw JSON arrays to `data/historical/<symbol>_raw_klines.json` — no transformation.
-
-### 📰 The News Watcher (`ingestion/producers/producer_news.py`)
-> *"Tracks what the world is saying about crypto."*
-
-- **Status:** ❌ Not Started (Ahmed Ayman)
-- **Goal:** Fetch news headlines and sentiment data from NewsAPI → Kafka topic: `crypto.news`
-
----
-
-## ⚙️ Data Processing Layer
-
-Located in `processing/`, this layer handles transforming raw Bronze data into business-ready insights.
-
-### 🔥 Spark Jobs (`processing/spark_jobs/`)
-
-#### `bronze_consumer.py` ✅ Complete (Yassin Mahmoud)
-Kafka → Spark Structured Streaming → Bronze Layer (ADLS Gen2)
-
-- Connects to Kafka topic `crypto.realtime.prices` using **Spark Structured Streaming**
-- Authenticates to ADLS Gen2 via **OAuth2 / Service Principal** (`ClientCredsTokenProvider`)
-- Preserves full raw payload in `raw_value` column — true schema-on-read
-- Columns captured: `kafka_key`, `raw_value`, `topic`, `partition`, `offset`, `kafka_timestamp`, `ingested_at`
-- Writes to ADLS path: `abfss://datalake@stcryptopulsedev2.dfs.core.windows.net/bronze/prices`
-- Checkpoint at: `.../checkpoints/bronze/prices`
-- Trigger: every **30 seconds**
-- Format: **Parquet** *(Delta Lake upgrade is the next step)*
-- Packages used: `hadoop-azure:3.3.4`, `wildfly-openssl:1.1.3.Final`, `spark-sql-kafka-0-10_2.12:3.5.0`
-
-> **⚠️ Note:** Delta Lake config is present but commented out. Format is currently `parquet`. Upgrading to Delta is Task 2.3 in Yassin's task file.
-
-#### `silver_processor.py` ❌ Not Started (Yassin Mahmoud)
-- Will read Bronze Parquet files, apply cleaning/transformation, and write to the Silver container partitioned by `year/month/day`
-
-#### `historical_loader.py` ✅ Complete (Yassin Mahmoud)
-- Batch-loads historical JSON files from `data/historical/` into Bronze ADLS as a Spark job using Delta Lake.
-
-### 🧱 dbt Models (`processing/dbt/`)
-- **`dbt_project.yml`**: ✅ Configured (Karim)
-- **`models/`**: 🚧 First Gold models (Skeleton) & sources defined
-- **Status:** 🚧 In Progress
+```
+Binance Klines API ──► historical_fetcher.py ──► data/historical/*.json
+                                                        │
+                                                        ▼
+                                              historical_loader.py (Spark Batch)
+                                                        │
+                                                        ▼
+                                              bronze/historical (Delta)
+                                                        │
+                                                        ▼
+                                      silver_historical_processor.py (Spark Batch)
+                                                        │
+                                                        ▼
+                                              silver/historical (Delta)
+```
 
 ---
 
-## 🎼 Orchestration (`dags/`)
+## 2. Repository Structure
 
-- **`etl_pipeline_dag.py`**: 🚧 In Progress (Yassin)
-  - Currently orchestrates: historical load.
-  - Next steps: bronze streaming trigger → silver batch → dbt gold models
-
----
-
-## 🗄️ Backend & Database
-
-Located in `backend/app/`:
-
-- **`main.py`**: ❌ Empty — FastAPI app not yet implemented (Mostafa)
-- **`models/schema.sql`**: ✅ Complete (Karim Ahmed) — PostgreSQL schema with tables: `users`, `watchlists`, `alerts`, `portfolios`
-- **`routers/`**: ❌ Not started
-- **`services/`**: ❌ Not started
-
----
-
-## 🐳 Docker Infrastructure
-
-Located in `docker-compose.yml` and `spark-apps/Dockerfile.spark`:
-
-### `docker-compose.yml` ✅ Defined (Mostafa)
-All services are defined on a shared `crypto-net` network:
-
-| Service | Port | Status |
-|---------|------|--------|
-| zookeeper | 2181 | ✅ Configured |
-| kafka | 9092 | ✅ Configured |
-| kafka-ui | 8080 | ✅ Configured |
-| postgres | 5432 | ✅ Configured |
-| airflow-webserver | 8081 | ✅ Configured |
-| airflow-scheduler | — | ✅ Configured |
-| spark-master | 7077 / 8082 | ✅ Configured |
-| spark-worker | 8083 | ✅ Configured |
-| backend (FastAPI) | 8000 | ✅ Configured |
-
-> **⚠️ Known Issue:** `KAFKA_ADVERTISED_LISTENERS` is set to `localhost:9092`. For internal Docker communication between services (e.g., Spark → Kafka), this needs to be `kafka:9092`. Update required.
-
-### `spark-apps/Dockerfile.spark` ✅ Exists
-- Custom Spark Docker image with pre-installed JARs for Kafka + Azure ADLS connectivity
-- A corresponding `.env` and the `bronze_consumer.py` are present in `spark-apps/`
-
----
-
-## 📂 Repository Structure
-
-```text
+```
 crypto-pulse/
-├── ingestion/                          # Bronze layer data agents
-│   ├── historical/
-│   │   └── historical_fetcher.py       ✅ Fetches years of OHLCV data
-│   └── producers/
-│       ├── producer_binance.py         ✅ Real-time WebSocket price stream → Kafka
-│       ├── producer_coingecko.py       ✅ Periodic market data poller → Kafka
-│       └── producer_news.py            ❌ News & sentiment fetcher (not started)
 │
-├── processing/                         # Silver & Gold layer jobs
+├── ingestion/                         Data ingestion agents (producers)
+│   ├── producers/
+│   │   ├── producer_binance.py        Live WebSocket price stream → Kafka
+│   │   ├── producer_coingecko.py      Periodic market data polling → Kafka
+│   │   └── producer_news.py           News headlines → Kafka (pending)
+│   └── historical/
+│       └── historical_fetcher.py      Batch OHLCV download → data/historical/
+│
+├── processing/                        All data transformation jobs
 │   ├── spark_jobs/
-│   │   ├── bronze_consumer.py          ✅ Kafka → Parquet on ADLS Bronze
-│   │   ├── silver_processor.py         ❌ Empty — Bronze → Silver (not started)
-│   │   └── historical_loader.py        ✅ Loads historical data JSON to ADLS Bronze
+│   │   ├── bronze_consumer.py         Kafka → Bronze/prices (Delta Streaming)
+│   │   ├── silver_prices_processor.py Bronze/prices → Silver/prices (Streaming+Upsert)
+│   │   ├── historical_loader.py       JSON → Bronze/historical (Batch)
+│   │   └── silver_historical_processor.py  Bronze/historical → Silver/historical (Batch)
 │   └── dbt/
-│       ├── dbt_project.yml             ❌ Empty — not configured yet
-│       ├── models/                     ❌ No models yet
-│       └── tests/                      ❌ No tests yet
+│       ├── dbt_project.yml            dbt project configuration
+│       ├── models/
+│       │   ├── staging/               Views that cast and clean Silver data
+│       │   │   ├── stg_prices.sql
+│       │   │   ├── stg_news.sql
+│       │   │   └── sources.yml
+│       │   └── gold/                  Materialized tables with business metrics
+│       │       ├── daily_market_summary.sql
+│       │       ├── market_sentiment.sql
+│       │       └── schema.yml
+│       └── tests/
+│           └── assert_low_price_less_than_high_price.sql
 │
-├── backend/                            # REST API
+├── backend/                           REST API
 │   └── app/
-│       ├── main.py                     ✅ Basic FastAPI setup with /health endpoint
-│       ├── models/schema.sql           ✅ PostgreSQL schema (users, watchlists, alerts, portfolios)
-│       ├── routers/                    ❌ Not started
-│       └── services/                   ❌ Not started
+│       ├── main.py                    FastAPI app entry point, CORS, router registration
+│       ├── config.py                  Settings loaded from environment
+│       ├── database.py                SQLAlchemy engine + session factory
+│       ├── models/                    ORM models + schema.sql
+│       │   ├── user.py
+│       │   ├── watchlist.py
+│       │   ├── alert.py
+│       │   ├── portfolio.py
+│       │   ├── refresh_token.py
+│       │   └── schema.sql
+│       ├── schemas/                   Pydantic request/response schemas
+│       ├── routers/                   API route handlers
+│       │   ├── auth.py                signup, login, refresh, /me
+│       │   ├── coins.py               coin price data endpoints
+│       │   ├── watchlists.py          user watchlist CRUD
+│       │   ├── alerts.py              price alert management
+│       │   └── portfolios.py          portfolio tracking
+│       ├── services/
+│       │   ├── auth_service.py        bcrypt hashing, JWT creation/validation
+│       │   └── data_service.py        data fetching helpers
+│       └── tests/                     pytest test suite
 │
 ├── dags/
-│   └── etl_pipeline_dag.py             ✅ Airflow DAG for historical ingestion
+│   └── etl_pipeline_dag.py            Airflow DAG — orchestrates the full batch pipeline
 │
-├── spark-apps/                         # Docker Spark runtime files
-│   ├── Dockerfile.spark                ✅ Custom Spark image with Kafka + Azure JARs
-│   ├── bronze_consumer.py              ✅ Same as processing/spark_jobs (Docker copy)
-│   ├── .env                            ✅ Azure + Kafka credentials for Docker
-│   └── .env.example                   ✅ Template
+├── spark-apps/                        Files baked into the custom Spark Docker image
+│   ├── Dockerfile.spark               Extends apache/spark:3.5.0 with Azure+Kafka JARs
+│   ├── bronze_consumer.py             Copy of the job (for Docker volume mapping)
+│   ├── .env.example
+│   └── .env                           (not committed)
 │
-├── data/historical/                    📦 Local Bronze JSON files (20 coins)
-├── docs/                               📖 Architecture diagrams & task docs
-├── ml/                                 ❌ ML models (not started)
-├── notebooks/                          📔 EDA Jupyter notebooks (not started)
-├── frontend/                           ❌ Web Dashboard (not started)
-├── docker-compose.yml                  🐳 Local: Kafka, Spark, Airflow, Postgres
-├── Makefile                            ⚡ make up / make down / make logs
-├── requirements.txt                    📦 Python dependencies
-├── .env.example                        🔑 Environment variables template
-└── README.md                           📖 This file
+├── data/
+│   └── historical/                    Raw JSON OHLCV files (20 coins, from Jan 2021)
+│
+├── docs/
+│   ├── architecture.png
+│   ├── project_proposal.pdf
+│   └── tasks/                         Per-member task tracking files
+│
+├── notebooks/
+│   ├── 01-data-exploration.ipynb
+│   ├── 02-model-training.ipynb
+│   └── 03-poc-dashboard.ipynb
+│
+├── docker-compose.yml
+├── Makefile
+├── requirements.txt
+└── .env.example
 ```
 
 ---
 
-## 🛠️ Setup & Installation
+## 3. Layer 1 — Data Ingestion
 
-### Prerequisites
-- **Python 3.10+**
-- **Docker** and **Docker Compose**
-- **Git**
+### `ingestion/producers/producer_binance.py`
 
-### 1. Clone the Repository
-```bash
-git clone https://github.com/Amr-Walid/Depi-Project.git
-cd Depi-Project/crypto-pulse
+**Status:** Complete
+
+Connects to Binance via a persistent WebSocket (`wss://stream.binance.com:9443/ws`) and subscribes to the combined ticker stream for 10 currency pairs: BTC, ETH, BNB, XRP, ADA, SOL, DOT, DOGE, MATIC, LINK (all against USDT).
+
+For every tick received, it transforms the raw Binance payload into a clean, normalized message and publishes it to the Kafka topic `crypto.realtime.prices`:
+
+```json
+{
+  "symbol": "BTCUSDT",
+  "price": 68500.0,
+  "volume_24h": 12345.6,
+  "timestamp": 1712750400000,
+  "source": "binance"
+}
 ```
 
-### 2. Configure Environment Variables
-```bash
-cp .env.example .env
-# Fill in your Azure credentials and API keys
+The connection is wrapped in an outer `while True` loop with **exponential backoff** (1s → 2s → 4s → ... → max 60s) to guarantee automatic reconnection after any network failure or WebSocket drop.
+
+### `ingestion/producers/producer_coingecko.py`
+
+**Status:** Complete
+
+Polls the CoinGecko REST API every 60 seconds using the `schedule` library to retrieve market-wide data (market cap, total volume, 24h price change) for the top 100 coins by market cap. Handles HTTP 429 rate-limit errors gracefully. Publishes snapshots to the Kafka topic `crypto.market.data`.
+
+### `ingestion/historical/historical_fetcher.py`
+
+**Status:** Complete
+
+Downloads multi-year OHLCV (Open, High, Low, Close, Volume) candlestick data for 20 cryptocurrencies starting from January 2021. Uses `ThreadPoolExecutor` with 5 parallel workers for concurrent downloads and includes retry logic for rate-limited requests. Output: raw JSON arrays saved to `data/historical/<SYMBOL>_raw_klines.json`. No transformation is applied at this stage — schema-on-read.
+
+### `ingestion/producers/producer_news.py`
+
+**Status:** Pending (Ahmed Ayman)
+
+Intended to fetch news headlines from a news API and publish them to `crypto.news` for sentiment analysis downstream.
+
+---
+
+## 4. Layer 2 — Bronze Layer
+
+**Location on Azure:** `abfss://datalake@<ACCOUNT>.dfs.core.windows.net/bronze/`
+
+**Format:** Delta Lake
+
+The Bronze layer stores all raw data exactly as received — no transformation, no filtering. This guarantees a complete audit trail and allows reprocessing if the downstream logic changes.
+
+### `processing/spark_jobs/bronze_consumer.py`
+
+**Type:** Spark Structured Streaming (continuous, never exits)
+
+Reads from the Kafka topic `crypto.realtime.prices` using `spark.readStream`. For every message, it extracts the Kafka metadata alongside the raw JSON payload and writes it to Azure Data Lake Storage Gen2 as a Delta stream.
+
+Columns written:
+
+| Column | Description |
+|--------|-------------|
+| `kafka_key` | Kafka message key (cast to String) |
+| `raw_value` | Raw JSON string from Binance — unchanged |
+| `topic` | Kafka topic name |
+| `partition` | Kafka partition number |
+| `offset` | Kafka message offset |
+| `kafka_timestamp` | Timestamp from Kafka broker |
+| `ingested_at` | Server-side ingestion timestamp (current_timestamp) |
+
+**Trigger:** every 30 seconds  
+**Checkpoint:** `abfss://.../checkpoints/bronze/prices`  
+**Authentication:** Azure OAuth2 Service Principal via `ClientCredsTokenProvider`
+
+### `processing/spark_jobs/historical_loader.py`
+
+**Type:** Spark Batch Job (run once or scheduled)
+
+Reads all raw JSON files from `data/historical/`, parses the OHLCV arrays, adds `symbol` and `ingested_at` metadata columns, and writes them in Delta format to `bronze/historical` on ADLS Gen2.
+
+---
+
+## 5. Layer 3 — Silver Layer
+
+**Location on Azure:** `abfss://datalake@<ACCOUNT>.dfs.core.windows.net/silver/`
+
+**Format:** Delta Lake (with partitioning)
+
+The Silver layer contains cleaned, typed, deduplicated, and enriched data. It is the source of truth for all downstream analytics and API queries.
+
+### `processing/spark_jobs/silver_prices_processor.py`
+
+**Type:** Spark Structured Streaming (continuous, never exits)
+
+Reads from the Bronze Delta table as a stream (`spark.readStream.format("delta")`). For each micro-batch it:
+
+1. Parses the `raw_value` JSON column using a defined schema (`symbol`, `price`, `volume_24h`, `timestamp`, `source`).
+2. Converts Unix millisecond timestamps to proper UTC `TimestampType`.
+3. Applies Data Quality filters: removes null symbols, null/zero/negative prices, and null timestamps.
+4. Drops duplicate events based on `(symbol, event_time)`.
+5. Adds partition columns: `year`, `month`, `day`, `hour`.
+6. Executes a **Delta MERGE (Upsert)** into the Silver table: if a row with the same `(symbol, event_time)` already exists it is updated, otherwise it is inserted.
+
+The Merge strategy prevents any duplicates from appearing in Silver even if the Bronze consumer re-processes old Kafka offsets after a restart.
+
+**Trigger:** every 30 seconds  
+**Output path:** `silver/prices` partitioned by `year/month/day/hour`  
+**Checkpoint:** `checkpoints/silver/prices`
+
+### `processing/spark_jobs/silver_historical_processor.py`
+
+**Type:** Spark Batch Job
+
+Reads from `bronze/historical`, applies the same cleaning rules (type casting, null filtering, deduplication) and writes the output to `silver/historical` partitioned by symbol and date.
+
+---
+
+## 6. Layer 4 — Gold Layer (dbt)
+
+**Owner:** Karim Ahmed  
+**Tool:** dbt (Data Build Tool)  
+**Project name:** `crypto_pulse_dbt`
+
+The Gold layer contains business-level aggregations and metrics built on top of the Silver data. It uses dbt models compiled and executed against the target warehouse (Azure Synapse or PostgreSQL).
+
+### Staging Models (materialized as Views)
+
+These are thin transformation views that sit directly on top of Silver data.
+
+**`models/staging/stg_prices.sql`**  
+Casts Silver price data to clean types (`DECIMAL(18,8)` for price and volume, `TIMESTAMP` for event time) and filters out null/zero prices.
+
+**`models/staging/stg_news.sql`** and **`models/staging/stg_social.sql`**  
+Same pattern applied to news and social data streams.
+
+### Gold Models (materialized as Tables)
+
+**`models/gold/daily_market_summary.sql`**  
+Computes OHLCV (Open, High, Low, Close, Volume) aggregates per coin per day using window functions. Output columns: `symbol`, `date`, `open_price`, `high_price`, `low_price`, `close_price`, `total_volume`.
+
+**`models/gold/market_sentiment.sql`**  
+Aggregates sentiment signals from the news and social streams.
+
+### Tests
+
+`tests/assert_low_price_less_than_high_price.sql` — a custom data test that asserts data integrity: `low_price` must always be less than or equal to `high_price` in `daily_market_summary`.
+
+---
+
+## 7. Backend API (FastAPI)
+
+**Owner:** Mostafa Matar  
+**Base URL:** `http://localhost:8000`  
+**Interactive Docs:** `http://localhost:8000/docs`
+
+The backend is a full-featured REST API built with FastAPI and SQLAlchemy, backed by a PostgreSQL database. It auto-creates all database tables on startup via `create_tables()`.
+
+### Authentication — `routers/auth.py`
+
+All user data is isolated by identity. The system uses JWT with **refresh token rotation** (each refresh issues a new refresh token and revokes the old one).
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/signup` | POST | Register a new user. Returns access + refresh tokens. Password hashed with bcrypt. |
+| `/api/v1/auth/login` | POST | Authenticate with email + password. Returns tokens. |
+| `/api/v1/auth/refresh` | POST | Exchange a valid refresh token for a new token pair. Old token is revoked. |
+| `/api/v1/auth/me` | GET | Returns the profile of the currently authenticated user. Requires Bearer token. |
+
+### Coin Data — `routers/coins.py`
+
+Serves live and historical price data fetched from the Silver/Gold layer.
+
+### Watchlists — `routers/watchlists.py`
+
+Full CRUD for user-defined coin watchlists. Each list is scoped to the authenticated user.
+
+### Alerts — `routers/alerts.py`
+
+Allows users to configure price alerts (e.g., "notify me when BTC > $70,000"). Stored in PostgreSQL.
+
+### Portfolios — `routers/portfolios.py`
+
+Tracks user portfolio positions (coin, quantity, buy price). Calculates current value against live prices.
+
+### Database Schema (`models/schema.sql`)
+
+PostgreSQL tables: `users`, `refresh_tokens`, `watchlists`, `alerts`, `portfolios`.
+
+---
+
+## 8. Orchestration (Airflow)
+
+**File:** `dags/etl_pipeline_dag.py`  
+**DAG ID:** `crypto_pulse_etl_pipeline`  
+**Schedule:** `@daily`
+
+The DAG orchestrates the **batch pipeline** (historical data). It does not manage the real-time streaming jobs — those run as persistent services.
+
+```
+fetch_historical_data
+        │
+        ▼
+ingest_historical_to_bronze          process_realtime_prices_to_silver
+        │                            (runs independently in parallel)
+        ▼
+process_historical_to_silver
 ```
 
-Required variables in `.env`:
+| Task ID | Command | Description |
+|---------|---------|-------------|
+| `fetch_historical_data` | `python3 historical_fetcher.py` | Downloads raw OHLCV JSON files |
+| `ingest_historical_to_bronze` | `spark-submit historical_loader.py` | Loads JSON into Bronze Delta table |
+| `process_historical_to_silver` | `spark-submit silver_historical_processor.py` | Cleans Bronze into Silver |
+| `process_realtime_prices_to_silver` | `spark-submit silver_prices_processor.py` | Runs the streaming processor as a one-time daily catch-up (independent of the chain) |
+
+All Spark commands use `spark://spark-master:7077` as the master URL and include Delta Lake packages.
+
+---
+
+## 9. Docker Infrastructure
+
+All services communicate over a shared Docker bridge network named `crypto-net`.
+
+| Container | Image | Port | Role |
+|-----------|-------|------|------|
+| `zookeeper` | `confluentinc/cp-zookeeper:7.0.0` | 2181 | Kafka coordination |
+| `kafka` | `confluentinc/cp-kafka:7.0.0` | 9092 (external), 29092 (internal) | Event streaming |
+| `kafka-init-topics` | (same as kafka) | — | Auto-creates 4 topics on startup |
+| `kafka-ui` | `provectuslabs/kafka-ui` | 8080 | Visual Kafka management |
+| `postgres` | `postgres:15` | 5432 | Relational database for the API |
+| `airflow-webserver` | `apache/airflow:2.7.3` | 8081 | DAG management UI |
+| `airflow-scheduler` | `apache/airflow:2.7.3` | — | DAG execution engine |
+| `spark-master` | `crypto-pulse-spark:3.5.0` (custom) | 7077, 8082 | Spark cluster master |
+| `spark-worker` | `crypto-pulse-spark:3.5.0` (custom) | 8083 | Spark executor (2 cores, 4GB RAM) |
+| `backend` | Custom (from `backend/Dockerfile`) | 8000 | FastAPI REST API |
+
+**Kafka topic auto-creation:** The `kafka-init-topics` container runs once on startup and creates: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`.
+
+**Kafka networking:** The Kafka broker is configured with dual listeners:
+- `EXTERNAL://localhost:9092` — for the Python producer running on the host machine.
+- `INTERNAL://kafka:29092` — for all Docker services (Spark, Airflow) communicating within the network.
+
+### Custom Spark Image — `spark-apps/Dockerfile.spark`
+
+Extends `apache/spark:3.5.0` and pre-installs all required JARs and Python packages:
+
+- Python: `python-dotenv==1.0.1`, `delta-spark==3.2.0`
+- JARs (downloaded into `/opt/spark/jars/`):
+  - `hadoop-azure:3.3.4` + `wildfly-openssl:1.1.3.Final` — ADLS Gen2 connectivity
+  - `azure-storage-blob`, `azure-storage-common`, `azure-core`, `azure-identity`, `msal4j` — Azure SDK
+  - `spark-sql-kafka-0-10_2.12:3.5.0`, `kafka-clients:3.5.1`, `commons-pool2:2.11.1` — Kafka connector
+  - `delta-spark_2.12:3.2.0`, `delta-storage:3.2.0` — Delta Lake
+
+---
+
+## 10. Environment Configuration
+
+Copy `.env.example` to `.env` and fill in your credentials. This file is mounted into all containers that need Azure or Kafka access.
+
 ```env
-KAFKA_BOOTSTRAP_SERVERS=localhost:9092
-KAFKA_TOPIC_REALTIME_PRICES=crypto.realtime.prices
-
+# Azure Service Principal (for ADLS Gen2 authentication)
 AZURE_CLIENT_ID=<your-service-principal-client-id>
 AZURE_CLIENT_SECRET=<your-service-principal-secret>
 AZURE_TENANT_ID=<your-tenant-id>
 AZURE_STORAGE_ACCOUNT_NAME=stcryptopulsedev2
 AZURE_STORAGE_CONTAINER_NAME=datalake
+
+# Kafka
+KAFKA_BOOTSTRAP_SERVERS=localhost:9092           # Use this for the host-side Python producer
+KAFKA_TOPIC_REALTIME_PRICES=crypto.realtime.prices
+
+# PostgreSQL (used by the FastAPI backend)
+POSTGRES_URL=postgresql://admin:admin123@postgres:5432/cryptopulse
 ```
 
-### 3. Start Local Infrastructure
+> **Important:** The Spark and Airflow jobs running **inside Docker** use `kafka:29092` (the internal listener), not `localhost:9092`. This is configured automatically via the `KAFKA_BOOTSTRAP_SERVERS=kafka:29092` environment variable set in `docker-compose.yml` for those services. You do not need to change your `.env` file for this.
+
+---
+
+## 11. Running the Project
+
+### Prerequisites
+
+- Docker Desktop (with WSL2 backend on Windows)
+- Python 3.10+
+- A configured Azure subscription with an ADLS Gen2 storage account and a service principal
+
+### Step 1 — Clone and Configure
+
+```bash
+git clone https://github.com/Amr-Walid/Depi-Project.git
+cd Depi-Project/crypto-pulse
+cp .env.example .env
+# Open .env and fill in your Azure credentials
+```
+
+### Step 2 — Build and Start All Services
+
+On the first run, this will build the custom Spark Docker image. Subsequent runs will be faster.
+
 ```bash
 make up
-# Starts: Kafka, Zookeeper, Spark, Airflow, PostgreSQL, Kafka-UI, Backend API
+# or: docker compose up -d --build
 ```
 
-### 4. Install Python Dependencies
-```bash
-python -m venv venv
-venv\Scripts\activate        # Windows
-# source venv/bin/activate   # Mac/Linux
+Wait approximately 30 seconds for Kafka and Postgres to fully initialize.
 
-pip install -r requirements.txt
+### Step 3 — Run the Real-Time Streaming Pipeline
+
+Open three separate terminal tabs and run one command per tab. All three must run simultaneously.
+
+**Tab 1 — Binance Producer (runs on the host, outside Docker)**
+```bash
+source venv/bin/activate
+python ingestion/producers/producer_binance.py
 ```
 
----
+**Tab 2 — Bronze Consumer (runs inside Spark container)**
+```bash
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/bronze_consumer.py
+```
 
-## 🚀 Running the Pipeline
+**Tab 3 — Silver Prices Processor (runs inside Spark container)**
+```bash
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_prices_processor.py
+```
+
+The Silver processor will begin writing cleaned, deduplicated data to `silver/prices` on Azure within 30–60 seconds after the Bronze consumer writes its first batch.
+
+> **Note for local testing:** Running two Spark Structured Streaming jobs simultaneously is resource-intensive. If you experience Spark executor heartbeat timeouts or freezes, stop Airflow first to free up RAM:
+> ```bash
+> docker compose stop airflow-webserver airflow-scheduler
+> ```
+
+### Step 4 — Run the Batch Historical Pipeline
 
 ```bash
-# 1. Pull historical data for all 20 cryptocurrencies → data/historical/
+# Download raw OHLCV data (runs on host)
 python ingestion/historical/historical_fetcher.py
 
-# 2. Start real-time Binance price streaming → Kafka topic: crypto.realtime.prices
-python ingestion/producers/producer_binance.py
+# Load raw JSON into Bronze (runs in Spark)
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/historical_loader.py
 
-# 3. Start periodic CoinGecko market polling (every 60s) → Kafka topic: crypto.market.data
-python ingestion/producers/producer_coingecko.py
-
-# 4. Submit Bronze Spark job (inside Docker)
-docker compose exec spark-master \
-  spark-submit \
-    --packages org.apache.hadoop:hadoop-azure:3.3.4,org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0 \
-    /opt/spark-apps/bronze_consumer.py
+# Process Bronze historical into Silver (runs in Spark)
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_historical_processor.py
 ```
 
-**Useful Docker commands:**
+### Step 5 — Access the Backend API
+
+The FastAPI backend starts automatically with `make up`. No manual step is needed.
+
+```
+http://localhost:8000/docs      Swagger interactive API documentation
+http://localhost:8000/redoc     ReDoc alternative documentation view
+```
+
+### Useful Commands
+
 ```bash
-make up       # Start all services
-make down     # Stop all services
-make logs     # Follow live logs
-make restart  # Restart everything
+make up        # Start all services
+make down      # Stop and remove all containers
+make logs      # Follow live logs from all containers
+make restart   # Restart everything
 ```
 
-**Access UIs:**
-| Service | URL |
-|---------|-----|
-| Kafka UI | http://localhost:8080 |
-| Airflow | http://localhost:8081 |
-| Spark Master | http://localhost:8082 |
-| FastAPI Backend | http://localhost:8000/docs |
+| Service UI | URL |
+|------------|-----|
+| Kafka UI (topic browser) | http://localhost:8080 |
+| Airflow (DAG management) | http://localhost:8081 |
+| Spark Master (job monitor) | http://localhost:8082 |
+| FastAPI (Swagger docs) | http://localhost:8000/docs |
 
 ---
 
-## 🤝 The Team
+## 12. Team
 
-Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital Egypt Pioneers Initiative)** program — Microsoft Azure Data Engineering Track.
-
-| Name | Role | Current Status |
-|------|------|---------------|
-| 🧑‍💻 **Amr Walid** | Team Lead & Lead Data Engineer | ✅ Milestone 1 Complete |
-| 🧑‍💻 **Yassin Mahmoud** | DataOps & Spark Engineer | ✅ Milestone 1 Complete |
-| 🧑‍💻 **Mostafa Matar** | Backend Engineer & Docker Owner | ✅ Milestone 1 Complete |
-| 🧑‍💻 **Karim Ahmed** | Analytics Engineer (dbt & PostgreSQL) | 🚧 Schema ✅ · dbt Setup ⏳ |
-| 🧑‍💻 **Ahmed Ayman** | Data Analyst & ML Engineer | ❌ Not Started |
+| Name | Role | Responsibilities |
+|------|------|-----------------|
+| **Amr Walid** | Team Lead & Lead Data Engineer | Azure infrastructure, ingestion scripts, Kafka producers, integration testing, orchestration |
+| **Yassin Mahmoud** | DataOps & Spark Engineer | Bronze consumer, Silver streaming processor, historical batch jobs, Airflow DAG |
+| **Mostafa Matar** | Backend Engineer & Docker Owner | FastAPI backend, JWT auth, PostgreSQL schema, Docker Compose, CI/CD |
+| **Karim Ahmed** | Analytics Engineer | dbt project setup, staging models, gold aggregations, data tests |
+| **Ahmed Ayman** | Data Analyst & ML Engineer | News producer, sentiment analysis (FinBERT), ML notebooks |
 
 ---
 
 <div align="center">
-  <b>Built with ❤️ for Data Engineering & The Crypto Ecosystem — DEPI 2025.</b>
+Built for the <b>DEPI — Digital Egypt Pioneers Initiative</b> · Microsoft Azure Data Engineering Track · 2025
 </div>
