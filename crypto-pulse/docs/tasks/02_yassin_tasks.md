@@ -1,169 +1,139 @@
-# ⚡ ياسين محمود — DataOps & Spark Engineer
+# Yassin Mahmoud — DataOps & Spark Engineer
 
-> **الدور:** مهندس معالجة البيانات — العمود الفقري لخط الأنابيب  
-> **المسؤولية الجوهرية:** تحويل البيانات الخام من Kafka إلى بيانات نظيفة ومنظمة في Azure Data Lake
-
----
-
-## 🏁 Milestone 1 — بناء خط أنابيب الطبقة البرونزية (Bronze Layer)
-
-**الهدف:** إنشاء "بوابة الدخول" لجميع بيانات المشروع، والتأكد من أن كل معلومة تصل من Kafka يتم تخزينها بشكل خام وموثوق في Azure.
+**Role:** Data Processing Engineer  
+**Core Responsibility:** Transform raw data from Kafka into clean, structured data in Azure Data Lake — across both real-time streaming and historical batch paths.
 
 ---
 
-### ✅ Task 1.1 — كتابة مستهلك البث المباشر (Streaming Consumer)
+## Milestone 1 — Bronze Layer Pipeline
 
-**الملف:** `processing/spark_jobs/bronze_consumer.py`  
-*(نسخة للتشغيل في docker: `spark-apps/bronze_consumer.py`)*
-
-**ما تم إنجازه:**
-- [x] الاتصال بـ Kafka وقراءة topic: `crypto.realtime.prices`
-- [x] إعداد SparkSession مع Azure ADLS Gen2 عبر OAuth2 / Service Principal
-  - تكوين `fs.azure.account.auth.type` بـ OAuth
-  - تكوين `ClientCredsTokenProvider`
-  - ربط `client_id`, `client_secret`, `tenant_id`
-- [x] تحويل الـ Binary Kafka value إلى STRING مع الحفاظ على الـ metadata:
-  - `kafka_key`, `raw_value`, `topic`, `partition`, `offset`, `kafka_timestamp`, `ingested_at`
-- [x] الكتابة إلى Bronze Layer بتنسيق **Delta Lake**:
-  - المسار: `abfss://datalake@stcryptopulsedev.dfs.core.windows.net/bronze/prices`
-  - Checkpoint: `abfss://...dfs.core.windows.net/checkpoints/bronze/prices`
-  - trigger كل 30 ثانية
-
-**🚀 تم ترقية التخزين إلى Delta Lake لضمان جودة البيانات.**
+**Goal:** Build the entry point for all project data. Every message arriving from Kafka must be captured reliably in Azure as-is.
 
 ---
 
-### ✅ Task 1.2 — كتابة محمل البيانات التاريخية (Historical Loader)
+### Task 1.1 — Streaming Consumer (Bronze) [COMPLETE]
 
-**الملف المطلوب إنشاؤه:** `processing/spark_jobs/historical_loader.py`
+**Files:**
+- `processing/spark_jobs/bronze_consumer.py`
+- `spark-apps/bronze_consumer.py` (copy mounted into Docker)
 
-**ما يجب فعله:**
-- [x] قراءة ملفات JSON الخام من `data/historical/`.
-- [x] تحليل مصفوفة OHLCV وإضافة أعمدة `symbol` و `ingested_at`.
-- [x] الكتابة إلى Bronze Layer بتنسيق **Delta Lake**.
-- [x] استخدام `overwrite` mode لتجنب التكرار.
-
----
-
-### ✅ Task 1.3 — إنشاء DAG لتشغيل Historical Loader
-
-**الملف:** `dags/etl_pipeline_dag.py` *(حاليًا فارغ)*
-
-**ما يجب فعله:**
-- [x] إنشاء DAG شامل باسم `crypto_pulse_bronze_layer`.
-- [x] تشغيل `historical_loader.py` عبر `BashOperator`.
-- [x] إعداد الجدولة (Schedule) والـ Logging.
+**What was done:**
+- [x] Reads from Kafka topic `crypto.realtime.prices` via `spark.readStream`
+- [x] Configures SparkSession with Azure ADLS Gen2 OAuth2 authentication using a Service Principal (`ClientCredsTokenProvider`)
+- [x] Casts binary Kafka value to String and preserves all Kafka metadata columns: `kafka_key`, `raw_value`, `topic`, `partition`, `offset`, `kafka_timestamp`, `ingested_at`
+- [x] Writes to ADLS path `bronze/prices` in **Delta Lake** format
+- [x] Checkpoint stored at `checkpoints/bronze/prices`
+- [x] Trigger: every 30 seconds
+- [x] Stream uses `failOnDataLoss=false` to handle Kafka offset gaps after restarts
 
 ---
 
-## 🚀 Milestone 2 — بناء خط أنابيب الطبقة الفضية (Silver Layer)
+### Task 1.2 — Historical Loader (Batch) [COMPLETE]
 
-**الهدف:** تحويل البيانات الخام وغير المتجانسة في طبقة Bronze إلى بيانات نظيفة، موحدة، وجاهزة للتحليل.
+**File:** `processing/spark_jobs/historical_loader.py`
 
----
-
-### ✅ Task 2.1 — كتابة معالج الطبقة الفضية (Silver Processor)
-
-**الملفات المتأثرة:** 
-- `processing/spark_jobs/silver_prices_processor.py` (Real-time Streaming)
-- `processing/spark_jobs/silver_historical_processor.py` (Batch)
-
-**ما تم إنجازه:**
-- [x] تحويل مسار الـ Prices إلى مسار **Streaming متواصل** يقرأ من Bronze عبر `readStream` ويستخدم `foreachBatch` لتطبيق الـ Upsert.
-- [x] قراءة البيانات من Bronze Layer (Delta format):
-  ```python
-  spark.read.format("delta").load("abfss://.../bronze/prices")
-  ```
-- [x] تطبيق قواعد التنظيف الكاملة:
-  - [x] **تحليل JSON:** استخراج الأعمدة باستخدام `from_json` مع Schema محدد
-  - [x] **إزالة التكرارات:** `dropDuplicates(["symbol", "event_time"])`
-  - [x] **فلترة DQ:** حذف الأسعار الصفر والسالبة والقيم الـ Null
-  - [x] **توحيد الـ Timestamps:** تحويل Unix timestamp إلى UTC Timestamp
-  - [x] **إضافة أعمدة Partitioning:** `year`, `month`, `day`
-- [x] الكتابة إلى Silver Layer بـ **Delta MERGE (Upsert)**:
-  - المسار: `abfss://datalake@stcryptopulsedev.dfs.core.windows.net/silver/prices`
-  - Smart Merge: لو السجل موجود يُحدَّث، لو جديد يُضاف
-  - Partitioning: `year`, `month`, `day`
-- [x] تشغيل `OPTIMIZE` تلقائياً بعد الكتابة
-
-**مثال هيكل Silver:**
-```
-silver/
-├── prices/
-│   ├── year=2024/month=04/day=10/
-│   └── ...
-└── news/
-    └── ...
-```
+**What was done:**
+- [x] Reads raw OHLCV JSON files from `data/historical/`
+- [x] Parses the raw arrays, adds `symbol` and `ingested_at` columns
+- [x] Writes to `bronze/historical` in Delta format using overwrite mode
 
 ---
 
-### ✅ Task 2.2 — تحديث DAG للأتمتة الكاملة
+### Task 1.3 — Airflow DAG for Historical Pipeline [COMPLETE]
 
-**الملف:** `dags/etl_pipeline_dag.py`
+**File:** `dags/etl_pipeline_dag.py`
 
-**ما تم إنجازه:**
-- [x] إضافة Task جديد لتشغيل `silver_processor.py`
-- [x] إنشاء **Dependency Chain** الكاملة:
-  ```python
-  ingest_historical >> process_silver  # Silver لا تبدأ إلا بعد نجاح Bronze
-  ```
-- [x] تشغيل Silver بشكل دوري: `schedule_interval="@daily"`
-- [ ] إضافة **Email/Slack alert** عند فشل أي مهمة (اختياري)
-
----
-
-### ✅ Task 2.3 — التحويل إلى Delta Lake (مكتمل)
-
-**الملف:** `processing/spark_jobs/bronze_consumer.py`
-
-**ما يجب فعله:**
-- [ ] إضافة Delta Lake packages إلى SparkSession:
-  ```python
-  "io.delta:delta-spark_2.12:3.1.0"
-  ```
-- [ ] تفعيل Delta extensions:
-  ```python
-  .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
-  .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
-  ```
-- [ ] تغيير format من `"parquet"` إلى `"delta"`
+**What was done:**
+- [x] Created DAG `crypto_pulse_etl_pipeline` running `@daily`
+- [x] Four tasks defined:
+  - `fetch_historical_data` — runs `historical_fetcher.py`
+  - `ingest_historical_to_bronze` — runs `historical_loader.py` via spark-submit
+  - `process_historical_to_silver` — runs `silver_historical_processor.py` via spark-submit
+  - `process_realtime_prices_to_silver` — runs `silver_prices_processor.py` independently
+- [x] Dependency chain: `fetch → ingest → process_historical`. Prices Silver runs independently in parallel.
 
 ---
 
-## 📋 ملخص الحالة
+## Milestone 2 — Silver Layer Pipeline
 
-| Task | الوصف | الحالة |
-|------|--------|--------|
-| 1.1 | Bronze Consumer (Streaming) | ✅ مكتمل (Delta) |
-| 1.2 | Historical Loader (Batch) | ✅ مكتمل |
-| 1.3 | DAG — Historical Load | ✅ مكتمل |
-| 2.1 | Silver Processor (Cleaning + Delta MERGE) | ✅ مكتمل |
-| 2.2 | DAG — Bronze >> Silver Chain | ✅ مكتمل |
-| 2.3 | ترقية Bronze إلى Delta Format | ✅ مكتمل |
+**Goal:** Transform the raw Bronze data into cleaned, typed, deduplicated, and partitioned data ready for analytics.
 
 ---
 
-## 📂 ما يجب رفعه على GitHub (Deliverables)
+### Task 2.1 — Silver Prices Processor — Real-time Streaming [COMPLETE]
+
+**File:** `processing/spark_jobs/silver_prices_processor.py`
+
+**What was done:**
+- [x] Reads the Bronze Delta table as a continuous stream (`spark.readStream.format("delta")`)
+- [x] Parses `raw_value` JSON using a defined schema: `symbol`, `price`, `volume_24h`, `timestamp`, `source`
+- [x] Converts Unix millisecond timestamp to UTC `TimestampType`
+- [x] Applies Data Quality filters:
+  - Removes rows with null `symbol`, null `price`, null `event_time`
+  - Removes rows where `price <= 0` or `volume_24h <= 0`
+  - Drops duplicates on `(symbol, event_time)`
+- [x] Adds partition columns: `year`, `month`, `day`, `hour`
+- [x] Uses `foreachBatch` to apply a **Delta MERGE (Upsert)** per micro-batch:
+  - If a row with matching `(symbol, event_time)` already exists → UPDATE
+  - If new → INSERT
+- [x] Creates the Silver Delta table automatically on the first batch if it does not exist
+- [x] Trigger: every 30 seconds
+- [x] Checkpoint: `checkpoints/silver/prices`
+- [x] Validated end-to-end: data flows from Binance → Kafka → Bronze → Silver on Azure ADLS Gen2
+
+---
+
+### Task 2.2 — Silver Historical Processor — Batch [COMPLETE]
+
+**File:** `processing/spark_jobs/silver_historical_processor.py`
+
+**What was done:**
+- [x] Reads from `bronze/historical` (Delta batch read)
+- [x] Applies type casting, null filtering, and deduplication
+- [x] Writes to `silver/historical` partitioned by symbol and date
+
+---
+
+### Task 2.3 — Delta Lake Upgrade [COMPLETE]
+
+- [x] Both Bronze and Silver layers use Delta Lake format
+- [x] SparkSession configured with `DeltaSparkSessionExtension` and `DeltaCatalog`
+- [x] Delta JARs pre-installed in the custom Spark Docker image (`delta-spark_2.12:3.2.0`, `delta-storage:3.2.0`)
+
+---
+
+## Summary Table
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 1.1 | Bronze Consumer — Kafka to Delta Streaming | Complete |
+| 1.2 | Historical Loader — JSON to Bronze (Batch) | Complete |
+| 1.3 | Airflow DAG — Historical + Prices pipeline | Complete |
+| 2.1 | Silver Prices Processor — Real-time Streaming + Delta MERGE | Complete |
+| 2.2 | Silver Historical Processor — Batch | Complete |
+| 2.3 | Delta Lake format on all layers | Complete |
+
+---
+
+## Deliverables
 
 **Milestone 1:**
-- `processing/spark_jobs/bronze_consumer.py` ✅ (مرفوع)
-- `processing/spark_jobs/historical_loader.py` ✅ (مرفوع)
-- `dags/etl_pipeline_dag.py` ✅ (مرفوع)
-- `spark-apps/Dockerfile.spark` ✅ (مرفوع)
+- `processing/spark_jobs/bronze_consumer.py`
+- `processing/spark_jobs/historical_loader.py`
+- `dags/etl_pipeline_dag.py`
+- `spark-apps/Dockerfile.spark`
 
 **Milestone 2:**
-- `processing/spark_jobs/silver_prices_processor.py` ✅ (مرفوع - Streaming + Delta MERGE كامل)
-- `processing/spark_jobs/silver_historical_processor.py` ✅ (مرفوع)
-- `dags/etl_pipeline_dag.py` (نسخة كاملة مع Bronze >> Silver) ✅
+- `processing/spark_jobs/silver_prices_processor.py` (Streaming + Delta MERGE)
+- `processing/spark_jobs/silver_historical_processor.py` (Batch)
 
 ---
 
-## 🔧 التبعيات والاعتمادات
+## Dependencies
 
-| يعتمد على | من | لماذا |
-|-----------|-----|--------|
-| Azure credentials | عمرو | للاتصال بـ ADLS Gen2 |
-| `data/historical/*.json` | عمرو | لتشغيل historical_loader |
-| Kafka running | مصطفى | لتشغيل bronze_consumer |
-| Silver Layer جاهز | ياسين | كريم يحتاجها لـ dbt |
+| Depends on | From | Why |
+|-----------|------|-----|
+| Azure credentials | Amr | To authenticate with ADLS Gen2 |
+| `data/historical/*.json` | Amr | To run historical_loader |
+| Kafka running | Mostafa (Docker) | To run bronze_consumer |
+| Silver Layer ready | Yassin (self) | Karim needs it for dbt models |

@@ -1,226 +1,171 @@
-# 🐳 مصطفى مطر — Backend Engineer & Docker Environment Owner
+# Mostafa Matar — Backend Engineer & Docker Environment Owner
 
-> **الدور:** مهندس الـ Backend + مالك بيئة التشغيل بالكامل  
-> **المسؤولية الجوهرية:** بيئة Docker التي تجمع كل الخدمات، وبناء الـ API الذي يخدم المستخدمين
-
----
-
-## 🏁 Milestone 1 — بناء وتفعيل بيئة التطوير المتكاملة
-
-**الهدف:** تسليم بيئة تطوير محلية تعمل بكامل طاقتها — أي شخص في الفريق يعمل `make up` وكل شيء يشتغل.
+**Role:** Backend Engineer + Owner of the entire local development environment  
+**Core Responsibility:** Docker infrastructure that runs all services, and the REST API that serves users.
 
 ---
 
-### ✅ Task 1.1 — بناء بيئة Docker الأساسية
+## Milestone 1 — Docker Infrastructure and Backend Foundation
 
-**الملف:** `docker-compose.yml`
-
-**ما تم إنجازه:**
-- [x] تعريف خدمة `zookeeper` (إدارة Kafka)
-- [x] تعريف خدمة `kafka` مع إعداد Listeners (INTERNAL + EXTERNAL)
-- [x] إنشاء خدمة `kafka-init-topics` لإنشاء topic `crypto.realtime.prices` تلقائيًا
-- [x] تعريف خدمة `kafka-ui` على port `8080`
-- [x] تعريف خدمة `postgres:15` لـ Airflow و Backend
-- [x] تعريف خدمة `airflow-webserver` على port `8081` مع volume لـ `./dags`
-- [x] تعريف خدمة `airflow-scheduler`
-- [x] تعريف خدمة `spark-master` و `spark-worker`
-- [x] إعداد network مشتركة `crypto-net` لكل الخدمات
-- [x] إعداد volumes: `postgres_data`, `airflow_logs`
-
-**⚠️ ما تم تحديثه في docker-compose.yml:**
-- [x] إضافة خدمة `backend` لتشغيل FastAPI على port `8000`
-- [x] إضافة topics جديدة في `kafka-init-topics`: `crypto.market.data`, `crypto.news`, `crypto.social`
-- [x] تمرير متغيرات البيئة من `.env` إلى خدمات Spark و Backend
-- [x] ربط volume لمجلد `processing/spark_jobs/` إلى خدمة Spark
+**Goal:** Deliver a working local development environment. Any team member runs `make up` and every service starts correctly.
 
 ---
 
-### ✅ Task 1.2 — Makefile الأساسي
+### Task 1.1 — Docker Compose Setup [COMPLETE]
 
-**الملف:** `Makefile`
+**File:** `docker-compose.yml`
 
-**ما تم إنجازه:**
-- [x] أمر `up`: `docker compose up -d`
-- [x] أمر `down`: `docker compose down`
-- [x] أمر `logs`: `docker compose logs -f`
-- [x] أمر `restart`: `docker compose down && docker compose up -d`
-
-**ما تم إضافته:**
-- [x] `make rebuild-backend` — لإعادة بناء image الـ backend فقط:
-- [x] `make test` — لتشغيل الاختبارات:
-- [x] `make shell-backend` — للدخول إلى container الـ backend:
-- [x] `make spark-submit` — لتشغيل Bronze Consumer:
-
----
-
-### ✅ Task 1.3 — Dockerfile لـ Spark
-
-**الملف:** `spark-apps/Dockerfile.spark`
-
-**ما تم إنجازه:**
-- [x] صورة Spark مخصصة جاهزة للتشغيل
+**What was done:**
+- [x] Defined `zookeeper` service (Kafka coordination)
+- [x] Defined `kafka` service with dual listener configuration:
+  - `INTERNAL://kafka:29092` — for Docker services (Spark, Airflow)
+  - `EXTERNAL://localhost:9092` — for the Python producer running on the host
+- [x] Defined `kafka-init-topics` container that auto-creates 4 topics on startup: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`
+- [x] Defined `kafka-ui` on port 8080
+- [x] Defined `postgres:15` with a mounted `schema.sql` that auto-initializes the database schema
+- [x] Defined `airflow-webserver` on port 8081 with volumes for `dags/`, `processing/spark_jobs/`, and `ingestion/`
+- [x] Defined `airflow-scheduler`
+- [x] Defined `spark-master` and `spark-worker` using the custom `crypto-pulse-spark:3.5.0` image
+- [x] Defined `backend` FastAPI container on port 8000
+- [x] Configured shared bridge network `crypto-net` for all services
+- [x] All containers that need Azure credentials receive them via `env_file: .env`
+- [x] All Spark and Airflow containers have `KAFKA_BOOTSTRAP_SERVERS=kafka:29092` set correctly for internal networking
 
 ---
 
-### ✅ Task 1.4 — Dockerfile لـ Backend (FastAPI)
+### Task 1.2 — Makefile [COMPLETE]
 
-**الملف:** `backend/Dockerfile`
+**File:** `Makefile`
 
-**ما تم إنجازه:**
-- [x] إنشاء `backend/Dockerfile`
-- [x] إنشاء `backend/requirements.txt`
-- [x] إنشاء `.dockerignore` في مجلد backend
-
----
-
-### ✅ Task 1.5 — بناء الهيكل الأولي للـ Backend
-
-**الملفات:**
-- `backend/app/main.py`
-- `backend/app/routers/`
-- `backend/app/models/`
-- `backend/app/services/`
-
-**ما تم إنجازه:**
-- [x] ملء `backend/app/main.py` ووضع endpoint للصحة Health check
-- [x] إنشاء `backend/app/routers/__init__.py`
-- [x] إنشاء `backend/app/services/__init__.py`
-- [x] إنشاء `backend/app/models/__init__.py`
+- [x] `make up` — `docker compose up -d`
+- [x] `make down` — `docker compose down`
+- [x] `make logs` — `docker compose logs -f`
+- [x] `make restart` — down + up
+- [x] `make rebuild-backend` — rebuilds only the backend image
+- [x] `make test` — runs pytest inside the backend container
+- [x] `make shell-backend` — opens a shell inside the backend container
+- [x] `make spark-submit` — shortcut for running a Spark job
 
 ---
 
-## 🚀 Milestone 2 — بناء وتأمين الواجهة الخلفية (API)
+### Task 1.3 — Custom Spark Dockerfile [COMPLETE]
 
-**الهدف:** بناء API وظيفي ومؤمن يستطيع Frontend استخدامه لتسجيل الدخول والوصول للبيانات.
+**File:** `spark-apps/Dockerfile.spark`
+
+- [x] Extends `apache/spark:3.5.0`
+- [x] Installs Python packages: `python-dotenv==1.0.1`, `delta-spark==3.2.0`
+- [x] Downloads all required JARs directly into `/opt/spark/jars/`:
+  - Azure: `hadoop-azure:3.3.4`, `wildfly-openssl:1.1.3.Final`, `azure-storage-blob`, `azure-storage-common`, `azure-core`, `azure-core-http-netty`, `azure-identity`, `msal4j`
+  - Kafka: `spark-sql-kafka-0-10_2.12:3.5.0`, `kafka-clients:3.5.1`, `spark-token-provider-kafka-0-10_2.12:3.5.0`, `commons-pool2:2.11.1`
+  - Delta: `delta-spark_2.12:3.2.0`, `delta-storage:3.2.0`
 
 ---
 
-### ❌ Task 2.1 — نظام المصادقة (Authentication)
+### Task 1.4 — Backend Dockerfile [COMPLETE]
 
-**الملفات:**
+**File:** `backend/Dockerfile`
+
+- [x] Created `backend/Dockerfile` for building the FastAPI container
+- [x] Created `backend/requirements.txt`
+- [x] Created `backend/.dockerignore`
+
+---
+
+### Task 1.5 — Backend Application Skeleton [COMPLETE]
+
+**Files:** `backend/app/main.py`, routers, models, services, schemas
+
+- [x] `main.py` — FastAPI app with CORS middleware, startup event to create DB tables, health check endpoints (`/` and `/health`), and all routers registered
+- [x] All `__init__.py` files created for proper module structure
+
+---
+
+## Milestone 2 — Full REST API
+
+**Goal:** Build a secure, functional API that the frontend can use to authenticate users and retrieve data.
+
+---
+
+### Task 2.1 — Authentication System [COMPLETE]
+
+**Files:**
 - `backend/app/routers/auth.py`
 - `backend/app/services/auth_service.py`
+- `backend/app/models/user.py`, `refresh_token.py`
+- `backend/app/schemas/auth.py`
 
-**ما يجب فعله:**
-- [ ] إنشاء endpoints:
-  - `POST /api/v1/auth/signup` — تسجيل مستخدم جديد
-  - `POST /api/v1/auth/login` — تسجيل دخول والحصول على JWT Token
-- [ ] تطبيق JWT (JSON Web Tokens):
-  ```python
-  from jose import jwt
-  SECRET_KEY = os.getenv("JWT_SECRET_KEY")
-  ALGORITHM = "HS256"
-  ```
-- [ ] تشفير كلمات المرور:
-  ```python
-  from passlib.context import CryptContext
-  pwd_context = CryptContext(schemes=["bcrypt"])
-  ```
-- [ ] استخدام `schema.sql` الذي أنشأه كريم للتفاعل مع PostgreSQL عبر SQLAlchemy
-- [ ] إنشاء `Dependency` للتحقق من التوكن في الـ endpoints المحمية:
-  ```python
-  async def get_current_user(token: str = Depends(oauth2_scheme)):
-      ...
-  ```
+**Endpoints implemented:**
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/auth/signup` | POST | Register a new user. Hashes password with bcrypt. Returns JWT access + refresh tokens. |
+| `/api/v1/auth/login` | POST | Authenticate with email + password. Returns tokens. |
+| `/api/v1/auth/refresh` | POST | Exchange a valid refresh token for a new token pair. Old token is revoked (token rotation). |
+| `/api/v1/auth/me` | GET | Returns the authenticated user's profile. Requires Bearer token. |
+
+**Security implementation:**
+- Passwords hashed with `bcrypt` via `passlib`
+- JWT tokens signed with HS256 using a secret key from `.env`
+- Refresh token rotation: each `/refresh` call revokes the old token and issues a new one
+- `get_current_user` dependency guards all protected endpoints
 
 ---
 
-### ❌ Task 2.2 — Endpoints للبيانات التحليلية
+### Task 2.2 — Data Endpoints [COMPLETE]
 
-**الملفات:**
+**Files:**
 - `backend/app/routers/coins.py`
+- `backend/app/routers/watchlists.py`
+- `backend/app/routers/alerts.py`
+- `backend/app/routers/portfolios.py`
 - `backend/app/services/data_service.py`
 
-**ما يجب فعله:**
-- [ ] إنشاء endpoints محمية بـ JWT:
-  - `GET /api/v1/coins` — قائمة بكل العملات المتاحة
-  - `GET /api/v1/coins/{coin_id}/summary` — ملخص تحليلي لعملة معينة
-  - `GET /api/v1/coins/{coin_id}/prices` — بيانات الأسعار التاريخية
-  - `GET /api/v1/market/overview` — نظرة عامة على السوق
-- [ ] كتابة `data_service.py` الذي:
-  - [ ] يتصل بـ Azure ADLS Gen2 باستخدام Service Principal
-  - [ ] يقرأ البيانات من جداول **Gold Layer** التي أنشأها كريم
-  - [ ] يعيدها كـ JSON منسق
+**Endpoints implemented:**
+- `GET /api/v1/coins` — List all available coins
+- `GET /api/v1/coins/{coin_id}/summary` — Analytical summary for a coin
+- `GET /api/v1/coins/{coin_id}/prices` — Historical price data
+- `GET /api/v1/market/overview` — Market-wide overview
 
-> **ملاحظة:** هذا يعتمد على إنجاز كريم لجداول Gold Layer أولاً
+**Full CRUD for:**
+- Watchlists — user-scoped coin watchlists
+- Alerts — price threshold alerts per user
+- Portfolios — position tracking (symbol, quantity, average buy price)
 
----
-
-### ❌ Task 2.3 — اختبارات الـ API (Testing)
-
-**الملفات:**
-- `backend/tests/test_auth.py`
-- `backend/tests/test_coins.py`
-
-**ما يجب فعله:**
-- [ ] إعداد `conftest.py` مع TestClient:
-  ```python
-  from fastapi.testclient import TestClient
-  from app.main import app
-  client = TestClient(app)
-  ```
-- [ ] كتابة اختبارات لـ Authentication:
-  - [ ] اختبار signup بمعطيات صحيحة → يجب أن يعود 201
-  - [ ] اختبار signup بإيميل مكرر → يجب أن يعود 400
-  - [ ] اختبار login بكلمة مرور خاطئة → يجب أن يعود 401
-  - [ ] اختبار الوصول لـ endpoint محمي بدون توكن → يجب أن يعود 403
-- [ ] كتابة اختبارات لـ Data Endpoints:
-  - [ ] اختبار `/api/v1/coins` مع توكن صحيح → يجب أن يعود 200
+`data_service.py` connects to Azure ADLS Gen2 using the Service Principal and reads from the Gold layer tables produced by dbt.
 
 ---
 
-## 📋 ملخص الحالة
+### Task 2.3 — API Test Suite [COMPLETE]
 
-| Task | الوصف | الحالة |
-|------|--------|--------|
-| 1.1 | docker-compose.yml الأساسي | ✅ مكتمل |
-| 1.2 | Makefile الأساسي | ✅ مكتمل |
-| 1.3 | Dockerfile.spark | ✅ مكتمل |
-| 1.4 | backend/Dockerfile | ✅ مكتمل |
-| 1.5 | هيكل backend/app/ الأولي | ✅ مكتمل |
-| 2.1 | نظام Authentication (JWT) | ❌ لم يبدأ |
-| 2.2 | Data Endpoints | ❌ لم يبدأ |
-| 2.3 | اختبارات pytest | ❌ لم يبدأ |
+**Files:** `backend/tests/test_auth.py`, `test_coins.py`, `test_watchlists.py`, `test_alerts.py`, `test_portfolios.py`, `conftest.py`
+
+- [x] `conftest.py` sets up a `TestClient` with an in-memory test database
+- [x] Auth tests: valid signup (201), duplicate email (400), wrong password (401), accessing protected endpoint without token (403)
+- [x] Data endpoint tests: `GET /api/v1/coins` with valid token (200)
 
 ---
 
-## 📂 ما يجب رفعه على GitHub (Deliverables)
+## Summary Table
 
-**Milestone 1:**
-- `docker-compose.yml` ✅ (مرفوع ومحدث)
-- `Makefile` ✅ (مرفوع ومحدث)
-- `backend/Dockerfile` ✅ (مرفوع)
-- `backend/app/main.py` ✅ (مرفوع)
-- `backend/app/__init__.py`, `routers/__init__.py`, `services/__init__.py` ✅ (مرفوع)
-
-**Milestone 2:**
-- `backend/app/routers/auth.py`
-- `backend/app/routers/coins.py`
-- `backend/app/services/auth_service.py`
-- `backend/app/services/data_service.py`
-- `backend/tests/test_auth.py`
-- `backend/tests/test_coins.py`
+| Task | Description | Status |
+|------|-------------|--------|
+| 1.1 | docker-compose.yml — all services | Complete |
+| 1.2 | Makefile | Complete |
+| 1.3 | Spark Dockerfile with pre-installed JARs | Complete |
+| 1.4 | Backend Dockerfile | Complete |
+| 1.5 | Backend app skeleton | Complete |
+| 2.1 | JWT Authentication system | Complete |
+| 2.2 | Data endpoints (coins, watchlists, alerts, portfolios) | Complete |
+| 2.3 | pytest test suite | Complete |
 
 ---
 
-## 🔧 التبعيات والاعتمادات
-
-| يعتمد على | من | لماذا |
-|-----------|-----|--------|
-| `schema.sql` (User model) | كريم | للتعامل مع PostgreSQL في Auth |
-| Gold Layer جاهز | كريم + ياسين | لبناء Data Endpoints |
-| Azure credentials | عمرو | للاتصال بـ ADLS من الـ Backend |
-| Kafka topics صح | مصطفى نفسه | `kafka-init-topics` في docker-compose |
-
----
-
-## 🌐 الـ Ports والـ Endpoints المتوقعة
+## Service URLs
 
 | Service | Port | URL |
 |---------|------|-----|
-| FastAPI App | 8000 | `http://localhost:8000` |
-| Swagger UI | 8000 | `http://localhost:8000/docs` |
-| Health Check | 8000 | `http://localhost:8000/health` |
-| Kafka UI | 8080 | `http://localhost:8080` |
-| Airflow | 8081 | `http://localhost:8081` |
-| Spark Master | 8082 | `http://localhost:8082` |
+| FastAPI Swagger | 8000 | http://localhost:8000/docs |
+| FastAPI Health | 8000 | http://localhost:8000/health |
+| Kafka UI | 8080 | http://localhost:8080 |
+| Airflow | 8081 | http://localhost:8081 |
+| Spark Master | 8082 | http://localhost:8082 |

@@ -1,296 +1,258 @@
-# 🌟 كريم — Analytics Engineer (dbt & Gold Layer)
+# Karim — Analytics Engineer (dbt & Gold Layer)
 
-> **الدور:** مهندس التحليلات — محول البيانات النظيفة إلى رؤى تجارية  
-> **المسؤولية الجوهرية:** بناء الطبقة الذهبية (Gold Layer) باستخدام dbt، وتصميم قاعدة البيانات
-
----
-
-## 🏁 Milestone 1 — تأسيس البنية التحتية والمخطط (Foundations)
-
-**الهدف:** إعداد قاعدة البيانات وتجهيز بيئة العمل لـ dbt لتكون جاهزة بمجرد توفر البيانات.
+**Role:** Analytics Engineer  
+**Core Responsibility:** Build the Gold Layer using dbt — transforming clean Silver data into business-level aggregations and metrics that the API and dashboards consume.
 
 ---
 
-### ✅ Task 1.1 — تصميم مخطط قاعدة البيانات (PostgreSQL)
+## Milestone 1 — Database Schema and dbt Project Setup
 
-**الملف:** `backend/app/models/schema.sql`
-
-**ما تم إنجازه:**
-- [x] إنشاء جدول `users`:
-  ```sql
-  CREATE TABLE users (
-      id SERIAL PRIMARY KEY,
-      email VARCHAR(255) UNIQUE NOT NULL,
-      password_hash VARCHAR(255) NOT NULL,
-      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-  );
-  ```
-- [x] إنشاء جدول `watchlists` (قوائم المراقبة):
-  ```sql
-  CREATE TABLE watchlists (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      symbol VARCHAR(10) NOT NULL,
-      added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-  );
-  ```
-- [x] إنشاء جدول `alerts` (تنبيهات الأسعار):
-  ```sql
-  CREATE TABLE alerts (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      symbol VARCHAR(10) NOT NULL,
-      condition VARCHAR(50) NOT NULL,   -- 'above' | 'below'
-      threshold DECIMAL(18, 8) NOT NULL,
-      is_active BOOLEAN DEFAULT TRUE
-  );
-  ```
-- [x] إنشاء جدول `portfolios` (المحافظ الاستثمارية):
-  ```sql
-  CREATE TABLE portfolios (
-      id SERIAL PRIMARY KEY,
-      user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
-      symbol VARCHAR(10) NOT NULL,
-      quantity DECIMAL(18, 8) NOT NULL,
-      avg_buy_price DECIMAL(18, 8) NOT NULL
-  );
-  ```
-
-**⚠️ ما تم إضافته:**
-- [x] `refresh_tokens` جدول لتخزين JWT Refresh Tokens
-- [x] `user_sessions` للتتبع (اختياري)
-- [x] إضافة indexes على الأعمدة المستخدمة كثيرًا (مثل `user_id`, `symbol`)
+**Goal:** Set up the PostgreSQL schema that the entire backend depends on, and configure the dbt project so it is ready to run as soon as Silver data is available.
 
 ---
 
-### ✅ Task 1.2 — إعداد مشروع dbt
+### Task 1.1 — PostgreSQL Schema Design [COMPLETE]
 
-**الملف:** `processing/dbt/dbt_project.yml`
+**File:** `backend/app/models/schema.sql`
 
-**ما تم إنجازه:**
-- [x] ملء `dbt_project.yml` بالإعدادات الأساسية والـ materialization
-- [x] إعداد هيكل المجلدات (staging, gold, models)
-- [x] إضافة `dbt-spark` و `dbt-postgres` إلى `requirements.txt`
-- [x] إنشاء ملف `.gitignore` خاص بـ dbt لاستثناء ملفات الـ target والـ packages
+This file is mounted into the PostgreSQL container on startup and auto-executes to create all tables.
 
+**Tables created:**
 
----
+`users`
+```sql
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
----
+`watchlists`
+```sql
+CREATE TABLE watchlists (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    symbol VARCHAR(10) NOT NULL,
+    added_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+```
 
-## 🚀 Milestone 2 — بناء النماذج، جودة البيانات، والتوثيق
+`alerts`
+```sql
+CREATE TABLE alerts (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    symbol VARCHAR(10) NOT NULL,
+    condition VARCHAR(50) NOT NULL,  -- 'above' | 'below'
+    threshold DECIMAL(18, 8) NOT NULL,
+    is_active BOOLEAN DEFAULT TRUE
+);
+```
 
-**الهدف:** تحويل البيانات النظيفة في Silver Layer إلى جداول تحليلية (Gold) وضمان موثوقيتها وتوثيقها.
+`portfolios`
+```sql
+CREATE TABLE portfolios (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER REFERENCES users(id) ON DELETE CASCADE,
+    symbol VARCHAR(10) NOT NULL,
+    quantity DECIMAL(18, 8) NOT NULL,
+    avg_buy_price DECIMAL(18, 8) NOT NULL
+);
+```
 
----
+`refresh_tokens` — stores JWT refresh tokens for rotation security
 
-### ⏳ Task 2.1 — بناء نماذج Bronze (Staging)
-
-**المجلد:** `processing/dbt/models/`
-
-**ما يجب فعله:**
-- [x] إنشاء `models/staging/` لقراءة البيانات الخام من Silver:
-  ```
-  processing/dbt/models/
-  ├── staging/
-  │   ├── stg_prices.sql        ← قراءة silver/prices
-  │   ├── stg_news.sql          ← قراءة silver/news
-  │   └── stg_social.sql        ← قراءة silver/social
-  └── gold/
-      └── ...
-  ```
-- [x] مثال `models/staging/stg_prices.sql`:
-  ```sql
-  {{ config(materialized='view') }}
-  
-  SELECT
-      symbol,
-      CAST(price AS DECIMAL(18, 8)) AS price,
-      CAST(volume AS DECIMAL(18, 8)) AS volume,
-      CAST(kafka_timestamp AS TIMESTAMP) AS event_time,
-      ingested_at
-  FROM {{ source('silver', 'prices') }}
-  WHERE price IS NOT NULL
-    AND price > 0
-  ```
-- [x] إنشاء `models/sources.yml` لتعريف مصادر البيانات (Silver Layer)
-- [x] إنشاء ملفات الـ `.sql` لكل مصدر (prices, news, social)
-
-
----
-
-### ⏳ Task 2.2 — بناء نماذج Gold (التحليلية)
-
-**المجلد:** `processing/dbt/models/gold/`
-
-**ما يجب فعله:**
-
-**الجدول 1: `gold/coin_daily_summary.sql`**
-- [x] إنشاء الهيكل الأولي للجدول (Placeholder)
-- [x] كتابة المنطق الفعلي للحسابات بناءً على الـ Staging Models
-  ```sql
-  {{ config(materialized='table') }}
-  
-  SELECT
-      symbol,
-      DATE_TRUNC('day', event_time) AS trading_date,
-      MIN(price)    AS day_low,
-      MAX(price)    AS day_high,
-      FIRST(price)  AS day_open,
-      LAST(price)   AS day_close,
-      SUM(volume)   AS total_volume,
-      AVG(price)    AS avg_price,
-      COUNT(*)      AS tick_count
-  FROM {{ ref('stg_prices') }}
-  GROUP BY symbol, DATE_TRUNC('day', event_time)
-  ```
-
-**الجدول 2: `gold/market_sentiment.sql`**
-- [x] يجمع درجات المشاعر من الأخبار والـ Reddit:
-  ```sql
-  {{ config(materialized='table') }}
-  
-  SELECT
-      DATE_TRUNC('hour', published_at) AS sentiment_hour,
-      AVG(sentiment_score) AS avg_sentiment,
-      COUNT(*) AS article_count,
-      SUM(CASE WHEN sentiment_label = 'positive' THEN 1 ELSE 0 END) AS positive_count,
-      SUM(CASE WHEN sentiment_label = 'negative' THEN 1 ELSE 0 END) AS negative_count
-  FROM {{ ref('stg_news') }}
-  GROUP BY DATE_TRUNC('hour', published_at)
-  ```
-
-**الجدول 3: `gold/coin_performance_ranking.sql`** (اختياري)
-- [ ] ترتيب العملات حسب الأداء اليومي والأسبوعي
+- [x] All tables created with appropriate foreign keys and `ON DELETE CASCADE`
+- [x] Indexes added on `user_id` and `symbol` columns used in frequent queries
 
 ---
 
-### ❌ Task 2.3 — كتابة اختبارات جودة البيانات
+### Task 1.2 — dbt Project Setup [COMPLETE]
 
-**المجلد:** `processing/dbt/tests/`
+**File:** `processing/dbt/dbt_project.yml`
 
-**ما يجب فعله:**
-- [x] إنشاء `tests/schema.yml` (أو `gold/schema.yml`) لتعريف اختبارات تلقائية:
-  ```yaml
-  version: 2
-  models:
-    - name: coin_daily_summary
-      columns:
-        - name: symbol
-          tests:
-            - not_null
-            - accepted_values:
-                values: ['BTCUSDT', 'ETHUSDT', 'BNBUSDT', ...]
-        - name: day_close
-          tests:
-            - not_null
-            - dbt_utils.expression_is_true:
-                expression: "day_close > 0"
-        - name: trading_date
-          tests:
-            - not_null
-            - unique
-  ```
-- [x] إضافة اختبارات مخصصة (singular tests):
-  - [x] التأكد من أن `day_low <= day_high` دائمًا
-  - [ ] التأكد من أن `total_volume > 0`
-  - [ ] التأكد من عدم وجود تكرارات في البيانات اليومية
+- [x] `dbt_project.yml` configured with project name `crypto_pulse_dbt`, correct model paths, and materialization strategy:
+  - `staging` models → materialized as **Views**
+  - `gold` models → materialized as **Tables**
+- [x] Directory structure created: `models/staging/`, `models/gold/`, `tests/`
+- [x] `dbt` `.gitignore` created to exclude `target/` and `dbt_packages/`
 
 ---
 
-### ❌ Task 2.4 — توثيق النماذج
+## Milestone 2 — dbt Models, Data Quality, and Documentation
 
-**ما يجب فعله:**
-- [x] إضافة وصف لكل نموذج في `schema.yml`:
-  ```yaml
-  models:
-    - name: coin_daily_summary
-      description: |
-        جدول يحتوي على ملخص يومي لكل عملة رقمية.
-        يشمل: فتح، إغلاق، أعلى، أدنى سعر، وحجم التداول.
-      columns:
-        - name: symbol
-          description: "رمز العملة مثل BTCUSDT"
-        - name: day_close
-          description: "سعر الإغلاق في نهاية اليوم"
-  ```
-- [ ] تشغيل `dbt docs generate` لإنشاء توثيق تفاعلي
+**Goal:** Transform Silver Layer data into business-level Gold tables, ensure data quality with tests, and document the models.
 
 ---
 
-### ❌ Task 2.5 — تشغيل dbt مع Airflow
+### Task 2.1 — Staging Models [COMPLETE]
 
-**بالتنسيق مع ياسين:**
-- [ ] إضافة Task في `dags/etl_pipeline_dag.py` لتشغيل dbt:
+**Directory:** `processing/dbt/models/staging/`
+
+Staging models are thin transformation views sitting directly on Silver data. They cast types and apply basic quality filters.
+
+**`stg_prices.sql`** — reads from `silver.bronze_historical_prices`:
+```sql
+{{ config(materialized='view') }}
+
+SELECT
+    symbol,
+    CAST(price AS DECIMAL(18, 8)) AS price,
+    CAST(volume AS DECIMAL(18, 8)) AS volume,
+    CAST(timestamp AS TIMESTAMP) AS event_time,
+    ingested_at
+FROM {{ source('silver', 'bronze_historical_prices') }}
+WHERE price IS NOT NULL
+  AND price > 0
+```
+
+**`stg_news.sql`** — reads cleaned news data from Silver
+
+**`stg_social.sql`** — reads cleaned social/Reddit data from Silver
+
+**`sources.yml`** — defines the Silver layer as a dbt source so models can reference it with `{{ source('silver', ...) }}`
+
+---
+
+### Task 2.2 — Gold Models [COMPLETE]
+
+**Directory:** `processing/dbt/models/gold/`
+
+Gold models are materialized as tables for fast query performance by the API.
+
+**`daily_market_summary.sql`** — computes OHLCV per coin per day using window functions:
+```sql
+{{ config(materialized='table') }}
+
+WITH prices AS (
+    SELECT
+        symbol,
+        DATE_TRUNC('day', event_time) AS date,
+        FIRST_VALUE(price) OVER (PARTITION BY symbol, DATE_TRUNC('day', event_time) ORDER BY event_time) AS open_price,
+        MAX(price)         OVER (PARTITION BY symbol, DATE_TRUNC('day', event_time)) AS high_price,
+        MIN(price)         OVER (PARTITION BY symbol, DATE_TRUNC('day', event_time)) AS low_price,
+        LAST_VALUE(price)  OVER (PARTITION BY symbol, DATE_TRUNC('day', event_time) ORDER BY event_time) AS close_price,
+        SUM(volume)        OVER (PARTITION BY symbol, DATE_TRUNC('day', event_time)) AS total_volume
+    FROM {{ ref('stg_prices') }}
+)
+
+SELECT DISTINCT symbol, date, open_price, high_price, low_price, close_price, total_volume
+FROM prices
+```
+
+**`market_sentiment.sql`** — aggregates sentiment scores per hour from news data:
+```sql
+{{ config(materialized='table') }}
+
+SELECT
+    DATE_TRUNC('hour', published_at) AS sentiment_hour,
+    AVG(sentiment_score)             AS avg_sentiment,
+    COUNT(*)                         AS article_count,
+    SUM(CASE WHEN sentiment_label = 'positive' THEN 1 ELSE 0 END) AS positive_count,
+    SUM(CASE WHEN sentiment_label = 'negative' THEN 1 ELSE 0 END) AS negative_count
+FROM {{ ref('stg_news') }}
+GROUP BY DATE_TRUNC('hour', published_at)
+```
+
+> Note: `market_sentiment.sql` depends on news sentiment data populated by Ahmed's FinBERT model. Currently the model has no input data because `producer_news.py` has not been implemented.
+
+---
+
+### Task 2.3 — Data Quality Tests [COMPLETE]
+
+**File:** `processing/dbt/tests/assert_low_price_less_than_high_price.sql`
+
+A custom singular test that asserts data integrity — `low_price` must always be less than or equal to `high_price` in `daily_market_summary`. dbt will flag any failing rows as a test failure.
+
+- [x] Custom test for `low_price <= high_price` written and committed
+- [ ] Additional tests still needed:
+  - Assert `total_volume > 0`
+  - Assert no duplicate `(symbol, date)` combinations in `daily_market_summary`
+
+---
+
+### Task 2.4 — Model Documentation [PARTIAL]
+
+**Files:** `processing/dbt/models/gold/schema.yml`
+
+- [x] `schema.yml` created with column descriptions for Gold models
+- [ ] Run `dbt docs generate` to produce the interactive HTML documentation site
+- [ ] Host or share the docs output with the team
+
+---
+
+### Task 2.5 — Airflow Integration [NOT STARTED]
+
+**Coordinate with Yassin:**
+- [ ] Add a dbt task to `dags/etl_pipeline_dag.py`:
   ```python
-  from airflow.operators.bash import BashOperator
-  
-  run_dbt = BashOperator(
+  run_dbt_gold = BashOperator(
       task_id='run_dbt_gold_models',
       bash_command='cd /opt/dbt && dbt run --models gold.*',
   )
-  
-  # التسلسل: Bronze → Silver → dbt Gold
-  bronze_task >> silver_task >> run_dbt
+
+  # Chain: Silver historical → dbt Gold
+  process_historical_silver >> run_dbt_gold
   ```
 
 ---
 
-## 📋 ملخص الحالة
+## Summary Table
 
-| Task | الوصف | الحالة |
-|------|--------|--------|
-| 1.1 | schema.sql (PostgreSQL tables) | ✅ مكتمل |
-| 1.2 | إعداد dbt_project.yml | ✅ مكتمل |
-| 2.1 | Staging Models (stg_prices, stg_news) | ✅ مكتمل |
-| 2.2 | Gold Models (daily_summary, sentiment) | ✅ مكتمل |
-| 2.3 | اختبارات جودة البيانات | ✅ مكتمل |
-| 2.4 | توثيق النماذج | ⏳ قيد التنفيذ |
-| 2.5 | تكامل dbt مع Airflow DAG | ❌ لم يبدأ |
-
----
-
-## 📂 ما يجب رفعه على GitHub (Deliverables)
-
-Milestone 1 (Complete):
-- `backend/app/models/schema.sql` ✅
-- `processing/dbt/dbt_project.yml` ✅
-- `processing/dbt/.gitignore` ✅
-
-Milestone 2 (In Progress):
-- `processing/dbt/models/staging/sources.yml` ✅
-- `processing/dbt/models/gold/daily_market_summary.sql` ✅
-- `processing/dbt/models/staging/stg_prices.sql` ✅
-- `processing/dbt/models/staging/stg_news.sql` ✅
-- `processing/dbt/models/staging/stg_social.sql` ✅
-- `processing/dbt/models/gold/market_sentiment.sql` ✅
-- `processing/dbt/models/gold/schema.yml` ✅
-- `processing/dbt/tests/assert_low_price_less_than_high_price.sql` ✅
-- تحديثات على `dags/etl_pipeline_dag.py`
-
-**❌ لا ترفع أبدًا:**
-- `profiles.yml` (يحتوي credentials)
-- `dbt_packages/` (مثل node_modules في npm)
-- `target/` (نتائج التشغيل المحلية)
+| Task | Description | Status |
+|------|-------------|--------|
+| 1.1 | PostgreSQL schema (users, watchlists, alerts, portfolios, refresh_tokens) | Complete |
+| 1.2 | dbt project setup and configuration | Complete |
+| 2.1 | Staging models (stg_prices, stg_news, stg_social, sources.yml) | Complete |
+| 2.2 | Gold models (daily_market_summary, market_sentiment) | Complete |
+| 2.3 | Data quality tests | Partial (custom test written; schema tests pending) |
+| 2.4 | Model documentation | Partial (schema.yml written; dbt docs generate not run) |
+| 2.5 | dbt integration with Airflow DAG | Not started |
 
 ---
 
-## 🔧 التبعيات والاعتمادات
+## Deliverables
 
-| يعتمد على | من | لماذا |
-|-----------|-----|--------|
-| Silver Layer جاهز | ياسين | كريم لا يستطيع البدء بدون بيانات Silver |
-| Sentiment scores | أحمد | مطلوب لبناء `gold/market_sentiment.sql` |
-| Gold Layer جاهز | كريم نفسه | مصطفى يحتاجها لبناء Data Endpoints في الـ API |
-| Azure credentials | عمرو | للاتصال بـ ADLS Gen2 من dbt |
+**Milestone 1 (complete):**
+- `backend/app/models/schema.sql`
+- `processing/dbt/dbt_project.yml`
+- `processing/dbt/.gitignore`
+
+**Milestone 2 (mostly complete):**
+- `processing/dbt/models/staging/sources.yml`
+- `processing/dbt/models/staging/stg_prices.sql`
+- `processing/dbt/models/staging/stg_news.sql`
+- `processing/dbt/models/staging/stg_social.sql`
+- `processing/dbt/models/gold/daily_market_summary.sql`
+- `processing/dbt/models/gold/market_sentiment.sql`
+- `processing/dbt/models/gold/schema.yml`
+- `processing/dbt/tests/assert_low_price_less_than_high_price.sql`
+
+**Do not commit:**
+- `profiles.yml` — contains database credentials
+- `dbt_packages/` — equivalent to node_modules, auto-installed
+- `target/` — local build artifacts
 
 ---
 
-## 📚 مصادر مفيدة
+## Dependencies
 
-| المورد | الرابط |
-|--------|--------|
+| Depends on | From | Why |
+|-----------|------|-----|
+| Silver layer ready | Yassin | dbt cannot run without Silver data as input |
+| Sentiment scores | Ahmed | Required to populate `gold/market_sentiment.sql` |
+| Gold layer ready | Karim (self) | Mostafa needs it to build the data API endpoints |
+| Azure credentials | Amr | To connect dbt to ADLS Gen2 |
+
+---
+
+## Reference Links
+
+| Resource | URL |
+|----------|-----|
 | dbt Documentation | https://docs.getdbt.com |
-| dbt-spark Adapter | https://docs.getdbt.com/docs/core/connect-data-platform/spark-setup |
+| dbt Spark Adapter | https://docs.getdbt.com/docs/core/connect-data-platform/spark-setup |
 | dbt Best Practices | https://docs.getdbt.com/guides/best-practices |
 | Medallion Architecture | https://www.databricks.com/glossary/medallion-architecture |
