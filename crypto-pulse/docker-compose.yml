@@ -87,6 +87,7 @@ services:
       - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
       AIRFLOW__WEBSERVER__RBAC: 'True'
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
@@ -114,6 +115,7 @@ services:
       - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
       _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
     command: scheduler
@@ -140,6 +142,7 @@ services:
     environment:
       SPARK_MASTER_HOST: spark-master
       SPARK_MASTER_PORT: 7077
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     ports:
       - "7077:7077"
@@ -161,6 +164,7 @@ services:
     environment:
       SPARK_WORKER_MEMORY: 4G
       SPARK_WORKER_CORES: 2
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     ports:
       - "8083:8081"
