@@ -2,9 +2,9 @@ version: 2
 
 sources:
   - name: silver
-    description: "Silver layer data (temporary from PostgreSQL for testing)"
     schema: public
     tables:
-      - name: bronze_historical_prices
-      - name: bronze_news
-      - name: bronze_social
+      - name: historical
+      - name: prices
+      - name: news
+      - name: social
