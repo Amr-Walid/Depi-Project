@@ -1,30 +1,18 @@
 {{ config(materialized='table') }}
 
-WITH prices AS (
+WITH historical_ohlcv AS (
     SELECT
         symbol,
-        DATE_TRUNC('day', event_time) AS date,
-        FIRST_VALUE(price) OVER (
-            PARTITION BY symbol, DATE_TRUNC('day', event_time)
-            ORDER BY event_time
-        ) AS open_price,
-        MAX(price) OVER (
-            PARTITION BY symbol, DATE_TRUNC('day', event_time)
-        ) AS high_price,
-        MIN(price) OVER (
-            PARTITION BY symbol, DATE_TRUNC('day', event_time)
-        ) AS low_price,
-        LAST_VALUE(price) OVER (
-            PARTITION BY symbol, DATE_TRUNC('day', event_time)
-            ORDER BY event_time
-        ) AS close_price,
-        SUM(volume) OVER (
-            PARTITION BY symbol, DATE_TRUNC('day', event_time)
-        ) AS total_volume
-    FROM {{ ref('stg_prices') }}
+        date,
+        open_price,
+        high_price,
+        low_price,
+        close_price,
+        total_volume
+    FROM {{ ref('gold_daily_ohlcv') }}
 )
 
-SELECT DISTINCT
+SELECT
     symbol,
     date,
     open_price,
@@ -32,4 +20,5 @@ SELECT DISTINCT
     low_price,
     close_price,
     total_volume
-FROM prices
+FROM historical_ohlcv
+ORDER BY symbol, date DESC
