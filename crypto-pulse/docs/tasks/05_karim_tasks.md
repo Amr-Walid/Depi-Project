@@ -156,7 +156,7 @@ FROM {{ ref('stg_news') }}
 GROUP BY DATE_TRUNC('hour', published_at)
 ```
 
-> Note: `market_sentiment.sql` depends on news sentiment data populated by Ahmed's FinBERT model. Currently the model has no input data because `producer_news.py` has not been implemented.
+> ✅ **Update (May 2026):** `market_sentiment.sql` now has data to work with. The `producer_news.py` and `producer_social_rss.py` are both operational and data has been confirmed in `silver/news` and `silver/social` on ADLS Gen2. The keyword-based logic in `market_sentiment.sql` is a placeholder — FinBERT scores (Ahmed's task) will replace the `positive_count`/`negative_count` logic once implemented.
 
 ---
 

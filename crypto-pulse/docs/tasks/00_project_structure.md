@@ -1,6 +1,6 @@
 # 🏗️ CryptoPulse — هيكل المشروع الكامل
 
-> **آخر تحديث:** أبريل 2026  
+> **آخر تحديث:** مايو 2026  
 > **الفريق:** عمرو (Lead) · ياسين (Spark) · مصطفى (Backend/Docker) · أحمد (ML/Analyst) · كريم (dbt/Analytics)
 
 ---
@@ -26,22 +26,29 @@ crypto-pulse/
 │   ├── 📁 producers/
 │   │   ├── 📄 producer_binance.py      ← بيانات أسعار لحظية من Binance [عمرو] ✅
 │   │   ├── 📄 producer_coingecko.py    ← بيانات سوق من CoinGecko [عمرو] ✅
-│   │   └── 📄 producer_news.py         ← أخبار العملات من NewsAPI [أحمد] ⏳
+│   │   ├── 📄 producer_news.py         ← أخبار العملات من NewsAPI [أحمد/عمرو] ✅
+│   │   └── 📄 producer_social_rss.py   ← مقالات رأي من RSS Feeds [أحمد/عمرو] ✅
 │   └── 📁 historical/
 │       └── 📄 historical_fetcher.py    ← جلب بيانات تاريخية من Binance [عمرو] ✅
 │
 ├── 📁 processing/
 │   ├── 📁 spark_jobs/
-│   │   ├── 📄 bronze_consumer.py           ← Spark Streaming → Bronze [ياسين] ✅
+│   │   ├── 📄 bronze_consumer.py           ← Spark Streaming → Bronze/prices [ياسين] ✅
+│   │   ├── 📄 bronze_news_consumer.py      ← Spark Streaming → Bronze/news [عمرو] ✅
+│   │   ├── 📄 bronze_social_consumer.py    ← Spark Streaming → Bronze/social [عمرو] ✅
 │   │   ├── 📄 silver_prices_processor.py   ← Streaming → Silver Prices [ياسين] ✅
 │   │   ├── 📄 silver_historical_processor.py ← Batch → Silver Historical [ياسين] ✅
+│   │   ├── 📄 silver_news_processor.py     ← Batch → Silver News [عمرو] ✅
+│   │   ├── 📄 silver_social_processor.py   ← Batch → Silver Social [عمرو] ✅
 │   │   ├── 📄 historical_loader.py         ← تحميل البيانات التاريخية → Bronze [ياسين] ✅
 │   │   ├── 📄 sync_historical_pg.py        ← Sync Historical ADLS → Postgres [عمرو] ✅
-│   │   └── 📄 sync_prices_pg.py            ← Sync Prices ADLS → Postgres [عمرو] ✅
+│   │   ├── 📄 sync_prices_pg.py            ← Sync Prices ADLS → Postgres [عمرو] ✅
+│   │   ├── 📄 sync_news_pg.py              ← Sync News ADLS → Postgres [عمرو] ✅
+│   │   └── 📄 sync_social_pg.py            ← Sync Social ADLS → Postgres [عمرو] ✅
 │   └── 📁 dbt/                     ← تحويلات الطبقة الذهبية
 │       ├── 📄 dbt_project.yml          ← إعدادات مشروع dbt [كريم] ✅
-│       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ⏳
-│       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ❌
+│       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ✅
+│       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ⏳
 │
 ├── 📁 dags/
 │   ├── 📄 dag_historical_daily.py      ← DAG يومي للبيانات التاريخية [عمرو] ✅
@@ -51,19 +58,19 @@ crypto-pulse/
 │   ├── 📁 app/
 │   │   ├── 📄 main.py                  ← نقطة دخول FastAPI [مصطفى] ✅
 │   │   ├── 📄 __init__.py
-│   │   ├── 📁 routers/                 ← API Endpoints [مصطفى] ❌
+│   │   ├── 📁 routers/                 ← API Endpoints [مصطفى] ✅
 │   │   ├── 📁 models/
 │   │   │   └── 📄 schema.sql           ← مخطط قاعدة البيانات [كريم] ✅
-│   │   └── 📁 services/                ← منطق الأعمال [مصطفى] ❌
-│   └── 📁 tests/                   ← اختبارات API [مصطفى] ❌
+│   │   └── 📁 services/                ← منطق الأعمال [مصطفى] ✅
+│   └── 📁 tests/                   ← اختبارات API [مصطفى] ✅
 │
 ├── 📁 spark-apps/                  ← بيئة Spark Docker
 │   ├── 📄 Dockerfile.spark             ← صورة Docker لـ Spark [مصطفى] ✅
 │   └── 📄 bronze_consumer.py           ← نسخة تشغيل داخل Container [ياسين] ✅
 │
-├── 📁 ml/                          ← نماذج الذكاء الاصطناعي [أحمد] ❌
+├── 📁 ml/                          ← نماذج الذكاء الاصطناعي [أحمد] ❌ (FinBERT لم يُطبق)
 ├── 📁 notebooks/
-│   ├── 📄 01-data-exploration.ipynb    ← تحليل استكشافي للبيانات [أحمد] ⏳
+│   ├── 📄 01-data-exploration.ipynb    ← تحليل استكشافي للبيانات [أحمد] ❌
 │   ├── 📄 02-model-training.ipynb      ← تدريب نماذج ML [أحمد] ❌
 │   └── 📄 03-poc-dashboard.ipynb       ← لوحة معلومات تجريبية [أحمد] ❌
 │
@@ -109,29 +116,29 @@ crypto-pulse/
 Binance API ──────────────────────────────────────────┐
 CoinGecko API ─────────────────────────────────────── ┤
 NewsAPI ────────────────────────────────────────────── ┤─► Kafka Topics
-Reddit API ────────────────────────────────────────── ┘
+RSS Feeds (CoinTelegraph, NewsBTC) ─────────────────── ┘
                                                         │
                                                         ▼
                                               Spark Structured Streaming
                                                         │
                                                         ▼
-                                              Bronze Layer (ADLS Gen2)
-                                              /bronze/prices/ | /news/ | /social/
+                                              Bronze Layer (ADLS Gen2) ✅
+                                              /bronze/prices/ | /news/ | /social/ | /historical/
                                                         │
                                                         ▼
-                                              Silver Layer (Spark Batch)
-                                              /silver/prices/ | /news/ | /social/
+                                              Silver Layer (Spark Batch) ✅
+                                              /silver/prices/ | /news/ | /social/ | /historical/
                                                         │
                                                         ▼
-                                              Gold Layer (dbt models)
-                                              /gold/coin_summary/ | /sentiment/
+                                              Gold Layer (dbt models) ⏳
+                                              /gold/daily_summary/ | /sentiment/ | /latest_prices/
                                                         │
                                                         ▼
-                                              FastAPI Backend
+                                              FastAPI Backend ✅
                                               /api/v1/coins/ | /auth/ | /prices/
                                                         │
                                                         ▼
-                                              Frontend Dashboard
+                                              Frontend Dashboard ❌
 ```
 
 ---
@@ -141,7 +148,7 @@ Reddit API ───────────────────────
 | المورد | الاسم | المستخدم |
 |--------|-------|----------|
 | Resource Group | rg-cryptopulse-dev | الكل |
-| Storage Account (ADLS Gen2) | stcryptopulsedev | الكل |
+| Storage Account (ADLS Gen2) | stcryptopulsedev2 | الكل |
 | Container | datalake | الكل |
 | Service Principal | sp-cryptopulse | عمرو (يوفره للفريق) |
 
