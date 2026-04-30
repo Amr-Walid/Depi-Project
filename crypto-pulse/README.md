@@ -65,7 +65,7 @@ Three specialized Python agents in `ingestion/` power the Bronze layer:
 ### 📰 The News Watcher (`ingestion/producers/producer_news.py`)
 > *"Tracks what the world is saying about crypto."*
 
-- **Status:** ❌ Not Started (Ahmed Ayman)
+- **Status:** ✅ Complete (Ahmed Ayman)
 - **Goal:** Fetch news headlines and sentiment data from NewsAPI → Kafka topic: `crypto.news`
 
 ---
@@ -297,7 +297,7 @@ Crypto-Pulse is proudly developed as a capstone project for the **DEPI (Digital 
 | 🧑‍💻 **Yassin Mahmoud** | DataOps & Spark Engineer | ✅ Milestone 1 Complete |
 | 🧑‍💻 **Mostafa Matar** | Backend Engineer & Docker Owner | ✅ Milestone 1 Complete |
 | 🧑‍💻 **Karim Ahmed** | Analytics Engineer (dbt & PostgreSQL) | 🚧 Schema ✅ · dbt Setup ⏳ |
-| 🧑‍💻 **Ahmed Ayman** | Data Analyst & ML Engineer | ❌ Not Started |
+| 🧑‍💻 **Ahmed Ayman** | Data Analyst & ML Engineer | ✅ Complete |
 
 ---
 
