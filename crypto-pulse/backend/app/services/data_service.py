@@ -1,15 +1,11 @@
-"""
-Data service — provides coin data, market overview, and price history.
-
-Currently returns structured mock data that matches the exact schema
-the Gold Layer (dbt) will produce. When Gold Layer is ready, only the
-internals of these functions need to change — the API contract stays the same.
-"""
 import random
 from datetime import datetime, timedelta, timezone
 from typing import List, Optional
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 
 from app.config import SUPPORTED_COINS
+from app.database import get_db
 
 
 # ──────────────────────────────────────────────

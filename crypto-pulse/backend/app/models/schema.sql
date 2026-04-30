@@ -1,3 +1,6 @@
+CREATE SCHEMA IF NOT EXISTS silver;
+CREATE SCHEMA IF NOT EXISTS gold;
+
 CREATE TABLE users (
     id SERIAL PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
@@ -50,6 +53,31 @@ CREATE TABLE user_sessions (
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Silver tables for News & Social (populated by Spark sync jobs)
+CREATE TABLE IF NOT EXISTS silver.news (
+    source VARCHAR(255),
+    title TEXT,
+    description TEXT,
+    url TEXT,
+    published_at TIMESTAMP,
+    content TEXT,
+    ingested_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE TABLE IF NOT EXISTS silver.social (
+    subreddit VARCHAR(100),
+    post_id VARCHAR(50),
+    title TEXT,
+    text TEXT,
+    score INTEGER,
+    num_comments INTEGER,
+    created_utc BIGINT,
+    created_at TIMESTAMP,
+    url TEXT,
+    type VARCHAR(20),
+    ingested_at TIMESTAMP DEFAULT NOW()
+);
+
 -- Performance Indexes
 CREATE INDEX idx_watchlists_user_id ON watchlists(user_id);
 CREATE INDEX idx_watchlists_symbol ON watchlists(symbol);
@@ -63,3 +91,6 @@ CREATE INDEX idx_portfolios_symbol ON portfolios(symbol);
 
 CREATE INDEX idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
+
+CREATE INDEX idx_news_published_at ON silver.news(published_at);
+CREATE INDEX idx_social_created_at ON silver.social(created_at);

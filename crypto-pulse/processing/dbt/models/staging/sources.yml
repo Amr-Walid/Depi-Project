@@ -1,10 +1,28 @@
 version: 2
 
 sources:
-  - name: silver
-    schema: public
+  - name: silver_historical
+    description: "Silver historical OHLCV data"
+    schema: silver
     tables:
       - name: historical
+        description: "Cleaned OHLCV candlestick data from Binance historical API"
+
+  - name: silver_prices
+    description: "Silver real-time streaming prices"
+    schema: silver
+    tables:
       - name: prices
+        description: "Real-time price ticks from Binance WebSocket via Kafka"
+
+  - name: silver_news
+    description: "Silver news data"
+    schema: silver
+    tables:
       - name: news
+
+  - name: silver_social
+    description: "Silver social media data"
+    schema: silver
+    tables:
       - name: social

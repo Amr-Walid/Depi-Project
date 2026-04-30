@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: daily_market_summary
-    description: "Daily market summary for each cryptocurrency"
+    description: "Daily market summary for each cryptocurrency combining historical and real-time streaming data"
     columns:
       - name: symbol
         tests:
@@ -23,6 +23,36 @@ models:
         tests:
           - not_null
       - name: total_volume
+        tests:
+          - not_null
+
+  - name: gold_daily_ohlcv
+    description: "Daily OHLCV generated from historical data"
+    columns:
+      - name: symbol
+        tests:
+          - not_null
+      - name: date
+        tests:
+          - not_null
+      - name: close_price
+      - name: open_price
+      - name: high_price
+      - name: low_price
+      - name: total_volume
+
+  - name: gold_latest_prices
+    description: "Latest prices from streaming real-time data"
+    columns:
+      - name: symbol
+        tests:
+          - not_null
+          - unique
+      - name: latest_price
+        tests:
+          - not_null
+      - name: latest_volume_24h
+      - name: last_updated
         tests:
           - not_null
 

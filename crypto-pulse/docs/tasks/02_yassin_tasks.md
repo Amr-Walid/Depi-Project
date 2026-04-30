@@ -39,18 +39,16 @@
 
 ---
 
-### Task 1.3 — Airflow DAG for Historical Pipeline [COMPLETE]
+### Task 1.3 — Airflow DAGs for Historical and Prices Pipelines [COMPLETE]
 
-**File:** `dags/etl_pipeline_dag.py`
+**Files:** 
+- `dags/dag_historical_daily.py`
+- `dags/dag_prices_frequent.py`
 
 **What was done:**
-- [x] Created DAG `crypto_pulse_etl_pipeline` running `@daily`
-- [x] Four tasks defined:
-  - `fetch_historical_data` — runs `historical_fetcher.py`
-  - `ingest_historical_to_bronze` — runs `historical_loader.py` via spark-submit
-  - `process_historical_to_silver` — runs `silver_historical_processor.py` via spark-submit
-  - `process_realtime_prices_to_silver` — runs `silver_prices_processor.py` independently
-- [x] Dependency chain: `fetch → ingest → process_historical`. Prices Silver runs independently in parallel.
+- [x] Created `dag_historical_daily` running `@daily` for the historical batch workload.
+- [x] Created `dag_prices_frequent` running every 5 minutes for micro-batch sync and dbt updates.
+- [x] Replaced the old monolithic `etl_pipeline_dag.py` to prevent streaming tasks from blocking batch DAGs.
 
 ---
 
@@ -108,7 +106,7 @@
 |------|-------------|--------|
 | 1.1 | Bronze Consumer — Kafka to Delta Streaming | Complete |
 | 1.2 | Historical Loader — JSON to Bronze (Batch) | Complete |
-| 1.3 | Airflow DAG — Historical + Prices pipeline | Complete |
+| 1.3 | Airflow DAGs — Decoupled Historical + Prices pipelines | Complete |
 | 2.1 | Silver Prices Processor — Real-time Streaming + Delta MERGE | Complete |
 | 2.2 | Silver Historical Processor — Batch | Complete |
 | 2.3 | Delta Lake format on all layers | Complete |
@@ -120,7 +118,8 @@
 **Milestone 1:**
 - `processing/spark_jobs/bronze_consumer.py`
 - `processing/spark_jobs/historical_loader.py`
-- `dags/etl_pipeline_dag.py`
+- `dags/dag_historical_daily.py`
+- `dags/dag_prices_frequent.py`
 - `spark-apps/Dockerfile.spark`
 
 **Milestone 2:**

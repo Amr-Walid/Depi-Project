@@ -116,6 +116,21 @@
 
 ---
 
+### Task 2.5 — Silver to PostgreSQL Sync Job [COMPLETE]
+
+**Files:**
+- `processing/spark_jobs/silver_to_postgres_sync.py`
+- `dags/etl_pipeline_dag.py`
+- `docker-compose.yml`
+- `backend/app/models/schema.sql`
+
+- [x] Created `silver_to_postgres_sync.py` to copy `silver/historical` and `silver/prices` from ADLS to PostgreSQL using PySpark and JDBC.
+- [x] Updated `schema.sql` to initialize `silver` and `gold` schemas.
+- [x] Updated `etl_pipeline_dag.py` to include the sync job and run `dbt run && dbt test` automatically afterwards.
+- [x] Updated `docker-compose.yml` to install `dbt-postgres` in the Airflow environment and mount the dbt project folder.
+
+---
+
 ## Summary Table
 
 | Task | Description | Status |
@@ -129,6 +144,7 @@
 | 2.2 | README.md full rewrite | Complete |
 | 2.3 | Integration testing (Streaming path) | Partial |
 | 2.4 | Final status report | Pending |
+| 2.5 | Silver to PostgreSQL Sync Job & DAG Update | Complete |
 
 ---
 

@@ -1,12 +1,15 @@
 {{ config(materialized='view') }}
 
 SELECT
+    subreddit,
+    post_id,
+    title,
     text,
-    platform,
-    author_id,
-    CAST(created_at AS TIMESTAMP) AS created_at,
-    likes,
-    shares,
+    score,
+    num_comments,
+    created_at,
+    url,
+    type,
     ingested_at
-FROM {{ source('silver', 'bronze_social') }}
-WHERE text IS NOT NULL
+FROM {{ source('silver', 'social') }}
+WHERE title IS NOT NULL OR text IS NOT NULL

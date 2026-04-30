@@ -26,6 +26,7 @@
 - [x] Defined `airflow-webserver` on port 8081 with volumes for `dags/`, `processing/spark_jobs/`, and `ingestion/`
 - [x] Defined `airflow-scheduler`
 - [x] Defined `spark-master` and `spark-worker` using the custom `crypto-pulse-spark:3.5.0` image
+- [x] Defined background streaming containers: `streaming-bronze-consumer` and `streaming-silver-processor` to run Spark structured streaming continuously without blocking Airflow
 - [x] Defined `backend` FastAPI container on port 8000
 - [x] Configured shared bridge network `crypto-net` for all services
 - [x] All containers that need Azure credentials receive them via `env_file: .env`

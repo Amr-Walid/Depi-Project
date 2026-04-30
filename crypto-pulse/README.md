@@ -369,30 +369,38 @@ PostgreSQL tables: `users`, `refresh_tokens`, `watchlists`, `alerts`, `portfolio
 
 ## 8. Orchestration (Airflow)
 
-**File:** `dags/etl_pipeline_dag.py`  
-**DAG ID:** `crypto_pulse_etl_pipeline`  
-**Schedule:** `@daily`
+The orchestration is split into two independent DAGs to separate batch processing from frequent micro-batch updates. **Note:** The continuous streaming jobs (`bronze_consumer.py` and `silver_prices_processor.py`) run as standalone background Docker containers and are not managed by Airflow.
 
-The DAG orchestrates the **batch pipeline** (historical data). It does not manage the real-time streaming jobs — those run as persistent services.
+### DAG 1: `dag_historical_daily`
+**Schedule:** `@daily`  
+Orchestrates the historical batch pipeline.
 
-```
+```text
 fetch_historical_data
         │
         ▼
-ingest_historical_to_bronze          process_realtime_prices_to_silver
-        │                            (runs independently in parallel)
+ingest_historical_to_bronze
+        │
         ▼
 process_historical_to_silver
+        │
+        ▼
+sync_historical_to_postgres
+        │
+        ▼
+run_dbt_historical
 ```
 
-| Task ID | Command | Description |
-|---------|---------|-------------|
-| `fetch_historical_data` | `python3 historical_fetcher.py` | Downloads raw OHLCV JSON files |
-| `ingest_historical_to_bronze` | `spark-submit historical_loader.py` | Loads JSON into Bronze Delta table |
-| `process_historical_to_silver` | `spark-submit silver_historical_processor.py` | Cleans Bronze into Silver |
-| `process_realtime_prices_to_silver` | `spark-submit silver_prices_processor.py` | Runs the streaming processor as a one-time daily catch-up (independent of the chain) |
+### DAG 2: `dag_prices_frequent`
+**Schedule:** Every 5 minutes  
+Orchestrates the near real-time synchronization and modeling for live prices.
 
-All Spark commands use `spark://spark-master:7077` as the master URL and include Delta Lake packages.
+```text
+sync_prices_to_postgres
+        │
+        ▼
+run_dbt_prices
+```
 
 ---
 
@@ -411,6 +419,8 @@ All services communicate over a shared Docker bridge network named `crypto-net`.
 | `airflow-scheduler` | `apache/airflow:2.7.3` | — | DAG execution engine |
 | `spark-master` | `crypto-pulse-spark:3.5.0` (custom) | 7077, 8082 | Spark cluster master |
 | `spark-worker` | `crypto-pulse-spark:3.5.0` (custom) | 8083 | Spark executor (2 cores, 4GB RAM) |
+| `streaming-bronze-consumer` | `crypto-pulse-spark:3.5.0` (custom) | — | Runs Kafka → Bronze stream continuously |
+| `streaming-silver-processor`| `crypto-pulse-spark:3.5.0` (custom) | — | Runs Bronze → Silver Upsert continuously |
 | `backend` | Custom (from `backend/Dockerfile`) | 8000 | FastAPI REST API |
 
 **Kafka topic auto-creation:** The `kafka-init-topics` container runs once on startup and creates: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`.

@@ -183,18 +183,22 @@ A custom singular test that asserts data integrity — `low_price` must always b
 
 ---
 
-### Task 2.5 — Airflow Integration [NOT STARTED]
+### Task 2.5 — Airflow Integration [COMPLETE]
 
-**Coordinate with Yassin:**
-- [ ] Add a dbt task to `dags/etl_pipeline_dag.py`:
+**Coordinated with Yassin & Amr:**
+- [x] Added a dbt task to `dags/dag_historical_daily.py`:
   ```python
-  run_dbt_gold = BashOperator(
-      task_id='run_dbt_gold_models',
-      bash_command='cd /opt/dbt && dbt run --models gold.*',
+  run_dbt_historical = BashOperator(
+      task_id='run_dbt_historical',
+      bash_command='cd /opt/airflow/dbt && dbt run --select gold_daily_ohlcv daily_market_summary && dbt test',
   )
-
-  # Chain: Silver historical → dbt Gold
-  process_historical_silver >> run_dbt_gold
+  ```
+- [x] Added a dbt task to `dags/dag_prices_frequent.py`:
+  ```python
+  run_dbt_prices = BashOperator(
+      task_id='run_dbt_prices',
+      bash_command='cd /opt/airflow/dbt && dbt run --select gold_latest_prices daily_market_summary',
+  )
   ```
 
 ---
@@ -209,7 +213,7 @@ A custom singular test that asserts data integrity — `low_price` must always b
 | 2.2 | Gold models (daily_market_summary, market_sentiment) | Complete |
 | 2.3 | Data quality tests | Partial (custom test written; schema tests pending) |
 | 2.4 | Model documentation | Partial (schema.yml written; dbt docs generate not run) |
-| 2.5 | dbt integration with Airflow DAG | Not started |
+| 2.5 | dbt integration with Airflow DAGs | Complete |
 
 ---
 

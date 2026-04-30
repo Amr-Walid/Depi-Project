@@ -3,8 +3,10 @@
 SELECT
     title,
     source,
-    CAST(published_at AS TIMESTAMP) AS published_at,
+    description,
+    published_at,
     url,
+    content,
     ingested_at
-FROM {{ source('silver', 'bronze_news') }}
+FROM {{ source('silver', 'news') }}
 WHERE title IS NOT NULL

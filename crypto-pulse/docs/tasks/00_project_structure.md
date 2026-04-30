@@ -32,16 +32,20 @@ crypto-pulse/
 │
 ├── 📁 processing/
 │   ├── 📁 spark_jobs/
-│   │   ├── 📄 bronze_consumer.py       ← Spark Streaming → Bronze Layer [ياسين] ✅
-│   │   ├── 📄 silver_processor.py      ← Spark Batch → Silver Layer [ياسين] ⏳
-│   │   └── 📄 historical_loader.py     ← تحميل البيانات التاريخية → Bronze [ياسين] ✅
+│   │   ├── 📄 bronze_consumer.py           ← Spark Streaming → Bronze [ياسين] ✅
+│   │   ├── 📄 silver_prices_processor.py   ← Streaming → Silver Prices [ياسين] ✅
+│   │   ├── 📄 silver_historical_processor.py ← Batch → Silver Historical [ياسين] ✅
+│   │   ├── 📄 historical_loader.py         ← تحميل البيانات التاريخية → Bronze [ياسين] ✅
+│   │   ├── 📄 sync_historical_pg.py        ← Sync Historical ADLS → Postgres [عمرو] ✅
+│   │   └── 📄 sync_prices_pg.py            ← Sync Prices ADLS → Postgres [عمرو] ✅
 │   └── 📁 dbt/                     ← تحويلات الطبقة الذهبية
 │       ├── 📄 dbt_project.yml          ← إعدادات مشروع dbt [كريم] ✅
 │       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ⏳
 │       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ❌
 │
 ├── 📁 dags/
-│   └── 📄 etl_pipeline_dag.py      ← DAG الرئيسي لـ Airflow [ياسين] ✅
+│   ├── 📄 dag_historical_daily.py      ← DAG يومي للبيانات التاريخية [عمرو] ✅
+│   └── 📄 dag_prices_frequent.py       ← DAG متكرر للبيانات اللحظية [عمرو] ✅
 │
 ├── 📁 backend/
 │   ├── 📁 app/
@@ -155,4 +159,6 @@ Reddit API ───────────────────────
 | airflow-scheduler | — | Scheduler لتشغيل DAGs |
 | spark-master | 7077 / 8082 | Spark Master Node |
 | spark-worker | 8083 | Spark Worker Node |
+| streaming-bronze-consumer | — | يقرأ من Kafka للـ Bronze بشكل مستمر |
+| streaming-silver-processor | — | يقرأ من Bronze للـ Silver بشكل مستمر |
 | backend | 8000 | FastAPI Application |
