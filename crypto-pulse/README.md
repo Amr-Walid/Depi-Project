@@ -101,7 +101,8 @@ crypto-pulse/
 │   ├── producers/
 │   │   ├── producer_binance.py        Live WebSocket price stream → Kafka
 │   │   ├── producer_coingecko.py      Periodic market data polling → Kafka
-│   │   └── producer_news.py           News headlines → Kafka (pending)
+│   │   ├── producer_news.py           News headlines via NewsAPI → Kafka
+│   │   └── producer_social_rss.py     Social sentiment via RSS (CoinTelegraph, etc.) → Kafka
 │   └── historical/
 │       └── historical_fetcher.py      Batch OHLCV download → data/historical/
 │
@@ -213,11 +214,11 @@ Polls the CoinGecko REST API every 60 seconds using the `schedule` library to re
 
 Downloads multi-year OHLCV (Open, High, Low, Close, Volume) candlestick data for 20 cryptocurrencies starting from January 2021. Uses `ThreadPoolExecutor` with 5 parallel workers for concurrent downloads and includes retry logic for rate-limited requests. Output: raw JSON arrays saved to `data/historical/<SYMBOL>_raw_klines.json`. No transformation is applied at this stage — schema-on-read.
 
-### `ingestion/producers/producer_news.py`
+### `ingestion/producers/producer_news.py` & `producer_social_rss.py`
 
-**Status:** Pending (Ahmed Ayman)
+**Status:** Complete
 
-Intended to fetch news headlines from a news API and publish them to `crypto.news` for sentiment analysis downstream.
+Fetches global cryptocurrency news headlines from NewsAPI and specialized crypto publications via RSS feeds (e.g., CoinTelegraph, NewsBTC, Bitcoin.com). Data is continuously published to the `crypto.news` and `crypto.social` Kafka topics for downstream sentiment analysis using FinBERT.
 
 ---
 
@@ -257,6 +258,12 @@ Columns written:
 
 Reads all raw JSON files from `data/historical/`, parses the OHLCV arrays, adds `symbol` and `ingested_at` metadata columns, and writes them in Delta format to `bronze/historical` on ADLS Gen2.
 
+### `processing/spark_jobs/bronze_news_consumer.py` & `bronze_social_consumer.py`
+
+**Type:** Spark Structured Streaming
+
+Reads from `crypto.news` and `crypto.social` topics. Casts payloads matching the specific schema of NewsAPI and RSS sources, adding ingestion timestamps, and writing to ADLS Gen2 `bronze/news` and `bronze/social` respectively using the Delta format. Uses Azure OAuth2 client credentials injected into the Spark Session builder.
+
 ---
 
 ## 5. Layer 3 — Silver Layer
@@ -291,6 +298,12 @@ The Merge strategy prevents any duplicates from appearing in Silver even if the 
 **Type:** Spark Batch Job
 
 Reads from `bronze/historical`, applies the same cleaning rules (type casting, null filtering, deduplication) and writes the output to `silver/historical` partitioned by symbol and date.
+
+### `processing/spark_jobs/silver_news_processor.py` & `silver_social_processor.py`
+
+**Type:** Spark Batch/Streaming
+
+Reads from the respective `bronze/` directories, normalizes the deeply nested schemas, standardizes string representations of `published_at` to proper UTC `TimestampType`, and applies deduplication filters. Saves cleanly into `silver/news` and `silver/social`.
 
 ---
 
@@ -453,6 +466,7 @@ AZURE_CLIENT_SECRET=<your-service-principal-secret>
 AZURE_TENANT_ID=<your-tenant-id>
 AZURE_STORAGE_ACCOUNT_NAME=stcryptopulsedev2
 AZURE_STORAGE_CONTAINER_NAME=datalake
+NEWS_API_KEY=<your-newsapi-key>
 
 # Kafka
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092           # Use this for the host-side Python producer
@@ -565,11 +579,11 @@ make restart   # Restart everything
 
 | Name | Role | Responsibilities |
 |------|------|-----------------|
-| **Amr Walid** | Team Lead & Lead Data Engineer | Azure infrastructure, ingestion scripts, Kafka producers, integration testing, orchestration |
+| **Amr Walid** | Team Lead & Lead Data Engineer | Azure infrastructure, ingestion scripts, Kafka producers, orchestration, News/Social integration |
 | **Yassin Mahmoud** | DataOps & Spark Engineer | Bronze consumer, Silver streaming processor, historical batch jobs, Airflow DAG |
 | **Mostafa Matar** | Backend Engineer & Docker Owner | FastAPI backend, JWT auth, PostgreSQL schema, Docker Compose, CI/CD |
 | **Karim Ahmed** | Analytics Engineer | dbt project setup, staging models, gold aggregations, data tests |
-| **Ahmed Ayman** | Data Analyst & ML Engineer | News producer, sentiment analysis (FinBERT), ML notebooks |
+| **Ahmed Ayman** | Data Analyst & ML Engineer | Sentiment analysis (FinBERT), ML notebooks |
 
 ---
 
