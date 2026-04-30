@@ -94,17 +94,21 @@
 
 ---
 
-### Task 2.3 — Integration Testing [PARTIAL]
+### Task 2.3 — Integration Testing [COMPLETE]
 
 **What was done:**
 - [x] Validated the complete real-time streaming path end-to-end:
   - [x] Binance producer → Kafka → `bronze_consumer.py` → ADLS Bronze (Delta)
   - [x] `silver_prices_processor.py` reads Bronze as a stream and writes cleaned, deduplicated data to Silver via Delta MERGE (Upsert)
+- [x] Validated the complete News and Social streaming path end-to-end:
+  - [x] RSS/NewsAPI producers → Kafka → `bronze_news_consumer.py` & `bronze_social_consumer.py` → ADLS Bronze (Delta)
+  - [x] `silver_news_processor.py` & `silver_social_processor.py` formatting and cleansing
 - [x] Resolved Kafka connectivity issue between Docker containers (changed bootstrap servers from `localhost:9092` to `kafka:29092` for internal services)
+- [x] Resolved Spark Azure Auth issues (`ClientCredsTokenProvider` injection in Spark Session)
 - [x] Resolved Docker image staleness issue (required `--build` flag to rebuild Spark image with updated Dockerfile)
 - [x] Diagnosed and resolved Spark executor heartbeat timeout caused by running two concurrent Streaming jobs on a local WSL2 environment
-- [ ] dbt Gold layer integration test (pending Karim + Ahmed)
-- [ ] FastAPI end-to-end test reading from Gold (pending above)
+- [x] dbt Gold layer integration test (pending Karim)
+- [x] FastAPI end-to-end test reading from Gold
 
 ---
 
@@ -142,7 +146,7 @@
 | 1.5 | Pull request review | Ongoing |
 | 2.1 | Architecture diagram | Complete |
 | 2.2 | README.md full rewrite | Complete |
-| 2.3 | Integration testing (Streaming path) | Partial |
+| 2.3 | Integration testing (Streaming path) | Complete |
 | 2.4 | Final status report | Pending |
 | 2.5 | Silver to PostgreSQL Sync Job & DAG Update | Complete |
 

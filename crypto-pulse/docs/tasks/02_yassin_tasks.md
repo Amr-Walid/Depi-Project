@@ -107,9 +107,11 @@
 | 1.1 | Bronze Consumer — Kafka to Delta Streaming | Complete |
 | 1.2 | Historical Loader — JSON to Bronze (Batch) | Complete |
 | 1.3 | Airflow DAGs — Decoupled Historical + Prices pipelines | Complete |
+| 1.4 | Bronze News & Social Consumers — Kafka to Delta | Complete |
 | 2.1 | Silver Prices Processor — Real-time Streaming + Delta MERGE | Complete |
 | 2.2 | Silver Historical Processor — Batch | Complete |
 | 2.3 | Delta Lake format on all layers | Complete |
+| 2.4 | Silver News & Social Processors — Cleansing & formatting | Complete |
 
 ---
 
@@ -118,6 +120,8 @@
 **Milestone 1:**
 - `processing/spark_jobs/bronze_consumer.py`
 - `processing/spark_jobs/historical_loader.py`
+- `processing/spark_jobs/bronze_news_consumer.py`
+- `processing/spark_jobs/bronze_social_consumer.py`
 - `dags/dag_historical_daily.py`
 - `dags/dag_prices_frequent.py`
 - `spark-apps/Dockerfile.spark`
@@ -125,6 +129,8 @@
 **Milestone 2:**
 - `processing/spark_jobs/silver_prices_processor.py` (Streaming + Delta MERGE)
 - `processing/spark_jobs/silver_historical_processor.py` (Batch)
+- `processing/spark_jobs/silver_news_processor.py`
+- `processing/spark_jobs/silver_social_processor.py`
 
 ---
 

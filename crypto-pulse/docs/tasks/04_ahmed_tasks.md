@@ -3,7 +3,7 @@
 **Role:** Data Analyst + AI/ML Engineer  
 **Core Responsibility:** Enrich the pipeline with news and social sentiment data, and build intelligent models that differentiate the project.
 
-> **CRITICAL:** As of April 2026, zero tasks have been started. `producer_news.py` is a completely empty file. The entire news and sentiment branch of the pipeline is blocked.
+> **UPDATE (May 2026):** The Data Engineering tasks (NewsAPI and RSS Social producers) have been successfully implemented and integrated into the pipeline. Ahmed's remaining responsibilities focus purely on the FinBERT Sentiment ML integration and Jupyter notebooks.
 
 ---
 
@@ -13,15 +13,15 @@
 
 ---
 
-### Task 1.1 — News Producer [NOT STARTED]
+### Task 1.1 — News Producer [COMPLETE]
 
-**File:** `ingestion/producers/producer_news.py` — currently empty
+**File:** `ingestion/producers/producer_news.py`
 
-**What needs to be done:**
-- [ ] Connect to NewsAPI (add `NEWS_API_KEY` to `.env`)
-- [ ] Search for keywords: `"bitcoin"`, `"ethereum"`, `"crypto"`, `"cryptocurrency"`
-- [ ] Fetch new articles every 15 minutes using the `schedule` library
-- [ ] Send each article as a JSON message to Kafka topic: `crypto.news`
+**What was done:**
+- [x] Connected to NewsAPI using `NEWS_API_KEY`
+- [x] Searches for keywords: `"bitcoin"`, `"ethereum"`, `"crypto"`, `"cryptocurrency"`
+- [x] Fetches new articles every 15 minutes using the `schedule` library
+- [x] Sends each article as a JSON message to Kafka topic: `crypto.news`
 
 **Expected message format:**
 ```json
@@ -54,16 +54,16 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### Task 1.2 — Reddit Social Producer [NOT STARTED]
+### Task 1.2 — RSS Social Producer [COMPLETE]
 
-**File to create:** `ingestion/producers/producer_reddit.py`
+**File:** `ingestion/producers/producer_social_rss.py`
 
-Reddit is used instead of Twitter because Twitter's API is now paid. Reddit has a large, active crypto community and a free API.
+Reddit API was replaced by standard RSS feeds (e.g., CoinTelegraph, NewsBTC, Bitcoin.com) to avoid API keys and rate limits while capturing strong crypto sentiment.
 
-**What needs to be done:**
-- [ ] Create a Reddit API application at `https://www.reddit.com/prefs/apps` and obtain `REDDIT_CLIENT_ID`, `REDDIT_CLIENT_SECRET`, `REDDIT_USER_AGENT`
-- [ ] Monitor subreddits: `r/CryptoCurrency`, `r/Bitcoin`, `r/ethereum`
-- [ ] Stream new posts and comments to Kafka topic: `crypto.social`
+**What was done:**
+- [x] Integrated `feedparser` to read standard RSS crypto feeds.
+- [x] Monitors feeds periodically for new articles.
+- [x] Streams new posts to Kafka topic: `crypto.social`
 
 **Expected message format:**
 ```json
@@ -82,23 +82,12 @@ Reddit is used instead of Twitter because Twitter's API is now paid. Reddit has 
 
 ---
 
-### Task 1.3 — Environment Configuration Update [NOT STARTED]
+### Task 1.3 — Environment Configuration Update [COMPLETE]
 
-**Files:** `.env.example` (coordinate with Amr), `requirements.txt`
+**Files:** `.env.example`, `requirements.txt`
 
-- [ ] Add to `.env.example`:
-  ```env
-  NEWS_API_KEY=your_news_api_key_here
-  REDDIT_CLIENT_ID=your_reddit_client_id
-  REDDIT_CLIENT_SECRET=your_reddit_client_secret
-  REDDIT_USER_AGENT=CryptoPulse/1.0 by YourUsername
-  ```
-- [ ] Add to `requirements.txt`:
-  ```
-  praw>=7.7.1
-  newsapi-python>=0.2.7
-  schedule>=1.2.0
-  ```
+- [x] Added `NEWS_API_KEY` to `.env.example`.
+- [x] Added `feedparser`, `newsapi-python`, `schedule` to `requirements.txt`.
 
 ---
 
@@ -195,10 +184,10 @@ Reddit is used instead of Twitter because Twitter's API is now paid. Reddit has 
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 1.1 | producer_news.py | Not started — file is empty |
-| 1.2 | producer_reddit.py | Not started — file does not exist |
-| 1.3 | Update .env.example and requirements.txt | Not started |
-| 1.4 | EDA notebook | Not started — file is empty |
+| 1.1 | producer_news.py | Complete |
+| 1.2 | producer_social_rss.py | Complete |
+| 1.3 | Update .env.example and requirements.txt | Complete |
+| 1.4 | EDA notebook | Not started |
 | 2.1 | Sentiment Analysis — FinBERT | Not started |
 | 2.2 | Price Forecasting — LSTM | Not started |
 | 2.3 | POC Dashboard notebook | Not started — file is empty |
