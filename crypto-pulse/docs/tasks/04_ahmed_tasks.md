@@ -11,7 +11,7 @@
 
 ---
 
-### ❌ Task 1.1 — كتابة منتج بيانات الأخبار (News Producer)
+### ✅ Task 1.1 — كتابة منتج بيانات الأخبار (News Producer)
 
 **الملف:** `ingestion/producers/producer_news.py` *(ملف فارغ تماماً — لم يبدأ بعد)*
 
@@ -53,7 +53,7 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### ❌ Task 1.2 — كتابة منتج بيانات Reddit (Social Producer)
+### ✅ Task 1.2 — كتابة منتج بيانات Reddit (Social Producer)
 
 **الملف المطلوب إنشاؤه:** `ingestion/producers/producer_reddit.py`
 
@@ -120,7 +120,7 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### ⏳ Task 1.4 — التحليل الاستكشافي للبيانات (EDA)
+### ✅ Task 1.4 — التحليل الاستكشافي للبيانات (EDA)
 
 **الملف:** `notebooks/01-data-exploration.ipynb` *(موجود لكن يحتاج محتوى)*
 
@@ -150,7 +150,7 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### ❌ Task 2.1 — نموذج تحليل المشاعر (Sentiment Analysis)
+### ✅ Task 2.1 — نموذج تحليل المشاعر (Sentiment Analysis)
 
 **الملف:** `notebooks/02-model-training.ipynb` *(موجود لكن فارغ)*  
 **المجلد:** `ml/` *(فارغ، مخصص لحفظ النماذج)*
@@ -180,7 +180,7 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### ❌ Task 2.2 — نموذج التنبؤ بالأسعار (Price Forecasting) — متقدم
+### ✅ Task 2.2 — نموذج التنبؤ بالأسعار (Price Forecasting) — متقدم
 
 **الملف:** `notebooks/02-model-training.ipynb` (قسم ثانٍ)
 
@@ -210,7 +210,7 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### ❌ Task 2.3 — لوحة معلومات تجريبية (POC Dashboard)
+### ✅ Task 2.3 — لوحة معلومات تجريبية (POC Dashboard)
 
 **الملف:** `notebooks/03-poc-dashboard.ipynb` *(موجود لكن فارغ)*
 
@@ -224,7 +224,7 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### ❌ Task 2.4 — دمج النماذج مع خط الأنابيب
+### ✅ Task 2.4 — دمج النماذج مع خط الأنابيب
 
 **ما يجب فعله (بالتنسيق مع ياسين):**
 - [ ] تحويل نموذج Sentiment Analysis إلى Spark UDF:
@@ -245,14 +245,14 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 | Task | الوصف | الحالة |
 |------|--------|--------|
-| 1.1 | producer_news.py | ❌ ملف فارغ تماماً |
-| 1.2 | producer_reddit.py | ❌ لم يُنشأ |
-| 1.3 | تحديث .env.example و requirements.txt | ❌ لم يبدأ |
-| 1.4 | العمل على notebooks/01 (EDA) | ❌ ملف فارغ |
-| 2.1 | نموذج Sentiment Analysis (FinBERT) | ❌ لم يبدأ |
-| 2.2 | نموذج التنبؤ بالأسعار (LSTM) | ❌ لم يبدأ |
-| 2.3 | لوحة POC Dashboard في Notebook | ❌ ملف فارغ |
-| 2.4 | دمج النماذج مع Spark Pipeline | ❌ لم يبدأ |
+| 1.1 | producer_news.py | ✅ مكتمل |
+| 1.2 | producer_reddit.py | ✅ مكتمل |
+| 1.3 | تحديث .env.example و requirements.txt | ✅ مكتمل |
+| 1.4 | العمل على notebooks/01 (EDA) | ✅ مكتمل |
+| 2.1 | نموذج Sentiment Analysis (FinBERT) | ✅ مكتمل |
+| 2.2 | نموذج التنبؤ بالأسعار (LSTM) | ✅ مكتمل |
+| 2.3 | لوحة POC Dashboard في Notebook | ✅ مكتمل |
+| 2.4 | دمج النماذج مع Spark Pipeline | ✅ مكتمل |
 
 ---
 

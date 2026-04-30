@@ -14,10 +14,10 @@ from dotenv import load_dotenv
 from pyspark.sql import SparkSession
 from pyspark.sql.functions import (
     col, from_json, current_timestamp, 
-    year, month, day
+    year, month, day, udf
 )
 from pyspark.sql.types import (
-    StructType, StructField, StringType, DoubleType, LongType
+    StructType, StructField, StringType, DoubleType, LongType, FloatType
 )
 
 
@@ -160,11 +160,62 @@ def process_bronze_to_silver(spark, config):
     logger.info("Silver Layer processing completed successfully.")
 
 
+# =====================================================================
+# AI/ML - Sentiment Analysis UDF
+# =====================================================================
+def get_sentiment_analyzer():
+    """Lazy initialization of the sentiment pipeline."""
+    from transformers import pipeline
+    # Using FinBERT for financial sentiment
+    return pipeline("text-classification", model="ProsusAI/finbert")
+
+@udf(returnType=StringType())
+def sentiment_label_udf(text):
+    if not text: return "neutral"
+    analyzer = get_sentiment_analyzer()
+    return analyzer(text[:512])[0]['label']
+
+@udf(returnType=FloatType())
+def sentiment_score_udf(text):
+    if not text: return 0.0
+    analyzer = get_sentiment_analyzer()
+    return analyzer(text[:512])[0]['score']
+
+
+def process_news_to_silver(spark, config):
+    """Read news from Bronze, apply Sentiment Analysis, and write to Silver."""
+    bronze_news_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/bronze/news"
+    silver_news_path = f"abfss://{config['container']}@{config['storage_account']}.dfs.core.windows.net/silver/news"
+
+    logger.info(f"Processing News: Reading from {bronze_news_path}")
+    
+    try:
+        news_df = spark.read.format("delta").load(bronze_news_path)
+        
+        # Apply Sentiment Analysis
+        logger.info("Applying Sentiment Analysis UDF to news titles...")
+        silver_news_df = (
+            news_df
+            .withColumn("sentiment_label", sentiment_label_udf(col("title")))
+            .withColumn("sentiment_score", sentiment_score_udf(col("title")))
+            .withColumn("processed_at", current_timestamp())
+        )
+        
+        # Save to Silver
+        silver_news_df.write.format("delta").mode("overwrite").save(silver_news_path)
+        logger.info(f"News with Sentiment saved to {silver_news_path}")
+        
+    except Exception as e:
+        logger.warning(f"Could not process news: {e}")
+
+
 def main():
     config = load_environment()
     spark = create_spark_session(config)
     try:
         process_bronze_to_silver(spark, config)
+        # Process news as well in Milestone 2
+        process_news_to_silver(spark, config)
     finally:
         spark.stop()
 
