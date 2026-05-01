@@ -10,7 +10,7 @@
 
 ---
 
-![Architecture Diagram](docs/architecture.png)
+![Full Pipeline Architecture](docs/architecture_full_pipeline.png)
 
 Crypto-Pulse is a production-grade, end-to-end data engineering project that ingests live and historical cryptocurrency market data, **news headlines**, and **social sentiment** from RSS feeds, processes it through a layered data lakehouse (Medallion Architecture on Azure ADLS Gen2), syncs it to PostgreSQL, transforms it via dbt, and exposes it via a secured REST API.
 
@@ -42,33 +42,51 @@ The system handles four distinct data streams:
 
 ## 1. Architecture Overview
 
-### Real-Time Streaming Path
+All 4 pipelines follow the same **Medallion Architecture** flow:
+
 ```
-Binance WebSocket ──► Kafka (crypto.realtime.prices) ──► bronze_consumer.py ──► bronze/prices (Delta)
-                                                                                     │
-                                                                                     ▼
-                                                                        silver_prices_processor.py
-                                                                        (Spark Streaming + Delta MERGE Upsert)
-                                                                                     │
-                                                                                     ▼
-                                                                              silver/prices (Delta)
+┌─────────────────┐     ┌──────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────┐     ┌───────────┐     ┌─────────┐
+│   DATA SOURCES  │     │  KAFKA   │     │    BRONZE LAYER      │     │    SILVER LAYER      │     │   SYNC   │     │ GOLD (dbt)│     │   API   │
+│                 │     │          │     │   (Raw — Delta)      │     │  (Clean — Delta)     │     │  → PG    │     │           │     │         │
+├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     ├─────────┤
+│                 │     │          │     │                      │     │                      │     │          │     │           │     │         │
+│ 🔴 Binance WS   │────►│ .prices  │────►│ bronze_consumer      │────►│ silver_prices_proc   │────►│sync_price│────►│gold_ohlcv │────►│ /coins  │
+│   (Streaming)   │     │          │     │                      │     │  (Delta MERGE)       │     │          │     │gold_latest│     │ /prices │
+│                 │     │          │     │                      │     │                      │     │          │     │daily_mkt  │     │ /market │
+├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
+│ 🟡 Binance API  │────►│ (batch)  │────►│ historical_loader    │────►│ silver_hist_proc     │────►│sync_hist │────►│           │     │         │
+│   (Daily)       │     │          │     │                      │     │                      │     │          │     │           │     │         │
+├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     │         │
+│ 🟢 NewsAPI      │────►│ .news    │────►│ bronze_news_consumer │────►│ silver_news_proc     │────►│sync_news │────►│market_    │     │         │
+│   (15 min)      │     │          │     │                      │     │                      │     │          │     │sentiment  │     │         │
+├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
+│ 🔵 RSS Feeds    │────►│ .social  │────►│ bronze_social_cons   │────►│ silver_social_proc   │────►│sync_socl │────►│           │     │         │
+│   (10 min)      │     │          │     │                      │     │                      │     │          │     │           │     │         │
+└─────────────────┘     └──────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┘     └───────────┘     └─────────┘
+                                                  │                            │                                          │
+                                                  ▼                            ▼                                          ▼
+                                         Azure ADLS Gen2               Azure ADLS Gen2                             PostgreSQL
+                                         (stcryptopulsedev2)           (stcryptopulsedev2)                        (localhost:5432)
 ```
 
-### News & Social Sentiment Path
-```
-NewsAPI ──────────► Kafka (crypto.news)   ──► bronze_news_consumer.py   ──► bronze/news   ──► silver_news_processor.py   ──► silver/news
-RSS Feeds ────────► Kafka (crypto.social) ──► bronze_social_consumer.py ──► bronze/social ──► silver_social_processor.py ──► silver/social
-```
+### Pipeline Summary
 
-### Batch Historical Path
-```
-Binance Klines API ──► historical_fetcher.py ──► data/historical/*.json ──► historical_loader.py ──► bronze/historical ──► silver_historical_processor.py ──► silver/historical
-```
+| # | Pipeline | Source | Kafka Topic | Type | Frequency |
+|---|----------|--------|-------------|------|-----------|
+| 1 | Real-Time Prices | Binance WebSocket | `crypto.realtime.prices` | Streaming 24/7 | Every 30s micro-batch |
+| 2 | Historical OHLCV | Binance Klines API | — (batch) | Batch | Daily via Airflow |
+| 3 | Crypto News | NewsAPI | `crypto.news` | Hybrid | Every 15 minutes |
+| 4 | Social Sentiment | RSS Feeds | `crypto.social` | Hybrid | Every 10 minutes |
 
-### Silver → Gold → API Path
-```
-silver/* (ADLS Gen2) ──► sync_*_pg.py (Spark JDBC) ──► PostgreSQL ──► dbt (staging + gold models) ──► FastAPI Backend ──► Frontend
-```
+### Infrastructure at a Glance
+
+| Component | Count |
+|-----------|-------|
+| Spark Jobs | 13 |
+| Docker Containers | 15 |
+| Airflow DAGs | 2 |
+| dbt Models | 8 (4 staging + 4 gold) |
+| API Endpoints | 10+ |
 
 ---
 
