@@ -12,9 +12,14 @@
 
 ![Architecture Diagram](docs/architecture.png)
 
-Crypto-Pulse is a production-grade, end-to-end data engineering project that ingests live and historical cryptocurrency market data, processes it through a layered data lakehouse (Medallion Architecture), exposes it via a REST API, and stores user-specific data in a relational database.
+Crypto-Pulse is a production-grade, end-to-end data engineering project that ingests live and historical cryptocurrency market data, **news headlines**, and **social sentiment** from RSS feeds, processes it through a layered data lakehouse (Medallion Architecture on Azure ADLS Gen2), syncs it to PostgreSQL, transforms it via dbt, and exposes it via a secured REST API.
 
-The system is designed to handle high-frequency streaming data from Binance, batch historical OHLCV data from Binance's Klines API, and serve the results to a frontend through a secured FastAPI backend.
+The system handles four distinct data streams:
+- **Real-time prices** — Binance WebSocket → Kafka → Spark Streaming → Delta Lake
+- **Market data** — CoinGecko REST API → Kafka
+- **Crypto news** — NewsAPI → Kafka → Spark → Delta Lake
+- **Social sentiment** — RSS feeds (CoinTelegraph, NewsBTC, Bitcoin.com) → Kafka → Spark → Delta Lake
+- **Historical OHLCV** — Binance Klines API → local JSON → Spark Batch → Delta Lake
 
 ---
 
@@ -37,57 +42,32 @@ The system is designed to handle high-frequency streaming data from Binance, bat
 
 ## 1. Architecture Overview
 
+### Real-Time Streaming Path
 ```
-Binance WebSocket ──► Kafka (crypto.realtime.prices)
-                          │
-                          ▼
-                   bronze_consumer.py
-                   (Spark Structured Streaming)
-                          │
-                          ▼
-              ADLS Gen2 ── bronze/prices  (Delta Lake)
-                          │
-                          ▼
-               silver_prices_processor.py
-               (Spark Streaming + foreachBatch)
-                          │
-                          ▼
-              ADLS Gen2 ── silver/prices  (Delta Lake, Upserted)
-                          │
-                    ┌─────┴──────────────────┐
-                    ▼                        ▼
-               stg_prices.sql          stg_news.sql
-               (dbt Staging Views)
-                    │
-                    ▼
-           daily_market_summary.sql
-           market_sentiment.sql
-           (dbt Gold Tables → PostgreSQL / Synapse)
-                    │
-                    ▼
-              FastAPI Backend
-              (Authentication + CRUD Endpoints)
-                    │
-                    ▼
-                Frontend (Pending)
+Binance WebSocket ──► Kafka (crypto.realtime.prices) ──► bronze_consumer.py ──► bronze/prices (Delta)
+                                                                                     │
+                                                                                     ▼
+                                                                        silver_prices_processor.py
+                                                                        (Spark Streaming + Delta MERGE Upsert)
+                                                                                     │
+                                                                                     ▼
+                                                                              silver/prices (Delta)
 ```
 
-**Binance Historical API** runs a separate batch path:
-
+### News & Social Sentiment Path
 ```
-Binance Klines API ──► historical_fetcher.py ──► data/historical/*.json
-                                                        │
-                                                        ▼
-                                              historical_loader.py (Spark Batch)
-                                                        │
-                                                        ▼
-                                              bronze/historical (Delta)
-                                                        │
-                                                        ▼
-                                      silver_historical_processor.py (Spark Batch)
-                                                        │
-                                                        ▼
-                                              silver/historical (Delta)
+NewsAPI ──────────► Kafka (crypto.news)   ──► bronze_news_consumer.py   ──► bronze/news   ──► silver_news_processor.py   ──► silver/news
+RSS Feeds ────────► Kafka (crypto.social) ──► bronze_social_consumer.py ──► bronze/social ──► silver_social_processor.py ──► silver/social
+```
+
+### Batch Historical Path
+```
+Binance Klines API ──► historical_fetcher.py ──► data/historical/*.json ──► historical_loader.py ──► bronze/historical ──► silver_historical_processor.py ──► silver/historical
+```
+
+### Silver → Gold → API Path
+```
+silver/* (ADLS Gen2) ──► sync_*_pg.py (Spark JDBC) ──► PostgreSQL ──► dbt (staging + gold models) ──► FastAPI Backend ──► Frontend
 ```
 
 ---
@@ -102,78 +82,62 @@ crypto-pulse/
 │   │   ├── producer_binance.py        Live WebSocket price stream → Kafka
 │   │   ├── producer_coingecko.py      Periodic market data polling → Kafka
 │   │   ├── producer_news.py           News headlines via NewsAPI → Kafka
-│   │   └── producer_social_rss.py     Social sentiment via RSS (CoinTelegraph, etc.) → Kafka
+│   │   └── producer_social_rss.py     Social sentiment via RSS → Kafka
 │   └── historical/
 │       └── historical_fetcher.py      Batch OHLCV download → data/historical/
 │
 ├── processing/                        All data transformation jobs
-│   ├── spark_jobs/
-│   │   ├── bronze_consumer.py         Kafka → Bronze/prices (Delta Streaming)
-│   │   ├── silver_prices_processor.py Bronze/prices → Silver/prices (Streaming+Upsert)
+│   ├── spark_jobs/                    (13 Spark jobs)
+│   │   ├── bronze_consumer.py         Kafka → Bronze/prices (Streaming)
+│   │   ├── bronze_news_consumer.py    Kafka → Bronze/news (Streaming)
+│   │   ├── bronze_social_consumer.py  Kafka → Bronze/social (Streaming)
 │   │   ├── historical_loader.py       JSON → Bronze/historical (Batch)
-│   │   └── silver_historical_processor.py  Bronze/historical → Silver/historical (Batch)
+│   │   ├── silver_prices_processor.py Bronze → Silver/prices (Streaming+Upsert)
+│   │   ├── silver_historical_processor.py  Bronze → Silver/historical (Batch)
+│   │   ├── silver_news_processor.py   Bronze → Silver/news (Batch)
+│   │   ├── silver_social_processor.py Bronze → Silver/social (Batch)
+│   │   ├── sync_prices_pg.py          Silver/prices → PostgreSQL (JDBC)
+│   │   ├── sync_historical_pg.py      Silver/historical → PostgreSQL (JDBC)
+│   │   ├── sync_news_pg.py            Silver/news → PostgreSQL (JDBC)
+│   │   └── sync_social_pg.py          Silver/social → PostgreSQL (JDBC)
 │   └── dbt/
 │       ├── dbt_project.yml            dbt project configuration
 │       ├── models/
 │       │   ├── staging/               Views that cast and clean Silver data
-│       │   │   ├── stg_prices.sql
-│       │   │   ├── stg_news.sql
+│       │   │   ├── stg_prices.sql, stg_historical.sql
+│       │   │   ├── stg_news.sql, stg_social.sql
 │       │   │   └── sources.yml
 │       │   └── gold/                  Materialized tables with business metrics
-│       │       ├── daily_market_summary.sql
-│       │       ├── market_sentiment.sql
+│       │       ├── gold_daily_ohlcv.sql, gold_latest_prices.sql
+│       │       ├── daily_market_summary.sql, market_sentiment.sql
 │       │       └── schema.yml
 │       └── tests/
 │           └── assert_low_price_less_than_high_price.sql
 │
-├── backend/                           REST API
+├── backend/                           REST API (FastAPI)
 │   └── app/
-│       ├── main.py                    FastAPI app entry point, CORS, router registration
-│       ├── config.py                  Settings loaded from environment
-│       ├── database.py                SQLAlchemy engine + session factory
+│       ├── main.py                    FastAPI entry point, CORS, router registration
+│       ├── config.py, database.py     Settings + SQLAlchemy engine
 │       ├── models/                    ORM models + schema.sql
-│       │   ├── user.py
-│       │   ├── watchlist.py
-│       │   ├── alert.py
-│       │   ├── portfolio.py
-│       │   ├── refresh_token.py
-│       │   └── schema.sql
 │       ├── schemas/                   Pydantic request/response schemas
-│       ├── routers/                   API route handlers
-│       │   ├── auth.py                signup, login, refresh, /me
-│       │   ├── coins.py               coin price data endpoints
-│       │   ├── watchlists.py          user watchlist CRUD
-│       │   ├── alerts.py              price alert management
-│       │   └── portfolios.py          portfolio tracking
-│       ├── services/
-│       │   ├── auth_service.py        bcrypt hashing, JWT creation/validation
-│       │   └── data_service.py        data fetching helpers
+│       ├── routers/                   auth, coins, watchlists, alerts, portfolios
+│       ├── services/                  auth_service.py, data_service.py
 │       └── tests/                     pytest test suite
 │
 ├── dags/
-│   └── etl_pipeline_dag.py            Airflow DAG — orchestrates the full batch pipeline
+│   ├── dag_historical_daily.py        @daily — Historical + News/Social sync + dbt
+│   └── dag_prices_frequent.py         Every 5min — Prices sync + dbt
 │
-├── spark-apps/                        Files baked into the custom Spark Docker image
-│   ├── Dockerfile.spark               Extends apache/spark:3.5.0 with Azure+Kafka JARs
-│   ├── bronze_consumer.py             Copy of the job (for Docker volume mapping)
-│   ├── .env.example
-│   └── .env                           (not committed)
+├── spark-apps/
+│   ├── Dockerfile.spark               Custom Spark 3.5.0 with Azure+Kafka+Delta JARs
+│   └── .env.example
 │
-├── data/
-│   └── historical/                    Raw JSON OHLCV files (20 coins, from Jan 2021)
-│
-├── docs/
-│   ├── architecture.png
-│   ├── project_proposal.pdf
-│   └── tasks/                         Per-member task tracking files
-│
-├── notebooks/
-│   ├── 01-data-exploration.ipynb
-│   ├── 02-model-training.ipynb
-│   └── 03-poc-dashboard.ipynb
-│
-├── docker-compose.yml
-├── Makefile
+├── data/historical/                   Raw JSON OHLCV files (20 coins, from Jan 2021)
+├── docs/                              Architecture diagram, proposal, task files
+├── notebooks/                         EDA, Model Training, POC Dashboard (pending)
+├── ml/                                FinBERT sentiment models (pending)
+├── docker-compose.yml                 15 containerized services
+├── Makefile                           Shortcut commands
 ├── requirements.txt
 └── .env.example
 ```
@@ -386,7 +350,7 @@ The orchestration is split into two independent DAGs to separate batch processin
 
 ### DAG 1: `dag_historical_daily`
 **Schedule:** `@daily`  
-Orchestrates the historical batch pipeline.
+Orchestrates the full historical + news/social batch pipeline.
 
 ```text
 fetch_historical_data
@@ -401,7 +365,13 @@ process_historical_to_silver
 sync_historical_to_postgres
         │
         ▼
-run_dbt_historical
+sync_news_to_postgres
+        │
+        ▼
+sync_social_to_postgres
+        │
+        ▼
+run_dbt_gold
 ```
 
 ### DAG 2: `dag_prices_frequent`
@@ -424,16 +394,18 @@ All services communicate over a shared Docker bridge network named `crypto-net`.
 | Container | Image | Port | Role |
 |-----------|-------|------|------|
 | `zookeeper` | `confluentinc/cp-zookeeper:7.0.0` | 2181 | Kafka coordination |
-| `kafka` | `confluentinc/cp-kafka:7.0.0` | 9092 (external), 29092 (internal) | Event streaming |
+| `kafka` | `confluentinc/cp-kafka:7.0.0` | 9092 (ext), 29092 (int) | Event streaming |
 | `kafka-init-topics` | (same as kafka) | — | Auto-creates 4 topics on startup |
 | `kafka-ui` | `provectuslabs/kafka-ui` | 8080 | Visual Kafka management |
-| `postgres` | `postgres:15` | 5432 | Relational database for the API |
+| `postgres` | `postgres:15` | 5432 | Relational database for API + dbt |
 | `airflow-webserver` | `apache/airflow:2.7.3` | 8081 | DAG management UI |
 | `airflow-scheduler` | `apache/airflow:2.7.3` | — | DAG execution engine |
 | `spark-master` | `crypto-pulse-spark:3.5.0` (custom) | 7077, 8082 | Spark cluster master |
 | `spark-worker` | `crypto-pulse-spark:3.5.0` (custom) | 8083 | Spark executor (2 cores, 4GB RAM) |
-| `streaming-bronze-consumer` | `crypto-pulse-spark:3.5.0` (custom) | — | Runs Kafka → Bronze stream continuously |
-| `streaming-silver-processor`| `crypto-pulse-spark:3.5.0` (custom) | — | Runs Bronze → Silver Upsert continuously |
+| `streaming-bronze-prices` | `crypto-pulse-spark:3.5.0` | — | Kafka → Bronze/prices (continuous) |
+| `streaming-bronze-news` | `crypto-pulse-spark:3.5.0` | — | Kafka → Bronze/news (continuous) |
+| `streaming-bronze-social` | `crypto-pulse-spark:3.5.0` | — | Kafka → Bronze/social (continuous) |
+| `streaming-silver-prices` | `crypto-pulse-spark:3.5.0` | — | Bronze → Silver/prices (continuous) |
 | `backend` | Custom (from `backend/Dockerfile`) | 8000 | FastAPI REST API |
 
 **Kafka topic auto-creation:** The `kafka-init-topics` container runs once on startup and creates: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`.
@@ -528,9 +500,35 @@ docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/bronze_
 docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_prices_processor.py
 ```
 
-The Silver processor will begin writing cleaned, deduplicated data to `silver/prices` on Azure within 30–60 seconds after the Bronze consumer writes its first batch.
+### Step 3.5 — Run the News & Social Sentiment Pipeline
 
-> **Note for local testing:** Running two Spark Structured Streaming jobs simultaneously is resource-intensive. If you experience Spark executor heartbeat timeouts or freezes, stop Airflow first to free up RAM:
+Open two more terminals:
+
+**Tab 4 — News Producer (runs on host)**
+```bash
+source venv/bin/activate
+python ingestion/producers/producer_news.py
+```
+
+**Tab 5 — RSS Social Producer (runs on host)**
+```bash
+source venv/bin/activate
+python ingestion/producers/producer_social_rss.py
+```
+
+**Then start the Bronze consumers inside Spark:**
+```bash
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/bronze_news_consumer.py
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/bronze_social_consumer.py
+```
+
+**Process Bronze to Silver:**
+```bash
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_news_processor.py
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_social_processor.py
+```
+
+> **Note for local testing:** Running two Spark Structured Streaming jobs simultaneously is resource-intensive. If you experience Spark executor heartbeat timeouts, stop Airflow first:
 > ```bash
 > docker compose stop airflow-webserver airflow-scheduler
 > ```
@@ -548,7 +546,17 @@ docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/histori
 docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_historical_processor.py
 ```
 
-### Step 5 — Access the Backend API
+### Step 5 — Sync Silver to PostgreSQL
+
+```bash
+# Sync all Silver layers to PostgreSQL for dbt to consume
+docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_historical_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_prices_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_news_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_social_pg.py
+```
+
+### Step 6 — Access the Backend API
 
 The FastAPI backend starts automatically with `make up`. No manual step is needed.
 
@@ -588,5 +596,5 @@ make restart   # Restart everything
 ---
 
 <div align="center">
-Built for the <b>DEPI — Digital Egypt Pioneers Initiative</b> · Microsoft Azure Data Engineering Track · 2025
+Built for the <b>DEPI — Digital Egypt Pioneers Initiative</b> · Microsoft Azure Data Engineering Track · 2025–2026
 </div>
