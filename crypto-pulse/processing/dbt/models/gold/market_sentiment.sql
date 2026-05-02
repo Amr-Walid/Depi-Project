@@ -27,25 +27,25 @@ WITH news_sentiment AS (
 social_sentiment AS (
     SELECT
         DATE_TRUNC('day', created_at) AS sentiment_date,
-        platform AS source_type,
+        'social' AS source_type,
         COUNT(*) AS total_mentions,
         COUNT(*) AS positive_count,
         0 AS negative_count
     FROM {{ ref('stg_social') }}
     WHERE text ILIKE '%bull%' OR text ILIKE '%moon%' OR text ILIKE '%gem%'
-    GROUP BY DATE_TRUNC('day', created_at), platform
+    GROUP BY DATE_TRUNC('day', created_at)
 
     UNION ALL
 
     SELECT
         DATE_TRUNC('day', created_at) AS sentiment_date,
-        platform AS source_type,
+        'social' AS source_type,
         COUNT(*) AS total_mentions,
         0 AS positive_count,
         COUNT(*) AS negative_count
     FROM {{ ref('stg_social') }}
     WHERE text ILIKE '%bear%' OR text ILIKE '%fud%' OR text ILIKE '%dump%'
-    GROUP BY DATE_TRUNC('day', created_at), platform
+    GROUP BY DATE_TRUNC('day', created_at)
 ),
 
 combined AS (
