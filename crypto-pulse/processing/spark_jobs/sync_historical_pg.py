@@ -46,14 +46,37 @@ def main():
         logger.info(f"Reading from ADLS: {adls_path}")
         df = spark.read.format("delta").load(adls_path)
         
-        logger.info(f"Writing to PostgreSQL table: {pg_table}")
-        df.write.jdbc(
-            url=jdbc_url,
-            table=pg_table,
-            mode="overwrite",
-            properties=jdbc_properties
-        )
-        logger.info(f"Successfully synced {pg_table}")
+        # Incremental Load Logic
+        try:
+            logger.info(f"Checking for max open_time in PostgreSQL table: {pg_table}")
+            max_date_df = spark.read.jdbc(
+                url=jdbc_url,
+                table=f"(SELECT MAX(open_time) as max_date FROM {pg_table}) as tmp",
+                properties=jdbc_properties
+            )
+            max_date = max_date_df.collect()[0]["max_date"]
+            
+            if max_date:
+                logger.info(f"Max open_time found: {max_date}. Filtering new records...")
+                from pyspark.sql.functions import col
+                df = df.filter(col("open_time") > max_date)
+            else:
+                logger.info("Table exists but is empty. Performing full load.")
+        except Exception as e:
+            logger.info("Table does not exist or max date could not be fetched. Performing full load.")
+        
+        if df.isEmpty():
+            logger.info("No new records to sync.")
+        else:
+            logger.info(f"Writing {df.count()} records to PostgreSQL table: {pg_table} (mode: append)")
+            df.write.jdbc(
+                url=jdbc_url,
+                table=pg_table,
+                mode="append",
+                properties=jdbc_properties
+            )
+            logger.info(f"Successfully synced {pg_table}")
+            
     except Exception as e:
         logger.error(f"Error syncing table {pg_table}: {str(e)}")
             

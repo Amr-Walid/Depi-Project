@@ -58,21 +58,34 @@ def main():
     pg_table = "silver.social"
     
     try:
-        logger.info(f"Reading from ADLS: {adls_path}")
-        df = spark.read.format("delta").load(adls_path)
+        logger.info(f"Reading STREAM from ADLS: {adls_path}")
+        df = spark.readStream.format("delta").load(adls_path)
         
-        logger.info(f"Writing to PostgreSQL table: {pg_table}")
-        df.write.jdbc(
-            url=jdbc_url,
-            table=pg_table,
-            mode="overwrite",
-            properties=jdbc_properties
-        )
-        logger.info(f"Successfully synced {pg_table}")
+        def write_to_pg(batch_df, batch_id):
+            batch_count = batch_df.count()
+            if batch_count > 0:
+                logger.info(f"Batch {batch_id}: Writing {batch_count} records to {pg_table}")
+                batch_df.write.jdbc(
+                    url=jdbc_url,
+                    table=pg_table,
+                    mode="append",
+                    properties=jdbc_properties
+                )
+            else:
+                logger.info(f"Batch {batch_id}: No new records.")
+                
+        checkpoint_path = f"abfss://{container}@{storage_account}.dfs.core.windows.net/checkpoints/sync_pg/{pg_table.replace('.', '_')}"
+        
+        logger.info(f"Starting Streaming Query to PostgreSQL table: {pg_table}")
+        query = df.writeStream \
+            .foreachBatch(write_to_pg) \
+            .option("checkpointLocation", checkpoint_path) \
+            .start()
+            
+        query.awaitTermination()
+        
     except Exception as e:
         logger.error(f"Error syncing table {pg_table}: {str(e)}")
-            
-    spark.stop()
 
 if __name__ == "__main__":
     main()
