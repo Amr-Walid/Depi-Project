@@ -10,6 +10,8 @@ def main():
     
     spark = SparkSession.builder \
         .appName("SyncPricesToPostgres") \
+        .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \
+        .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \
         .getOrCreate()
     
     azure_client_id = os.getenv("AZURE_CLIENT_ID")
