@@ -12,6 +12,6 @@ SELECT
     month,
     day,
     processed_at
-FROM {{ source('silver_historical', 'historical') }}
+FROM {{ source('silver', 'historical') }}
 WHERE open IS NOT NULL
   AND open > 0

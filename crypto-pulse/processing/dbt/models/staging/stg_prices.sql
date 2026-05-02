@@ -7,6 +7,6 @@ SELECT
     event_time,
     source,
     processed_at
-FROM {{ source('silver_prices', 'prices') }}
+FROM {{ source('silver', 'prices') }}
 WHERE price IS NOT NULL
   AND price > 0
