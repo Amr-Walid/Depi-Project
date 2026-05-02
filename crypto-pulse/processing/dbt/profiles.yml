@@ -3,10 +3,10 @@ crypto_pulse_dbt:
   outputs:
     dev:
       type: postgres
-      host: localhost
+      host: "{{ env_var('POSTGRES_HOST', 'localhost') }}"
       port: 5432
       user: admin
       password: admin123
       dbname: cryptopulse
       schema: gold
-      threads: 1
+      threads: 4
