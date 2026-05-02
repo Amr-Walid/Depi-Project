@@ -30,3 +30,7 @@ spark-submit:
 db-reset:
 	docker compose exec postgres psql -U admin -d cryptopulse -c "DROP SCHEMA public CASCADE; CREATE SCHEMA public;"
 	@echo "Database reset complete. Restart backend to re-create tables."
+
+db-init:
+	docker compose exec postgres psql -U admin -d cryptopulse -c "CREATE SCHEMA IF NOT EXISTS silver; CREATE SCHEMA IF NOT EXISTS gold;"
+	@echo "Database schemas (silver, gold) initialized successfully."
