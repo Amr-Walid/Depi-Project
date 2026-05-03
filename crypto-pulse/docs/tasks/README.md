@@ -42,7 +42,12 @@
 
 ### Ahmed Ayman — ❌ REMOVED FROM PROJECT
 
-> Ahmed was removed from the team due to inactivity. His remaining ML tasks have been redistributed to Yassin (FinBERT Spark integration) and Karim (dbt sentiment models).
+| | Milestone 1 | Milestone 2 | Milestone 3 |
+|--|------------|------------|------------|
+| Progress | 0% | 0% | 0% |
+| Status | Not started | Not started | Not started |
+
+> Ahmed was removed from the team due to inactivity. His Milestone 1 tasks (News & Social Producers) were actually implemented by **Amr Walid** and added to Amr's Milestone 2. His remaining ML tasks have been redistributed to Yassin and Karim.
 
 ### Karim
 

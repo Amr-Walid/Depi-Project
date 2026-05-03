@@ -165,6 +165,37 @@
 
 ---
 
+### Task 2.7 — News & Social Ingestion (Redistributed from Ahmed) [COMPLETE ✅]
+
+**Files:**
+- `ingestion/producers/producer_news.py`
+- `ingestion/producers/producer_social_rss.py`
+- `processing/spark_jobs/bronze_news_consumer.py`
+- `processing/spark_jobs/bronze_social_consumer.py`
+- `processing/spark_jobs/silver_news_processor.py`
+- `processing/spark_jobs/silver_social_processor.py`
+
+**What was done:**
+- [x] Implemented NewsAPI producer to fetch global crypto news headlines every 15 minutes.
+- [x] Implemented RSS Social producer to stream sentiment-rich posts from top crypto blogs (CoinTelegraph, etc.).
+- [x] Developed Spark Bronze consumers for both news and social topics to land data in Delta format on ADLS.
+- [x] Developed Silver processors to clean, format, and structure the news/social data for later AI analysis.
+- [x] Verified data flow from external APIs → Kafka → Bronze → Silver.
+
+---
+
+### Task 2.8 — Multi-Source Environment Configuration [COMPLETE ✅]
+
+**Files:**
+- `.env.example`
+- `requirements.txt`
+
+- [x] Centralized all external API keys (Binance, NewsAPI) and Kafka connection strings in the environment.
+- [x] Added `feedparser` and `newsapi-python` dependencies for the ingestion layer.
+- [x] Updated documentation to include instructions for setting up these specific sources.
+
+---
+
 ## Summary Table
 
 | Task | Description | Status |
@@ -180,6 +211,8 @@
 | 2.4 | Final status report | Complete |
 | 2.5 | Silver to PostgreSQL Sync Job & DAG Update | Complete |
 | 2.6 | Airflow-Spark Orchestration Integration | Complete ✅ |
+| 2.7 | News & Social Ingestion (Redistributed from Ahmed) | Complete ✅ |
+| 2.8 | Multi-Source Environment Configuration | Complete ✅ |
 
 ---
 
@@ -196,6 +229,8 @@
 - `docs/architecture.png` (complete)
 - `airflow/Dockerfile` (complete — Docker CLI 27.4.1 + dbt + pip packages)
 - Integration test results and final report (complete)
+- `ingestion/producers/producer_news.py` (Redistributed from Ahmed)
+- `ingestion/producers/producer_social_rss.py` (Redistributed from Ahmed)
 
 ---
 

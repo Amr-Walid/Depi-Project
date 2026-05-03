@@ -1,7 +1,7 @@
 # 🏗️ CryptoPulse — هيكل المشروع الكامل
 
 > **آخر تحديث:** مايو 2026  
-> **الفريق:** عمرو (Lead) · ياسين (Spark) · مصطفى (Backend/Docker) · أحمد (ML/Analyst) · كريم (dbt/Analytics)
+> **الفريق:** عمرو (Lead/Frontend) · ياسين (Spark/ML) · مصطفى (Backend/Docker) · كريم (dbt/Analytics)
 
 ---
 
@@ -26,8 +26,8 @@ crypto-pulse/
 │   ├── 📁 producers/
 │   │   ├── 📄 producer_binance.py      ← بيانات أسعار لحظية من Binance [عمرو] ✅
 │   │   ├── 📄 producer_coingecko.py    ← بيانات سوق من CoinGecko [عمرو] ✅
-│   │   ├── 📄 producer_news.py         ← أخبار العملات من NewsAPI [أحمد/عمرو] ✅
-│   │   └── 📄 producer_social_rss.py   ← مقالات رأي من RSS Feeds [أحمد/عمرو] ✅
+│   │   ├── 📄 producer_news.py         ← أخبار العملات من NewsAPI [عمرو] ✅
+│   │   └── 📄 producer_social_rss.py   ← مقالات رأي من RSS Feeds [عمرو] ✅
 │   └── 📁 historical/
 │       └── 📄 historical_fetcher.py    ← جلب بيانات تاريخية من Binance [عمرو] ✅
 │
@@ -68,11 +68,11 @@ crypto-pulse/
 │   ├── 📄 Dockerfile.spark             ← صورة Docker لـ Spark [مصطفى] ✅
 │   └── 📄 bronze_consumer.py           ← نسخة تشغيل داخل Container [ياسين] ✅
 │
-├── 📁 ml/                          ← نماذج الذكاء الاصطناعي [أحمد] ❌ (FinBERT لم يُطبق)
+├── 📁 ml/                          ← نماذج الذكاء الاصطناعي [ياسين/كريم] ⏳ (FinBERT)
 ├── 📁 notebooks/
-│   ├── 📄 01-data-exploration.ipynb    ← تحليل استكشافي للبيانات [أحمد] ❌
-│   ├── 📄 02-model-training.ipynb      ← تدريب نماذج ML [أحمد] ❌
-│   └── 📄 03-poc-dashboard.ipynb       ← لوحة معلومات تجريبية [أحمد] ❌
+│   ├── 📄 01-data-exploration.ipynb    ← تحليل استكشافي للبيانات [ياسين] ⏳
+│   ├── 📄 02-model-training.ipynb      ← تدريب نماذج ML [ياسين] ⏳
+│   └── 📄 03-poc-dashboard.ipynb       ← تم إلغاؤه لصالح Next.js [عمرو] ❌
 │
 ├── 📁 data/
 │   └── 📁 historical/              ← بيانات JSON المحفوظة محليًا [عمرو] ✅
@@ -85,7 +85,7 @@ crypto-pulse/
 ├── 📁 airflow/                     ← صورة Docker مخصصة للـ Airflow
 │   └── 📄 Dockerfile                  ← Airflow + Docker CLI 27.4.1 + dbt [عمرو] ✅
 │
-├── 📁 frontend/                    ← واجهة المستخدم (مرحلة لاحقة) ❌
+├── 📁 frontend/                    ← واجهة المستخدم (Next.js Dashboard) [عمرو] ⏳
 └── 📁 orchestration/               ← (محجوز للتوسع المستقبلي)
 ```
 
@@ -105,11 +105,11 @@ crypto-pulse/
 
 | الملف | الشخص |
 |-------|--------|
-| [01_amr_tasks.md](./01_amr_tasks.md) | عمرو وليد — Team Lead & Lead Data Engineer |
-| [02_yassin_tasks.md](./02_yassin_tasks.md) | ياسين محمود — DataOps & Spark Engineer |
-| [03_mostafa_tasks.md](./03_mostafa_tasks.md) | مصطفى مطر — Backend & Docker Environment |
-| [04_ahmed_tasks.md](./04_ahmed_tasks.md) | أحمد أيمن — Data Analyst & ML Engineer |
+| [01_amr_tasks.md](./01_amr_tasks.md) | عمرو وليد — Team Lead, Data Engineer & Frontend |
+| [02_yassin_tasks.md](./02_yassin_tasks.md) | ياسين محمود — DataOps, Spark & ML (FinBERT) |
+| [03_mostafa_tasks.md](./03_mostafa_tasks.md) | مصطفى مطر — Backend, Alerts & Docker Environment |
 | [05_karim_tasks.md](./05_karim_tasks.md) | كريم — Analytics Engineer (dbt) |
+| [06_milestone3_plan.md](./06_milestone3_plan.md) | خطة عمل المرحلة الثالثة (Milestone 3) المجمعة |
 
 ---
 
@@ -138,10 +138,10 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
                                                         │
                                                         ▼
                                               FastAPI Backend ✅
-                                              /api/v1/coins/ | /auth/ | /prices/
+                                              /api/v1/coins/ | /market/sentiment/ | /alerts/
                                                         │
                                                         ▼
-                                              Frontend Dashboard ❌
+                                              Frontend Dashboard (Next.js) ⏳
 ```
 
 ---
@@ -174,3 +174,5 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
 | streaming-bronze-social | — | Kafka → Bronze/social (مستمر 24/7) |
 | streaming-silver-prices | — | Bronze → Silver/prices (مستمر 24/7) |
 | backend | 8000 | FastAPI Application |
+| alert-worker | — | خدمة التنبيهات في الخلفية ⏳ |
+| frontend | 3000 | واجهة Next.js (Dashboard) ⏳ |

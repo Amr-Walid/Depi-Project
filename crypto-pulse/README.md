@@ -69,6 +69,10 @@ All 4 pipelines follow the same **Medallion Architecture** flow:
                                                   ▼                            ▼                                          ▼
                                          Azure ADLS Gen2               Azure ADLS Gen2                             PostgreSQL
                                          (stcryptopulsedev2)           (stcryptopulsedev2)                        (localhost:5432)
+                                                                                                                      │
+                                                                                                                      ▼
+                                                                                                              Frontend Dashboard
+                                                                                                              (Next.js App)
 ```
 
 ### Pipeline Summary
@@ -141,8 +145,11 @@ crypto-pulse/
 │       ├── models/                    ORM models + schema.sql
 │       ├── schemas/                   Pydantic request/response schemas
 │       ├── routers/                   auth, coins, watchlists, alerts, portfolios
-│       ├── services/                  auth_service.py, data_service.py
+│       ├── services/                  auth_service.py, data_service.py, alert_worker.py
 │       └── tests/                     pytest test suite
+│
+├── frontend/                          Next.js Web Dashboard
+│   └── app/                           React components, API hooks, and UI pages
 │
 ├── dags/
 │   ├── dag_historical_daily.py        @daily — Historical + News/Social sync + dbt
@@ -154,9 +161,9 @@ crypto-pulse/
 │
 ├── data/historical/                   Raw JSON OHLCV files (20 coins, from Jan 2021)
 ├── docs/                              Architecture diagram, proposal, task files
-├── notebooks/                         EDA, Model Training, POC Dashboard (pending)
-├── ml/                                FinBERT sentiment models (pending)
-├── docker-compose.yml                 15 containerized services
+├── notebooks/                         EDA, Model Training (FinBERT)
+├── ml/                                FinBERT sentiment models setup
+├── docker-compose.yml                 17 containerized services (Data + Backend + Frontend)
 ├── Makefile                           Shortcut commands
 ├── requirements.txt
 └── .env.example
@@ -436,6 +443,8 @@ All services communicate over a shared Docker bridge network named `crypto-net`.
 | `streaming-bronze-social` | `crypto-pulse-spark:3.5.0` | — | Kafka → Bronze/social (continuous) |
 | `streaming-silver-prices` | `crypto-pulse-spark:3.5.0` | — | Bronze → Silver/prices (continuous) |
 | `backend` | Custom (from `backend/Dockerfile`) | 8000 | FastAPI REST API |
+| `alert-worker` | Custom (from `backend/Dockerfile`) | — | Background service monitoring price alerts |
+| `frontend` | `node:18-alpine` | 3000 | Next.js Dashboard UI |
 
 **Kafka topic auto-creation:** The `kafka-init-topics` container runs once on startup and creates: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`.
 
@@ -663,11 +672,10 @@ The project underwent a final end-to-end audit in May 2026, confirming the stabi
 
 | Name | Role | Responsibilities |
 |------|------|-----------------|
-| **Amr Walid** | Team Lead & Lead Data Engineer | Azure infrastructure, ingestion scripts, Kafka producers, orchestration, News/Social integration |
-| **Yassin Mahmoud** | DataOps & Spark Engineer | Bronze consumer, Silver streaming processor, historical batch jobs, Airflow DAG |
-| **Mostafa Matar** | Backend Engineer & Docker Owner | FastAPI backend, JWT auth, PostgreSQL schema, Docker Compose, CI/CD |
-| **Karim Ahmed** | Analytics Engineer | dbt project setup, staging models, gold aggregations, data tests |
-| **Ahmed Ayman** | Data Analyst & ML Engineer | Sentiment analysis (FinBERT), ML notebooks |
+| **Amr Walid** | Team Lead, Data Engineer & Frontend | Azure infra, Kafka producers, orchestration, News/Social integration, Next.js Dashboard |
+| **Yassin Mahmoud** | DataOps, Spark & ML Engineer | Bronze/Silver streaming, Airflow DAG, FinBERT sentiment integration, ML Notebooks |
+| **Mostafa Matar** | Backend & Docker Engineer | FastAPI backend, JWT auth, PostgreSQL schema, Docker Compose, Alert Worker |
+| **Karim Ahmed** | Analytics Engineer (dbt) | dbt project setup, staging models, gold aggregations, data tests, Dashboard Stats |
 
 ---
 

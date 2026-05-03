@@ -3,7 +3,7 @@
 **Role:** Data Analyst + AI/ML Engineer  
 **Core Responsibility:** Enrich the pipeline with news and social sentiment data, and build intelligent models that differentiate the project.
 
-> **UPDATE (May 2026):** The Data Engineering tasks (NewsAPI and RSS Social producers) have been successfully implemented and integrated into the pipeline. Ahmed's remaining responsibilities focus purely on the FinBERT Sentiment ML integration and Jupyter notebooks.
+> **UPDATE (May 2026):** Ahmed was removed from the project due to inactivity. The Data Engineering tasks (NewsAPI and RSS Social producers) he was supposed to do in Milestone 1 were actually handled by **Amr Walid**. Ahmed's remaining tasks are currently unassigned or marked as not started.
 
 ---
 
@@ -13,15 +13,14 @@
 
 ---
 
-### Task 1.1 — News Producer [COMPLETE]
+### Task 1.1 — News Producer [NOT STARTED]
 
 **File:** `ingestion/producers/producer_news.py`
 
-**What was done:**
-- [x] Connected to NewsAPI using `NEWS_API_KEY`
-- [x] Searches for keywords: `"bitcoin"`, `"ethereum"`, `"crypto"`, `"cryptocurrency"`
-- [x] Fetches new articles every 15 minutes using the `schedule` library
-- [x] Sends each article as a JSON message to Kafka topic: `crypto.news`
+- [ ] Connected to NewsAPI using `NEWS_API_KEY`
+- [ ] Searches for keywords: `"bitcoin"`, `"ethereum"`, `"crypto"`, `"cryptocurrency"`
+- [ ] Fetches new articles every 15 minutes using the `schedule` library
+- [ ] Sends each article as a JSON message to Kafka topic: `crypto.news`
 
 **Expected message format:**
 ```json
@@ -54,16 +53,13 @@ schedule.every(15).minutes.do(fetch_and_produce)
 
 ---
 
-### Task 1.2 — RSS Social Producer [COMPLETE]
+### Task 1.2 — RSS Social Producer [NOT STARTED]
 
 **File:** `ingestion/producers/producer_social_rss.py`
 
-Reddit API was replaced by standard RSS feeds (e.g., CoinTelegraph, NewsBTC, Bitcoin.com) to avoid API keys and rate limits while capturing strong crypto sentiment.
-
-**What was done:**
-- [x] Integrated `feedparser` to read standard RSS crypto feeds.
-- [x] Monitors feeds periodically for new articles.
-- [x] Streams new posts to Kafka topic: `crypto.social`
+- [ ] Integrated `feedparser` to read standard RSS crypto feeds.
+- [ ] Monitors feeds periodically for new articles.
+- [ ] Streams new posts to Kafka topic: `crypto.social`
 
 **Expected message format:**
 ```json
@@ -82,12 +78,10 @@ Reddit API was replaced by standard RSS feeds (e.g., CoinTelegraph, NewsBTC, Bit
 
 ---
 
-### Task 1.3 — Environment Configuration Update [COMPLETE]
+### Task 1.3 — Environment Configuration Update [NOT STARTED]
 
-**Files:** `.env.example`, `requirements.txt`
-
-- [x] Added `NEWS_API_KEY` to `.env.example`.
-- [x] Added `feedparser`, `newsapi-python`, `schedule` to `requirements.txt`.
+- [ ] Added `NEWS_API_KEY` to `.env.example`.
+- [ ] Added `feedparser`, `newsapi-python`, `schedule` to `requirements.txt`.
 
 ---
 
@@ -184,9 +178,9 @@ Reddit API was replaced by standard RSS feeds (e.g., CoinTelegraph, NewsBTC, Bit
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 1.1 | producer_news.py | Complete |
-| 1.2 | producer_social_rss.py | Complete |
-| 1.3 | Update .env.example and requirements.txt | Complete |
+| 1.1 | producer_news.py | Not started |
+| 1.2 | producer_social_rss.py | Not started |
+| 1.3 | Update .env.example and requirements.txt | Not started |
 | 1.4 | EDA notebook | Not started |
 | 2.1 | Sentiment Analysis — FinBERT | Not started |
 | 2.2 | Price Forecasting — LSTM | Not started |
