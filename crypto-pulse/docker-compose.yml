@@ -191,6 +191,8 @@ services:
       - .env
     volumes:
       - ./backend/app:/app/app
+    environment:
+      - POSTGRES_HOST=postgres
     networks:
       - crypto-net
 
