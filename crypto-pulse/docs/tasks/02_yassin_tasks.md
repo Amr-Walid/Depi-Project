@@ -49,6 +49,7 @@
 - [x] Created `dag_historical_daily` running `@daily` for the historical batch workload.
 - [x] Created `dag_prices_frequent` running every 5 minutes for micro-batch sync and dbt updates.
 - [x] Replaced the old monolithic `etl_pipeline_dag.py` to prevent streaming tasks from blocking batch DAGs.
+- [x] **Verified (May 2026):** DAGs successfully orchestrate Spark jobs via Docker socket on the `spark-master` container. ✅
 
 ---
 
@@ -111,7 +112,7 @@
 | 2.1 | Silver Prices Processor — Real-time Streaming + Delta MERGE | Complete |
 | 2.2 | Silver Historical Processor — Batch | Complete |
 | 2.3 | Delta Lake format on all layers | Complete |
-| 2.4 | Silver News & Social Processors — Cleansing & formatting | Complete |
+| 2.4 | Silver News & Social Processors — Cleansing & formatting | Complete & Verified ✅ |
 
 ---
 
@@ -142,3 +143,73 @@
 | `data/historical/*.json` | Amr | To run historical_loader |
 | Kafka running | Mostafa (Docker) | To run bronze_consumer |
 | Silver Layer ready | Yassin (self) | Karim needs it for dbt models |
+
+---
+
+## Milestone 3 — FinBERT Sentiment Integration + Notebooks
+
+**Goal:** دمج نموذج FinBERT داخل Spark لتحليل مشاعر الأخبار، وملء دفاتر التحليل (Notebooks) بالرسوم البيانية والاستنتاجات.
+
+> **ملاحظة:** التفاصيل الكاملة لكل التاسكات موجودة في [06_milestone3_plan.md](./06_milestone3_plan.md)
+
+---
+
+### Task 3.1 — تجهيز بيئة FinBERT في Spark Docker Image [NOT STARTED]
+
+**الملف:** `spark-apps/Dockerfile.spark`
+
+- [ ] إضافة `transformers` و `torch` (أو `torch-cpu`) للـ Dockerfile
+- [ ] إعادة بناء الـ Image: `docker compose build spark-master`
+- [ ] اختبار إن المكتبات تعمل داخل الـ Container
+
+### Task 3.2 — إنشاء Sentiment Processor Script [NOT STARTED]
+
+**الملف الجديد:** `processing/spark_jobs/sentiment_processor.py`
+
+- [ ] قراءة `silver.news` و `silver.social` من PostgreSQL
+- [ ] تطبيق FinBERT كـ Spark UDF على عمود `title`
+- [ ] إضافة أعمدة: `sentiment_score` (float, -1 to 1) و `sentiment_label` (string)
+- [ ] كتابة النتيجة في `silver.news_sentiment` (mode=overwrite)
+- [ ] إضافة `spark.stop()` في النهاية للتوافق مع Airflow
+
+### Task 3.3 — إضافة جدول Sentiment في schema.sql [NOT STARTED]
+
+**الملف:** `backend/app/models/schema.sql`
+
+- [ ] إضافة `CREATE TABLE IF NOT EXISTS silver.news_sentiment` مع أعمدة sentiment_score و sentiment_label
+- [ ] إضافة indexes على `published_at` و `sentiment_label`
+
+### Task 3.4 — إضافة Sentiment Job للـ Airflow DAG [NOT STARTED]
+
+**الملف:** `dags/dag_historical_daily.py`
+
+- [ ] إضافة BashOperator `run_sentiment_analysis` يشغل `sentiment_processor.py` عبر `docker exec`
+- [ ] وضعه بعد `sync_news_postgres` وقبل `run_dbt_gold`
+
+### Task 3.5 — ملء Notebook التحليل الاستكشافي [NOT STARTED]
+
+**الملف:** `notebooks/01-data-exploration.ipynb`
+
+- [ ] قراءة بيانات الأسعار من PostgreSQL وعرض توزيعاتها
+- [ ] Correlation Matrix بين العملات
+- [ ] حجم التداول اليومي مع الوقت
+- [ ] شرح Markdown لكل خلية
+
+### Task 3.6 — ملء Notebook تدريب النموذج [NOT STARTED]
+
+**الملف:** `notebooks/02-model-training.ipynb`
+
+- [ ] شرح نموذج FinBERT وطريقة عمله
+- [ ] عرض نتائج الـ Sentiment على عينة من الأخبار
+- [ ] رسم العلاقة بين Sentiment Score وتغير السعر
+
+---
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | تجهيز بيئة FinBERT في Docker | Not started |
+| 3.2 | إنشاء Sentiment Processor Script | Not started |
+| 3.3 | إضافة جدول Sentiment في schema.sql | Not started |
+| 3.4 | إضافة Sentiment Job للـ Airflow DAG | Not started |
+| 3.5 | ملء Notebook التحليل الاستكشافي | Not started |
+| 3.6 | ملء Notebook تدريب النموذج | Not started |

@@ -183,7 +183,7 @@ A custom singular test that asserts data integrity — `low_price` must always b
 
 ---
 
-### Task 2.5 — Airflow Integration [COMPLETE]
+### Task 2.5 — Airflow Integration [COMPLETE & VERIFIED ✅]
 
 **Coordinated with Yassin & Amr:**
 - [x] Added a dbt task to `dags/dag_historical_daily.py`:
@@ -200,6 +200,7 @@ A custom singular test that asserts data integrity — `low_price` must always b
       bash_command='cd /opt/airflow/dbt && dbt run --select gold_latest_prices daily_market_summary',
   )
   ```
+- [x] **Verified (May 2026):** dbt runs successfully within Airflow DAGs and populates Gold tables in PostgreSQL. Confirmed **37,304 records** created in `gold.daily_market_summary`.
 
 ---
 
@@ -213,7 +214,7 @@ A custom singular test that asserts data integrity — `low_price` must always b
 | 2.2 | Gold models (daily_market_summary, market_sentiment) | Complete |
 | 2.3 | Data quality tests | Complete |
 | 2.4 | Model documentation | Complete |
-| 2.5 | dbt integration with Airflow DAGs | Complete |
+| 2.5 | dbt integration with Airflow DAGs | Complete & Verified ✅ |
 
 ---
 
@@ -260,3 +261,66 @@ A custom singular test that asserts data integrity — `low_price` must always b
 | dbt Spark Adapter | https://docs.getdbt.com/docs/core/connect-data-platform/spark-setup |
 | dbt Best Practices | https://docs.getdbt.com/guides/best-practices |
 | Medallion Architecture | https://www.databricks.com/glossary/medallion-architecture |
+
+---
+
+## Milestone 3 — dbt Sentiment Models + Dashboard Analytics
+
+**Goal:** تحديث نماذج الـ Sentiment لتستخدم أرقام FinBERT الحقيقية بدلاً من الكلمات المفتاحية، وإنشاء نماذج جديدة لدعم الـ Frontend Dashboard.
+
+> **ملاحظة:** التفاصيل الكاملة لكل التاسكات موجودة في [06_milestone3_plan.md](./06_milestone3_plan.md)
+
+---
+
+### Task 3.1 — تحديث market_sentiment.sql بأعمدة FinBERT [NOT STARTED]
+
+**الملف:** `processing/dbt/models/gold/market_sentiment.sql`
+
+- [ ] استبدال المنطق الحالي (keyword-based: `ILIKE '%bull%'`) بقراءة مباشرة من `silver.news_sentiment`
+- [ ] حساب `avg_sentiment_score`, `positive_count`, `negative_count`, `neutral_count`
+- [ ] إضافة عمود `market_mood` (Bullish / Bearish / Neutral) بناءً على المتوسط
+
+### Task 3.2 — تحديث sources.yml [NOT STARTED]
+
+**الملف:** `processing/dbt/models/staging/sources.yml`
+
+- [ ] إضافة جدول `news_sentiment` كـ source جديد
+
+### Task 3.3 — إنشاء Staging Model للـ Sentiment [NOT STARTED]
+
+**الملف الجديد:** `processing/dbt/models/staging/stg_news_sentiment.sql`
+
+- [ ] View بسيط يقرأ من `silver.news_sentiment`
+- [ ] يعمل CAST للـ sentiment_score كـ `DECIMAL(5, 4)`
+- [ ] يفلتر الصفوف اللي فيها `sentiment_score IS NOT NULL`
+
+### Task 3.4 — إنشاء Gold Model للـ Dashboard Stats [NOT STARTED]
+
+**الملف الجديد:** `processing/dbt/models/gold/gold_dashboard_stats.sql`
+
+- [ ] يجمع كل الإحصائيات في استعلام واحد
+- [ ] `active_coins`, `total_volume_24h`, `overall_sentiment`
+
+### Task 3.5 — إضافة اختبارات جودة بيانات جديدة [NOT STARTED]
+
+**المجلد:** `processing/dbt/tests/`
+
+- [ ] `assert_sentiment_score_range.sql` — التأكد إن الـ scores في نطاق -1 إلى 1
+- [ ] تحديث `schema.yml` بأوصاف الأعمدة الجديدة
+
+### Task 3.6 — تحديث الـ dbt DAG في Airflow [NOT STARTED]
+
+**الملف:** `dags/dag_historical_daily.py`
+
+- [ ] تحديث أمر dbt ليشمل كل الـ Models الجديدة: `dbt run && dbt test`
+
+---
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | تحديث market_sentiment.sql | Not started |
+| 3.2 | تحديث sources.yml | Not started |
+| 3.3 | Staging Model للـ Sentiment | Not started |
+| 3.4 | Gold Dashboard Stats Model | Not started |
+| 3.5 | اختبارات جودة بيانات جديدة | Not started |
+| 3.6 | تحديث الـ dbt DAG | Not started |

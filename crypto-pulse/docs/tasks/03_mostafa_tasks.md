@@ -133,7 +133,8 @@
 - Alerts — price threshold alerts per user
 - Portfolios — position tracking (symbol, quantity, average buy price)
 
-`data_service.py` connects to Azure ADLS Gen2 using the Service Principal and reads from the Gold layer tables produced by dbt.
+`data_service.py` connects to Azure ADLS Gen2 using the Service Principal and reads from the Gold layer tables produced by dbt in PostgreSQL.
+- [x] **Verified (May 2026):** API correctly serves real OHLCV and market overview data from the `gold.daily_market_summary` table. ✅
 
 ---
 
@@ -157,7 +158,7 @@
 | 1.4 | Backend Dockerfile | Complete |
 | 1.5 | Backend app skeleton | Complete |
 | 2.1 | JWT Authentication system | Complete |
-| 2.2 | Data endpoints (coins, watchlists, alerts, portfolios) | Complete |
+| 2.2 | Data endpoints (coins, watchlists, alerts, portfolios) | Complete & Verified ✅ |
 | 2.3 | pytest test suite | Complete |
 
 ---
@@ -171,3 +172,68 @@
 | Kafka UI | 8080 | http://localhost:8080 |
 | Airflow | 8081 | http://localhost:8081 |
 | Spark Master | 8082 | http://localhost:8082 |
+
+---
+
+## Milestone 3 — Sentiment API + Alert Worker + Code Cleanup
+
+**Goal:** إضافة Endpoint للـ Sentiment، بناء محرك تنبيهات يعمل في الخلفية، وتنظيف الكود القديم.
+
+> **ملاحظة:** التفاصيل الكاملة لكل التاسكات موجودة في [06_milestone3_plan.md](./06_milestone3_plan.md)
+
+---
+
+### Task 3.1 — إنشاء Sentiment API Endpoint [NOT STARTED]
+
+**الملف:** `backend/app/routers/coins.py`
+
+- [ ] إضافة `GET /api/v1/market/sentiment`
+- [ ] يقرأ من `gold.market_sentiment` أو `silver.news_sentiment`
+- [ ] يرجع: `overall_score`, `overall_label`, `positive_pct`, `negative_pct`, `article_count`
+
+### Task 3.2 — تحديث Pydantic Schema للـ Sentiment [NOT STARTED]
+
+**الملف:** `backend/app/schemas/coins.py`
+
+- [ ] إضافة `SentimentOverview` schema جديد
+
+### Task 3.3 — تحديث data_service.py [NOT STARTED]
+
+**الملف:** `backend/app/services/data_service.py`
+
+- [ ] حذف `import random` (سطر 1) — كود قديم
+- [ ] حذف `MOCK_BASE_PRICES` (سطر 37-59) — كود Mock غير مستخدم
+- [ ] إضافة function `get_market_sentiment(db)` يقرأ من PostgreSQL
+
+### Task 3.4 — بناء Alert Worker (Background Service) [NOT STARTED]
+
+**الملف الجديد:** `backend/app/services/alert_worker.py`
+
+- [ ] Worker يلف كل دقيقة يقرأ أحدث الأسعار من `gold.daily_market_summary`
+- [ ] يقارن بجدول `alerts` (condition: above/below)
+- [ ] يطبع تنبيه ويعطل الـ Alert (`is_active = FALSE`)
+
+### Task 3.5 — إضافة Alert Worker للـ Docker Compose [NOT STARTED]
+
+**الملف:** `docker-compose.yml`
+
+- [ ] إضافة service `alert-worker` يستخدم نفس `backend/Dockerfile`
+- [ ] يشتغل كـ: `python -m app.services.alert_worker`
+
+### Task 3.6 — تنظيف الـ Backend Code [NOT STARTED]
+
+**الملف:** `backend/app/services/data_service.py`
+
+- [ ] التأكد إن كل الـ Endpoints بترجع داتا حقيقية من PostgreSQL فقط
+- [ ] إزالة أي references للـ Mock data
+
+---
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | Sentiment API Endpoint | Not started |
+| 3.2 | Pydantic Schema للـ Sentiment | Not started |
+| 3.3 | تحديث data_service.py | Not started |
+| 3.4 | Alert Worker | Not started |
+| 3.5 | Alert Worker في Docker | Not started |
+| 3.6 | تنظيف الـ Backend Code | Not started |

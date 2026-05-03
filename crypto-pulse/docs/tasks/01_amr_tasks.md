@@ -135,7 +135,7 @@
 
 ---
 
-### Task 2.6 — Airflow-Spark Orchestration Integration [COMPLETE]
+### Task 2.6 — Airflow-Spark Orchestration Integration [COMPLETE & VERIFIED ✅]
 
 **Files:**
 - `airflow/Dockerfile`
@@ -176,10 +176,10 @@
 | 1.5 | Pull request review | Ongoing |
 | 2.1 | Architecture diagram | Complete |
 | 2.2 | README.md full rewrite | Complete |
-| 2.3 | Integration testing (Streaming path) | Complete |
+| 2.3 | Integration testing (Streaming path & End-to-End) | Complete ✅ |
 | 2.4 | Final status report | Complete |
 | 2.5 | Silver to PostgreSQL Sync Job & DAG Update | Complete |
-| 2.6 | Airflow-Spark Orchestration Integration | Complete |
+| 2.6 | Airflow-Spark Orchestration Integration | Complete ✅ |
 
 ---
 
@@ -196,3 +196,62 @@
 - `docs/architecture.png` (complete)
 - `airflow/Dockerfile` (complete — Docker CLI 27.4.1 + dbt + pip packages)
 - Integration test results and final report (complete)
+
+---
+
+## Milestone 3 — Frontend Dashboard + Cloud Deployment
+
+**Goal:** بناء واجهة رسومية للمشروع باستخدام قالب Next.js جاهز، وربطها بالـ API، ونشر المشروع على Azure.
+
+> **ملاحظة:** التفاصيل الكاملة لكل التاسكات موجودة في [06_milestone3_plan.md](./06_milestone3_plan.md)
+
+---
+
+### Task 3.1 — اختيار وتنظيف قالب Next.js [NOT STARTED]
+
+- [ ] البحث عن قالب Crypto Dashboard مناسب (مفتوح المصدر)
+- [ ] تشغيل القالب محلياً في مجلد `frontend/`
+- [ ] إزالة المكونات غير المطلوبة
+- [ ] إعداد هيكل المجلدات (components, lib, pages)
+
+### Task 3.2 — شاشة تسجيل الدخول [NOT STARTED]
+
+- [ ] إنشاء Login form (Email + Password)
+- [ ] ربطها بـ `POST /api/v1/auth/login` و `POST /api/v1/auth/signup`
+- [ ] تخزين الـ Token في cookies/localStorage
+
+### Task 3.3 — لوحة التحكم الرئيسية (Dashboard) [NOT STARTED]
+
+- [ ] عرض Market Overview cards (Market Cap, Volume, BTC Dominance)
+- [ ] جدول عملات تفاعلي من `GET /api/v1/coins`
+- [ ] Top Gainers / Losers من `GET /api/v1/market/overview`
+- [ ] مؤشر Sentiment Gauge من `GET /api/v1/market/sentiment`
+
+### Task 3.4 — صفحة تفاصيل العملة [NOT STARTED]
+
+- [ ] رسم بياني OHLCV من `GET /api/v1/coins/{symbol}/prices?days=30`
+- [ ] جدول Daily Summary
+- [ ] أزرار تغيير الفترة الزمنية (7d / 30d / 90d / 1y)
+
+### Task 3.5 — إضافة Frontend للـ Docker Compose [NOT STARTED]
+
+- [ ] إنشاء `frontend/Dockerfile`
+- [ ] إضافة service `frontend` في `docker-compose.yml` على port 3000
+
+### Task 3.6 — النشر على Azure [NOT STARTED]
+
+- [ ] إنشاء Azure VM (Ubuntu 22.04)
+- [ ] تثبيت Docker وتشغيل المشروع
+- [ ] فتح البورتات (3000, 8000) في NSG
+- [ ] اختبار الوصول من المتصفح
+
+---
+
+| Task | Description | Status |
+|------|-------------|--------|
+| 3.1 | اختيار وتنظيف قالب Next.js | Not started |
+| 3.2 | شاشة تسجيل الدخول | Not started |
+| 3.3 | لوحة التحكم الرئيسية | Not started |
+| 3.4 | صفحة تفاصيل العملة | Not started |
+| 3.5 | إضافة Frontend للـ Docker | Not started |
+| 3.6 | النشر على Azure | Not started |

@@ -21,38 +21,35 @@
 
 ### Amr Walid
 
-| | Milestone 1 | Milestone 2 |
-|--|------------|------------|
-| Progress | 100% | 100% |
-| Status | Complete | Complete — Pipeline architecture, streaming jobs, and PostgreSQL syncing verified. Final status report complete. |
+| | Milestone 1 | Milestone 2 | Milestone 3 |
+|--|------------|------------|------------|
+| Progress | 100% | 100% | 0% |
+| Status | Complete | Complete ✅ | Frontend (Next.js Template) + Azure Deployment |
 
 ### Yassin Mahmoud
 
-| | Milestone 1 | Milestone 2 |
-|--|------------|------------|
-| Progress | 100% | 100% |
-| Status | Complete | Complete — Bronze streaming, Silver streaming processor, historical batch, News/Social consumers, Airflow DAGs. |
+| | Milestone 1 | Milestone 2 | Milestone 3 |
+|--|------------|------------|------------|
+| Progress | 100% | 100% | 0% |
+| Status | Complete | Complete ✅ | FinBERT Integration + Notebooks |
 
 ### Mostafa Matar
 
-| | Milestone 1 | Milestone 2 |
-|--|------------|------------|
-| Progress | 100% | 100% |
-| Status | Complete | Complete — Full FastAPI backend with JWT auth, all CRUD endpoints, pytest test suite. |
+| | Milestone 1 | Milestone 2 | Milestone 3 |
+|--|------------|------------|------------|
+| Progress | 100% | 100% | 0% |
+| Status | Complete | Complete ✅ | Sentiment API + Alert Worker + Cleanup |
 
-### Ahmed Ayman
+### Ahmed Ayman — ❌ REMOVED FROM PROJECT
 
-| | Milestone 1 | Milestone 2 |
-|--|------------|------------|
-| Progress | 100% | 0% |
-| Status | Complete — News producer and RSS social producer are operational and data flows to Azure. | ML tasks (FinBERT, LSTM, Notebooks) not started. |
+> Ahmed was removed from the team due to inactivity. His remaining ML tasks have been redistributed to Yassin (FinBERT Spark integration) and Karim (dbt sentiment models).
 
 ### Karim
 
-| | Milestone 1 | Milestone 2 |
-|--|------------|------------|
-| Progress | 100% | 100% |
-| Status | Complete | Complete — Staging and Gold dbt models written and successfully run. Data tests passed. dbt docs generated. |
+| | Milestone 1 | Milestone 2 | Milestone 3 |
+|--|------------|------------|------------|
+| Progress | 100% | 100% | 0% |
+| Status | Complete | Complete ✅ | dbt Sentiment Models + Dashboard Stats |
 
 ---
 
@@ -87,21 +84,34 @@ Amr (bronze_news_consumer + bronze_social_consumer) ✅
 Amr (silver_news_processor + silver_social_processor) ✅
     |
     v
-Karim  (gold/market_sentiment.sql — data available now!) ✅
+Yassin (FinBERT sentiment_processor.py) ⏳  ← NEW (Milestone 3)
     |
     v
-Ahmed (FinBERT sentiment scoring — NOT STARTED) ❌
+Karim  (gold/market_sentiment.sql — FinBERT scores) ⏳  ← NEW (Milestone 3)
+    |
+    v
+Mostafa (GET /api/v1/market/sentiment) ⏳  ← NEW (Milestone 3)
+    |
+    v
+Amr (Frontend Dashboard — Next.js) ⏳  ← NEW (Milestone 3)
 ```
+
+---
+
+## Milestone 3 Task Files
+
+| File | Owner |
+|------|-------|
+| [06_milestone3_plan.md](./06_milestone3_plan.md) | Detailed plan with code samples for all tasks |
 
 ---
 
 ## Current Priorities
 
-1. **✅ Airflow Automation** — Custom Airflow Dockerfile with Docker CLI, DAGs triggering Spark via `docker exec`, sync jobs in batch mode. **DONE.**
-2. **⏳ End-to-End Pipeline Testing** — Verify full Airflow DAG runs (sync + dbt) complete successfully with real data.
-3. **⏳ Backend API Testing** — Verify FastAPI reads from Gold tables correctly after Airflow populates them.
-4. **Ahmed** — Implement FinBERT sentiment model in notebooks and integrate as Spark UDF.
-5. **Amr** — All tasks complete.
-6. **Yassin** — All tasks complete.
-7. **Mostafa** — All tasks complete.
-8. **Karim** — All tasks complete.
+1. **✅ Airflow Automation** — DONE.
+2. **✅ End-to-End Pipeline Testing** — DONE.
+3. **✅ Backend API Testing** — DONE.
+4. **⏳ Yassin** — FinBERT integration in Spark + Notebooks.
+5. **⏳ Karim** — dbt sentiment models + dashboard stats.
+6. **⏳ Mostafa** — Sentiment API endpoint + Alert Worker.
+7. **⏳ Amr** — Frontend Dashboard (Next.js) + Azure Deployment.
