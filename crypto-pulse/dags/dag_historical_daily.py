@@ -31,7 +31,7 @@ with DAG(
     ingest_historical = BashOperator(
         task_id='ingest_historical_to_bronze',
         bash_command=(
-            'spark-submit '
+            '/home/airflow/.local/bin/spark-submit '
             '--master spark://spark-master:7077 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
@@ -44,7 +44,7 @@ with DAG(
     process_historical_silver = BashOperator(
         task_id='process_historical_to_silver',
         bash_command=(
-            'spark-submit '
+            '/home/airflow/.local/bin/spark-submit '
             '--master spark://spark-master:7077 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
@@ -57,7 +57,7 @@ with DAG(
     sync_historical_postgres = BashOperator(
         task_id='sync_historical_to_postgres',
         bash_command=(
-            'spark-submit '
+            '/home/airflow/.local/bin/spark-submit '
             '--master spark://spark-master:7077 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
@@ -71,7 +71,7 @@ with DAG(
     sync_news_postgres = BashOperator(
         task_id='sync_news_to_postgres',
         bash_command=(
-            'spark-submit '
+            '/home/airflow/.local/bin/spark-submit '
             '--master spark://spark-master:7077 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
@@ -84,7 +84,7 @@ with DAG(
     sync_social_postgres = BashOperator(
         task_id='sync_social_to_postgres',
         bash_command=(
-            'spark-submit '
+            '/home/airflow/.local/bin/spark-submit '
             '--master spark://spark-master:7077 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
@@ -97,7 +97,7 @@ with DAG(
     # 6. Run dbt to generate Gold Layer (Full Models)
     run_dbt_gold = BashOperator(
         task_id='run_dbt_gold',
-        bash_command='cd /opt/airflow/dbt && dbt run && dbt test --select gold_daily_ohlcv daily_market_summary',
+        bash_command='export POSTGRES_HOST=postgres && cd /opt/airflow/dbt && /home/airflow/.local/bin/dbt deps && /home/airflow/.local/bin/dbt run --select gold_daily_ohlcv daily_market_summary && /home/airflow/.local/bin/dbt test --select gold_daily_ohlcv daily_market_summary',
     )
 
     # Dependency Chain

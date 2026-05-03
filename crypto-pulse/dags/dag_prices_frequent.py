@@ -27,7 +27,7 @@ with DAG(
     sync_prices_postgres = BashOperator(
         task_id='sync_prices_to_postgres',
         bash_command=(
-            'spark-submit '
+            '/home/airflow/.local/bin/spark-submit '
             '--master spark://spark-master:7077 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
@@ -40,7 +40,7 @@ with DAG(
     # 2. Run dbt to generate Gold Layer (Prices Models)
     run_dbt_prices = BashOperator(
         task_id='run_dbt_prices',
-        bash_command='cd /opt/airflow/dbt && dbt run --select gold_latest_prices daily_market_summary',
+        bash_command='export POSTGRES_HOST=postgres && cd /opt/airflow/dbt && /home/airflow/.local/bin/dbt run --select gold_latest_prices daily_market_summary',
     )
 
     # Dependency Chain
