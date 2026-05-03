@@ -366,6 +366,15 @@ PostgreSQL tables: `users`, `refresh_tokens`, `watchlists`, `alerts`, `portfolio
 
 The orchestration is split into two independent DAGs to separate batch processing from frequent micro-batch updates. **Note:** The continuous streaming jobs (`bronze_consumer.py` and `silver_prices_processor.py`) run as standalone background Docker containers and are not managed by Airflow.
 
+### Custom Airflow Image — `airflow/Dockerfile`
+
+Airflow uses a custom Docker image that extends `apache/airflow:2.7.3` with:
+- **Docker CLI 27.4.1** (static binary) — allows the Airflow scheduler to trigger Spark jobs on the `spark-master` container via `docker exec`
+- **Pre-installed pip packages** — `dbt-core==1.7.0`, `dbt-postgres==1.7.0`, `requests`, `python-dotenv`
+- Runs as `user: "0:0"` (root) for Docker socket access
+
+**Architecture:** Airflow does NOT run Spark locally. Instead, it uses the mounted Docker socket (`/var/run/docker.sock`) to execute `docker exec spark-master spark-submit ...` commands on the already-running Spark cluster. This keeps Airflow lightweight (~200MB vs 2GB+ with Spark).
+
 ### DAG 1: `dag_historical_daily`
 **Schedule:** `@daily`  
 Orchestrates the full historical + news/social batch pipeline.
@@ -374,22 +383,22 @@ Orchestrates the full historical + news/social batch pipeline.
 fetch_historical_data
         │
         ▼
-ingest_historical_to_bronze
+ingest_historical_to_bronze     ← docker exec spark-master spark-submit ...
         │
         ▼
-process_historical_to_silver
+process_historical_to_silver    ← docker exec spark-master spark-submit ...
         │
         ▼
-sync_historical_to_postgres
+sync_historical_to_postgres     ← docker exec spark-master spark-submit ...
         │
         ▼
-sync_news_to_postgres
+sync_news_to_postgres           ← docker exec spark-master spark-submit ...
         │
         ▼
-sync_social_to_postgres
+sync_social_to_postgres         ← docker exec spark-master spark-submit ...
         │
         ▼
-run_dbt_gold
+run_dbt_gold                    ← dbt run && dbt test (inside Airflow)
 ```
 
 ### DAG 2: `dag_prices_frequent`
@@ -397,10 +406,10 @@ run_dbt_gold
 Orchestrates the near real-time synchronization and modeling for live prices.
 
 ```text
-sync_prices_to_postgres
+sync_prices_to_postgres         ← docker exec spark-master spark-submit ... (batch mode)
         │
         ▼
-run_dbt_prices
+run_dbt_prices                  ← dbt run (inside Airflow)
 ```
 
 ---
@@ -416,8 +425,8 @@ All services communicate over a shared Docker bridge network named `crypto-net`.
 | `kafka-init-topics` | (same as kafka) | — | Auto-creates 4 topics on startup |
 | `kafka-ui` | `provectuslabs/kafka-ui` | 8080 | Visual Kafka management |
 | `postgres` | `postgres:15` | 5432 | Relational database for API + dbt |
-| `airflow-webserver` | `apache/airflow:2.7.3` | 8081 | DAG management UI |
-| `airflow-scheduler` | `apache/airflow:2.7.3` | — | DAG execution engine |
+| `airflow-webserver` | Custom (`airflow/Dockerfile`) | 8081 | DAG management UI (with Docker CLI) |
+| `airflow-scheduler` | Custom (`airflow/Dockerfile`) | — | DAG execution via `docker exec` |
 | `spark-master` | `crypto-pulse-spark:3.5.0` (custom) | 7077, 8082 | Spark cluster master |
 | `spark-worker` | `crypto-pulse-spark:3.5.0` (custom) | 8083 | Spark executor (2 cores, 4GB RAM) |
 | `streaming-bronze-prices` | `crypto-pulse-spark:3.5.0` | — | Kafka → Bronze/prices (continuous) |
@@ -442,6 +451,7 @@ Extends `apache/spark:3.5.0` and pre-installs all required JARs and Python packa
   - `azure-storage-blob`, `azure-storage-common`, `azure-core`, `azure-identity`, `msal4j` — Azure SDK
   - `spark-sql-kafka-0-10_2.12:3.5.0`, `kafka-clients:3.5.1`, `commons-pool2:2.11.1` — Kafka connector
   - `delta-spark_2.12:3.2.0`, `delta-storage:3.2.0` — Delta Lake
+  - `postgresql:42.6.0` — PostgreSQL JDBC driver
 
 ---
 
@@ -586,12 +596,14 @@ docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/silver_
 
 ### Step 5 — Sync Silver to PostgreSQL
 
+All JARs (Delta, Hadoop-Azure, PostgreSQL) are **pre-installed** in the Spark image — no `--packages` needed.
+
 ```bash
 # Sync all Silver layers to PostgreSQL for dbt to consume
-docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_historical_pg.py
-docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_prices_pg.py
-docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_news_pg.py
-docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_social_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/sync_historical_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/sync_prices_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/sync_news_pg.py
+docker exec -it spark-master /opt/spark/bin/spark-submit /opt/spark/jobs/sync_social_pg.py
 ```
 
 ### Step 6 — Build Gold Layer via dbt

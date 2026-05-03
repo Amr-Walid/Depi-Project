@@ -23,14 +23,15 @@
 - [x] Defined `kafka-init-topics` container that auto-creates 4 topics on startup: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`
 - [x] Defined `kafka-ui` on port 8080
 - [x] Defined `postgres:15` with a mounted `schema.sql` that auto-initializes the database schema
-- [x] Defined `airflow-webserver` on port 8081 with volumes for `dags/`, `processing/spark_jobs/`, and `ingestion/`
-- [x] Defined `airflow-scheduler`
+- [x] Defined `airflow-webserver` on port 8081 using a **custom Dockerfile** (`airflow/Dockerfile`) with Docker CLI 27.4.1 and pre-installed pip packages (dbt-core, dbt-postgres)
+- [x] Defined `airflow-scheduler` — triggers Spark jobs via `docker exec` on the spark-master container through the Docker socket
 - [x] Defined `spark-master` and `spark-worker` using the custom `crypto-pulse-spark:3.5.0` image
-- [x] Defined background streaming containers: `streaming-bronze-consumer` and `streaming-silver-processor` to run Spark structured streaming continuously without blocking Airflow
-- [x] Defined `backend` FastAPI container on port 8000
+- [x] Defined background streaming containers: `streaming-bronze-prices`, `streaming-bronze-news`, `streaming-bronze-social`, and `streaming-silver-prices` to run Spark structured streaming continuously without blocking Airflow
+- [x] Defined `backend` FastAPI container on port 8000 with `POSTGRES_HOST=postgres`
 - [x] Configured shared bridge network `crypto-net` for all services
 - [x] All containers that need Azure credentials receive them via `env_file: .env`
 - [x] All Spark and Airflow containers have `KAFKA_BOOTSTRAP_SERVERS=kafka:29092` set correctly for internal networking
+- [x] Both Airflow containers run as `user: "0:0"` to access the Docker socket at `/var/run/docker.sock`
 
 ---
 

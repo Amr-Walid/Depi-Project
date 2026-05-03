@@ -97,10 +97,11 @@ Ahmed (FinBERT sentiment scoring — NOT STARTED) ❌
 
 ## Current Priorities
 
-1. **Airflow Automation** — Integrate the verified PySpark scripts and dbt commands into Airflow DAGs for automated scheduling.
-2. **Backend API Testing** — Verify FastAPI connects securely to the new Gold tables.
-3. **Ahmed** — Implement FinBERT sentiment model in notebooks and integrate as Spark UDF.
-4. **Amr** — All tasks complete.
-5. **Yassin** — All tasks complete.
-6. **Mostafa** — All tasks complete.
-7. **Karim** — All tasks complete.
+1. **✅ Airflow Automation** — Custom Airflow Dockerfile with Docker CLI, DAGs triggering Spark via `docker exec`, sync jobs in batch mode. **DONE.**
+2. **⏳ End-to-End Pipeline Testing** — Verify full Airflow DAG runs (sync + dbt) complete successfully with real data.
+3. **⏳ Backend API Testing** — Verify FastAPI reads from Gold tables correctly after Airflow populates them.
+4. **Ahmed** — Implement FinBERT sentiment model in notebooks and integrate as Spark UDF.
+5. **Amr** — All tasks complete.
+6. **Yassin** — All tasks complete.
+7. **Mostafa** — All tasks complete.
+8. **Karim** — All tasks complete.

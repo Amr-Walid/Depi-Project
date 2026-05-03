@@ -82,6 +82,9 @@ crypto-pulse/
 │   ├── 📄 architecture.png             ← رسم البنية التحتية [عمرو] ✅
 │   └── 📁 tasks/                   ← ← أنت هنا (ملفات التاسكات)
 │
+├── 📁 airflow/                     ← صورة Docker مخصصة للـ Airflow
+│   └── 📄 Dockerfile                  ← Airflow + Docker CLI 27.4.1 + dbt [عمرو] ✅
+│
 ├── 📁 frontend/                    ← واجهة المستخدم (مرحلة لاحقة) ❌
 └── 📁 orchestration/               ← (محجوز للتوسع المستقبلي)
 ```
@@ -162,10 +165,12 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
 | kafka | 9092 | Message Broker |
 | kafka-ui | 8080 | واجهة مراقبة Kafka |
 | postgres | 5432 | قاعدة بيانات Airflow + Backend |
-| airflow-webserver | 8081 | واجهة Airflow |
-| airflow-scheduler | — | Scheduler لتشغيل DAGs |
+| airflow-webserver | 8081 | واجهة Airflow (صورة مخصصة + Docker CLI) |
+| airflow-scheduler | — | Scheduler — ينفذ Spark jobs عبر `docker exec` |
 | spark-master | 7077 / 8082 | Spark Master Node |
 | spark-worker | 8083 | Spark Worker Node |
-| streaming-bronze-consumer | — | يقرأ من Kafka للـ Bronze بشكل مستمر |
-| streaming-silver-processor | — | يقرأ من Bronze للـ Silver بشكل مستمر |
+| streaming-bronze-prices | — | Kafka → Bronze/prices (مستمر 24/7) |
+| streaming-bronze-news | — | Kafka → Bronze/news (مستمر 24/7) |
+| streaming-bronze-social | — | Kafka → Bronze/social (مستمر 24/7) |
+| streaming-silver-prices | — | Bronze → Silver/prices (مستمر 24/7) |
 | backend | 8000 | FastAPI Application |

@@ -135,6 +135,36 @@
 
 ---
 
+### Task 2.6 — Airflow-Spark Orchestration Integration [COMPLETE]
+
+**Files:**
+- `airflow/Dockerfile`
+- `docker-compose.yml`
+- `dags/dag_prices_frequent.py`
+- `dags/dag_historical_daily.py`
+- `processing/spark_jobs/sync_prices_pg.py`
+
+**What was done:**
+- [x] Created `airflow/Dockerfile` — custom Airflow image with Docker CLI 27.4.1 (static binary) and pre-installed pip packages (dbt-core, dbt-postgres, requests, python-dotenv)
+- [x] Updated `docker-compose.yml` to use custom Airflow build context (`./airflow`) with `user: "0:0"` for Docker socket access
+- [x] Added `POSTGRES_HOST=postgres` environment variable to the backend service
+- [x] Updated all DAG tasks to use `docker exec spark-master spark-submit` instead of local execution — Airflow acts as a lightweight orchestrator that triggers Spark jobs on the spark-master container
+- [x] Removed `--packages` flags from all spark-submit commands since JARs are pre-installed in the Spark image
+- [x] Converted `sync_prices_pg.py` from streaming to batch mode for Airflow compatibility (streaming is handled by dedicated background containers)
+- [x] Added Delta Lake configuration (`spark.sql.extensions`, `spark.sql.catalog`) to all spark-submit commands
+
+**Architecture Decision:** Airflow does NOT run Spark locally. Instead, it uses the Docker socket to execute `docker exec` commands on the already-running `spark-master` container. This keeps Airflow lightweight and avoids duplicate Java/Spark installations.
+
+**Issues resolved:**
+1. Docker socket permission denied → Fixed with `user: "0:0"`
+2. Docker CLI version mismatch (API 1.41 vs 1.44) → Fixed with static binary 27.4.1
+3. Airflow `_PIP_ADDITIONAL_REQUIREMENTS` failure as root → Fixed by baking packages in Dockerfile
+4. Ivy cache write permission → Fixed with `--conf spark.jars.ivy=/tmp/.ivy2` (later removed by eliminating `--packages`)
+5. Maven download failures → Fixed by using pre-installed JARs from Spark image
+6. sync_prices_pg.py streaming hang → Fixed by converting to batch mode
+
+---
+
 ## Summary Table
 
 | Task | Description | Status |
@@ -149,6 +179,7 @@
 | 2.3 | Integration testing (Streaming path) | Complete |
 | 2.4 | Final status report | Complete |
 | 2.5 | Silver to PostgreSQL Sync Job & DAG Update | Complete |
+| 2.6 | Airflow-Spark Orchestration Integration | Complete |
 
 ---
 
@@ -163,4 +194,5 @@
 **Milestone 2 (complete):**
 - `README.md` (complete)
 - `docs/architecture.png` (complete)
+- `airflow/Dockerfile` (complete — Docker CLI 27.4.1 + dbt + pip packages)
 - Integration test results and final report (complete)
