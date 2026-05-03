@@ -93,8 +93,7 @@ services:
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
       AIRFLOW__WEBSERVER__RBAC: 'True'
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
-      _PIP_ADDITIONAL_REQUIREMENTS: 'requests python-dotenv dbt-core==1.7.0 dbt-postgres==1.7.0'
-    user: "0:0"  # Run as root to access Docker socket
+    user: "0:0"
     command: webserver
     ports:
       - "8081:8080"
@@ -123,8 +122,7 @@ services:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
       KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
-      _PIP_ADDITIONAL_REQUIREMENTS: 'requests python-dotenv dbt-core==1.7.0 dbt-postgres==1.7.0'
-    user: "0:0"  # Run as root to access Docker socket
+    user: "0:0"
     command: scheduler
     volumes:
       - ./dags:/opt/airflow/dags
