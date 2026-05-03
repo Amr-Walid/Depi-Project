@@ -33,6 +33,7 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
+            '--conf spark.jars.ivy=/tmp/.ivy2 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final '
@@ -46,6 +47,7 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
+            '--conf spark.jars.ivy=/tmp/.ivy2 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final '
@@ -59,6 +61,7 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
+            '--conf spark.jars.ivy=/tmp/.ivy2 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
@@ -73,6 +76,7 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
+            '--conf spark.jars.ivy=/tmp/.ivy2 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
@@ -86,6 +90,7 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
+            '--conf spark.jars.ivy=/tmp/.ivy2 '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
