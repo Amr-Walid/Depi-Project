@@ -498,6 +498,26 @@ make up
 
 Wait approximately 30 seconds for Kafka and Postgres to fully initialize.
 
+### Step 2.5 — Initialize Airflow (First Time Only)
+
+If this is your first time running the project, you must initialize the Airflow database and create an admin user:
+
+```bash
+# 1. Create Airflow internal tables
+docker compose exec airflow-webserver airflow db migrate
+
+# 2. Create the Admin user for the Web UI
+docker compose exec airflow-webserver airflow users create \
+    --username admin \
+    --firstname Admin \
+    --lastname User \
+    --role Admin \
+    --email admin@example.com \
+    --password admin
+```
+
+You can now access the Airflow UI at `http://localhost:8081` using `admin` / `admin`.
+
 ### Step 3 — Run the Real-Time Streaming Pipeline
 
 Open three separate terminal tabs and run one command per tab. All three must run simultaneously.
