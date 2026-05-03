@@ -122,7 +122,7 @@ services:
     command: scheduler
     volumes:
       - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
+      - airflow_logs:/opt/airflow/logs
       - ./processing/spark_jobs:/opt/airflow/jobs
       - ./ingestion:/opt/airflow/ingestion
       - ./data:/opt/data
