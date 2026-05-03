@@ -76,89 +76,75 @@ def get_supported_coins() -> List[dict]:
     ]
 
 
-def get_coin_summary(symbol: str) -> Optional[dict]:
+def get_coin_summary(symbol: str, db: Session) -> Optional[dict]:
     """
     Get daily summary for a specific coin.
     
-    When Gold Layer is ready, this will query the coin_daily_summary table.
-    Currently returns realistic mock data.
-    
-    Args:
-        symbol: Trading pair symbol (e.g., 'BTCUSDT')
-    
-    Returns:
-        Dictionary with daily summary or None if coin not found
+    Queries the gold.daily_market_summary table in PostgreSQL.
     """
     symbol = symbol.upper()
-    if symbol not in MOCK_BASE_PRICES:
+    if symbol not in SUPPORTED_COINS:
         return None
 
-    base_price = MOCK_BASE_PRICES[symbol]
-    # Generate realistic daily variation (±3%)
-    random.seed(hash(symbol + datetime.now(timezone.utc).strftime("%Y-%m-%d")))
-    variation = random.uniform(-0.03, 0.03)
+    query = text("""
+        SELECT symbol, date, open_price, high_price, low_price, close_price, total_volume
+        FROM gold.daily_market_summary
+        WHERE symbol = :symbol
+        ORDER BY date DESC
+        LIMIT 1
+    """)
+    result = db.execute(query, {"symbol": symbol}).fetchone()
+    
+    if not result:
+        return None
 
-    day_open = base_price * (1 + random.uniform(-0.01, 0.01))
-    day_close = base_price * (1 + variation)
-    day_high = max(day_open, day_close) * (1 + random.uniform(0.005, 0.02))
-    day_low = min(day_open, day_close) * (1 - random.uniform(0.005, 0.02))
-    price_change_pct = ((day_close - day_open) / day_open) * 100
+    open_p = float(result.open_price)
+    close_p = float(result.close_price)
+    price_change_pct = ((close_p - open_p) / open_p * 100) if open_p > 0 else 0
 
     return {
-        "symbol": symbol,
-        "trading_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
-        "day_open": round(day_open, 2),
-        "day_close": round(day_close, 2),
-        "day_high": round(day_high, 2),
-        "day_low": round(day_low, 2),
-        "total_volume": round(random.uniform(1_000_000, 50_000_000), 2),
-        "avg_price": round((day_open + day_close) / 2, 2),
+        "symbol": result.symbol,
+        "trading_date": result.date.strftime("%Y-%m-%d"),
+        "day_open": round(open_p, 4),
+        "day_close": round(close_p, 4),
+        "day_high": round(float(result.high_price), 4),
+        "day_low": round(float(result.low_price), 4),
+        "total_volume": round(float(result.total_volume), 2),
+        "avg_price": round((open_p + close_p) / 2, 4),
         "price_change_pct": round(price_change_pct, 4),
-        "tick_count": random.randint(50000, 200000),
+        "tick_count": 0,
     }
 
 
-def get_coin_prices(symbol: str, days: int = 30) -> Optional[dict]:
+def get_coin_prices(symbol: str, days: int, db: Session) -> Optional[dict]:
     """
     Get historical price data for a coin.
     
-    When Gold Layer is ready, this will query ADLS Gen2 via the Gold tables.
-    Currently returns realistic mock OHLCV data.
-    
-    Args:
-        symbol: Trading pair symbol (e.g., 'BTCUSDT')
-        days: Number of days of history to return (default: 30)
-    
-    Returns:
-        Dictionary with symbol, days, and list of price data points
+    Queries gold.daily_market_summary for the last N days.
     """
     symbol = symbol.upper()
-    if symbol not in MOCK_BASE_PRICES:
+    if symbol not in SUPPORTED_COINS:
         return None
 
-    base_price = MOCK_BASE_PRICES[symbol]
+    query = text("""
+        SELECT date, open_price, high_price, low_price, close_price, total_volume
+        FROM gold.daily_market_summary
+        WHERE symbol = :symbol
+        ORDER BY date DESC
+        LIMIT :days
+    """)
+    results = db.execute(query, {"symbol": symbol, "days": days}).fetchall()
+
     prices = []
-    current_price = base_price
-
-    for i in range(days, 0, -1):
-        date = datetime.now(timezone.utc) - timedelta(days=i)
-        # Random walk for realistic price movement
-        random.seed(hash(symbol + date.strftime("%Y-%m-%d")))
-        change = random.uniform(-0.04, 0.04)
-        current_price = current_price * (1 + change)
-
-        day_open = current_price * (1 + random.uniform(-0.01, 0.01))
-        day_close = current_price
-        day_high = max(day_open, day_close) * (1 + random.uniform(0.005, 0.02))
-        day_low = min(day_open, day_close) * (1 - random.uniform(0.005, 0.02))
-
+    # Reverse to return chronologically (oldest first)
+    for row in reversed(results):
         prices.append({
-            "timestamp": date.strftime("%Y-%m-%dT00:00:00Z"),
-            "open": round(day_open, 2),
-            "high": round(day_high, 2),
-            "low": round(day_low, 2),
-            "close": round(day_close, 2),
-            "volume": round(random.uniform(500_000, 30_000_000), 2),
+            "timestamp": row.date.strftime("%Y-%m-%dT00:00:00Z"),
+            "open": float(row.open_price),
+            "high": float(row.high_price),
+            "low": float(row.low_price),
+            "close": float(row.close_price),
+            "volume": float(row.total_volume),
         })
 
     return {
@@ -168,41 +154,70 @@ def get_coin_prices(symbol: str, days: int = 30) -> Optional[dict]:
     }
 
 
-def get_market_overview() -> dict:
+def get_market_overview(db: Session) -> dict:
     """
     Get market-wide overview statistics.
     
-    When Gold Layer is ready, this will aggregate from the Gold tables.
-    Currently returns realistic mock data.
-    
-    Returns:
-        Dictionary with market-wide stats including top gainers and losers.
+    Aggregates from the latest data in gold.daily_market_summary.
     """
-    # Generate summaries for all coins to find top gainers/losers
+    # 1. Get the latest date available in the database
+    latest_date_query = text("SELECT MAX(date) FROM gold.daily_market_summary")
+    latest_date_result = db.execute(latest_date_query).scalar()
+
+    if not latest_date_result:
+        return {
+            "total_market_cap": 0.0,
+            "total_volume_24h": 0.0,
+            "btc_dominance": 0.0,
+            "active_coins": len(SUPPORTED_COINS),
+            "top_gainers": [],
+            "top_losers": [],
+            "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        }
+
+    # 2. Get summaries for the latest date for all coins
+    query = text("""
+        SELECT symbol, open_price, close_price, total_volume
+        FROM gold.daily_market_summary
+        WHERE date = :latest_date
+    """)
+    results = db.execute(query, {"latest_date": latest_date_result}).fetchall()
+
     summaries = []
-    for symbol in SUPPORTED_COINS:
-        summary = get_coin_summary(symbol)
-        if summary:
-            summaries.append(summary)
+    total_volume_24h = 0.0
+    btc_volume = 0.0
 
-    # Sort by price change to find gainers and losers
-    sorted_by_change = sorted(summaries, key=lambda x: x["price_change_pct"], reverse=True)
+    for row in results:
+        open_p = float(row.open_price)
+        close_p = float(row.close_price)
+        vol = float(row.total_volume)
+        
+        pct_change = ((close_p - open_p) / open_p * 100) if open_p > 0 else 0
+        
+        summaries.append({
+            "symbol": row.symbol,
+            "name": COIN_NAMES.get(row.symbol, row.symbol.replace("USDT", "")),
+            "change_pct": round(pct_change, 2)
+        })
 
-    top_gainers = [
-        {"symbol": s["symbol"], "name": COIN_NAMES.get(s["symbol"], ""), "change_pct": s["price_change_pct"]}
-        for s in sorted_by_change[:5]
-    ]
-    top_losers = [
-        {"symbol": s["symbol"], "name": COIN_NAMES.get(s["symbol"], ""), "change_pct": s["price_change_pct"]}
-        for s in sorted_by_change[-5:]
-    ]
+        total_volume_24h += vol
+        if row.symbol == "BTCUSDT":
+            btc_volume = vol
+
+    sorted_by_change = sorted(summaries, key=lambda x: x["change_pct"], reverse=True)
+    top_gainers = sorted_by_change[:5] if len(sorted_by_change) >= 5 else sorted_by_change
+    top_losers = sorted_by_change[-5:] if len(sorted_by_change) >= 5 else sorted_by_change
+
+    # Market cap approximation based on volume since we lack circulating supply
+    total_market_cap = total_volume_24h * 15.0
+    btc_dominance = (btc_volume / total_volume_24h * 100) if total_volume_24h > 0 else 50.0
 
     return {
-        "total_market_cap": round(random.uniform(2.0e12, 3.0e12), 2),
-        "total_volume_24h": round(random.uniform(80e9, 150e9), 2),
-        "btc_dominance": round(random.uniform(48.0, 55.0), 2),
+        "total_market_cap": round(total_market_cap, 2),
+        "total_volume_24h": round(total_volume_24h, 2),
+        "btc_dominance": round(btc_dominance, 2),
         "active_coins": len(SUPPORTED_COINS),
         "top_gainers": top_gainers,
         "top_losers": top_losers,
-        "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
+        "last_updated": latest_date_result.strftime("%Y-%m-%dT00:00:00Z"),
     }

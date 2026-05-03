@@ -4,6 +4,9 @@ All endpoints require JWT authentication.
 """
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from typing import List
+from sqlalchemy.orm import Session
+
+from app.database import get_db
 
 from app.models.user import User
 from app.services.auth_service import get_current_user
@@ -36,16 +39,16 @@ def list_coins(current_user: User = Depends(get_current_user)):
 # GET /api/v1/coins/{symbol}/summary
 # ──────────────────────────────────────────────
 @router.get("/coins/{symbol}/summary", response_model=CoinSummary)
-def coin_summary(symbol: str, current_user: User = Depends(get_current_user)):
+def coin_summary(symbol: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Get the daily trading summary for a specific coin.
     
     Includes: open, close, high, low prices, total volume,
     average price, price change percentage, and tick count.
     
-    When Gold Layer is ready, this pulls from the `coin_daily_summary` dbt model.
+    Pulls from the `gold.daily_market_summary` dbt model.
     """
-    summary = get_coin_summary(symbol)
+    summary = get_coin_summary(symbol, db)
     if not summary:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -62,15 +65,16 @@ def coin_prices(
     symbol: str,
     days: int = Query(default=30, ge=1, le=365, description="Number of days of history"),
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ):
     """
     Get historical OHLCV price data for a specific coin.
     
     - `days`: Number of days of history (1–365, default: 30)
     
-    When Gold Layer is ready, this pulls from ADLS Gen2 via the Gold tables.
+    Pulls from ADLS Gen2 via the Gold tables.
     """
-    prices = get_coin_prices(symbol, days)
+    prices = get_coin_prices(symbol, days, db)
     if not prices:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -83,11 +87,11 @@ def coin_prices(
 # GET /api/v1/market/overview
 # ──────────────────────────────────────────────
 @router.get("/market/overview", response_model=MarketOverview)
-def market_overview(current_user: User = Depends(get_current_user)):
+def market_overview(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
     """
     Get a market-wide overview with aggregate statistics.
     
     Includes: total market cap, 24h volume, BTC dominance,
     top 5 gainers, and top 5 losers.
     """
-    return get_market_overview()
+    return get_market_overview(db)
