@@ -574,7 +574,21 @@ docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgres
 docker exec -it spark-master /opt/spark/bin/spark-submit --packages org.postgresql:postgresql:42.6.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4 /opt/spark/jobs/sync_social_pg.py
 ```
 
-### Step 6 — Access the Backend API
+### Step 6 — Build Gold Layer via dbt
+
+After the Silver data is synced to PostgreSQL, you can trigger dbt to build the analytics tables.
+
+```bash
+docker compose exec -e POSTGRES_HOST=postgres airflow-webserver bash -c "cd /opt/airflow/dbt && dbt deps && dbt run"
+
+# Run data quality tests
+docker compose exec -e POSTGRES_HOST=postgres airflow-webserver bash -c "cd /opt/airflow/dbt && dbt test"
+
+# Generate documentation
+docker compose exec -e POSTGRES_HOST=postgres airflow-webserver bash -c "cd /opt/airflow/dbt && dbt docs generate"
+```
+
+### Step 7 — Access the Backend API
 
 The FastAPI backend starts automatically with `make up`. No manual step is needed.
 

@@ -107,16 +107,16 @@
 - [x] Resolved Spark Azure Auth issues (`ClientCredsTokenProvider` injection in Spark Session)
 - [x] Resolved Docker image staleness issue (required `--build` flag to rebuild Spark image with updated Dockerfile)
 - [x] Diagnosed and resolved Spark executor heartbeat timeout caused by running two concurrent Streaming jobs on a local WSL2 environment
-- [x] dbt Gold layer integration test (pending Karim)
+- [x] dbt Gold layer integration test (completed)
 - [x] FastAPI end-to-end test reading from Gold
 
 ---
 
-### Task 2.4 — Final Status Report [PENDING]
+### Task 2.4 — Final Status Report [COMPLETE]
 
-- [ ] Summary of progress per milestone
-- [ ] Problems encountered and how they were resolved
-- [ ] Next steps for the project
+- [x] Summary of progress per milestone
+- [x] Problems encountered and how they were resolved
+- [x] Next steps for the project
 
 ---
 
@@ -147,7 +147,7 @@
 | 2.1 | Architecture diagram | Complete |
 | 2.2 | README.md full rewrite | Complete |
 | 2.3 | Integration testing (Streaming path) | Complete |
-| 2.4 | Final status report | Pending |
+| 2.4 | Final status report | Complete |
 | 2.5 | Silver to PostgreSQL Sync Job & DAG Update | Complete |
 
 ---
@@ -160,7 +160,7 @@
 - `ingestion/historical/historical_fetcher.py`
 - `.gitignore`, `.env.example`, `requirements.txt`
 
-**Milestone 2 (in progress):**
+**Milestone 2 (complete):**
 - `README.md` (complete)
 - `docs/architecture.png` (complete)
-- Integration test results and final report (pending)
+- Integration test results and final report (complete)

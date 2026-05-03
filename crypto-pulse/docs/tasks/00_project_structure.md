@@ -48,7 +48,7 @@ crypto-pulse/
 │   └── 📁 dbt/                     ← تحويلات الطبقة الذهبية
 │       ├── 📄 dbt_project.yml          ← إعدادات مشروع dbt [كريم] ✅
 │       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ✅
-│       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ⏳
+│       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ✅
 │
 ├── 📁 dags/
 │   ├── 📄 dag_historical_daily.py      ← DAG يومي للبيانات التاريخية [عمرو] ✅
@@ -130,7 +130,7 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
                                               /silver/prices/ | /news/ | /social/ | /historical/
                                                         │
                                                         ▼
-                                              Gold Layer (dbt models) ⏳
+                                              Gold Layer (dbt models) ✅
                                               /gold/daily_summary/ | /sentiment/ | /latest_prices/
                                                         │
                                                         ▼

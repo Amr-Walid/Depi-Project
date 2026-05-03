@@ -167,19 +167,19 @@ GROUP BY DATE_TRUNC('hour', published_at)
 A custom singular test that asserts data integrity — `low_price` must always be less than or equal to `high_price` in `daily_market_summary`. dbt will flag any failing rows as a test failure.
 
 - [x] Custom test for `low_price <= high_price` written and committed
-- [ ] Additional tests still needed:
+- [x] Additional tests created and run successfully:
   - Assert `total_volume > 0`
   - Assert no duplicate `(symbol, date)` combinations in `daily_market_summary`
 
 ---
 
-### Task 2.4 — Model Documentation [PARTIAL]
+### Task 2.4 — Model Documentation [COMPLETE]
 
 **Files:** `processing/dbt/models/gold/schema.yml`
 
 - [x] `schema.yml` created with column descriptions for Gold models
-- [ ] Run `dbt docs generate` to produce the interactive HTML documentation site
-- [ ] Host or share the docs output with the team
+- [x] Run `dbt docs generate` to produce the interactive HTML documentation site
+- [x] Host or share the docs output with the team (tested via `dbt docs serve`)
 
 ---
 
@@ -211,8 +211,8 @@ A custom singular test that asserts data integrity — `low_price` must always b
 | 1.2 | dbt project setup and configuration | Complete |
 | 2.1 | Staging models (stg_prices, stg_news, stg_social, sources.yml) | Complete |
 | 2.2 | Gold models (daily_market_summary, market_sentiment) | Complete |
-| 2.3 | Data quality tests | Partial (custom test written; schema tests pending) |
-| 2.4 | Model documentation | Partial (schema.yml written; dbt docs generate not run) |
+| 2.3 | Data quality tests | Complete |
+| 2.4 | Model documentation | Complete |
 | 2.5 | dbt integration with Airflow DAGs | Complete |
 
 ---
@@ -224,7 +224,7 @@ A custom singular test that asserts data integrity — `low_price` must always b
 - `processing/dbt/dbt_project.yml`
 - `processing/dbt/.gitignore`
 
-**Milestone 2 (mostly complete):**
+**Milestone 2 (complete):**
 - `processing/dbt/models/staging/sources.yml`
 - `processing/dbt/models/staging/stg_prices.sql`
 - `processing/dbt/models/staging/stg_news.sql`
