@@ -23,8 +23,8 @@
 
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| Progress | 100% | 95% |
-| Status | Complete | Integration testing complete. News/Social RSS pipelines integrated. Final status report pending. |
+| Progress | 100% | 100% |
+| Status | Complete | Complete — Pipeline architecture, streaming jobs, and PostgreSQL syncing verified. Final status report complete. |
 
 ### Yassin Mahmoud
 
@@ -51,8 +51,8 @@
 
 | | Milestone 1 | Milestone 2 |
 |--|------------|------------|
-| Progress | 100% | 85% |
-| Status | Complete | Staging and Gold dbt models written. Data tests written. `dbt run` and `dbt docs generate` pending execution. |
+| Progress | 100% | 100% |
+| Status | Complete | Complete — Staging and Gold dbt models written and successfully run. Data tests passed. dbt docs generated. |
 
 ---
 
@@ -71,7 +71,7 @@ Yassin (silver_prices_processor.py — Streaming Upsert) ✅
 Amr (sync_*_pg.py — Silver → PostgreSQL) ✅
     |
     v
-Karim  (dbt staging + gold models) ⏳
+Karim  (dbt staging + gold models) ✅
     |
     v
 Mostafa (FastAPI — data_service reads Gold layer) ✅
@@ -87,7 +87,7 @@ Amr (bronze_news_consumer + bronze_social_consumer) ✅
 Amr (silver_news_processor + silver_social_processor) ✅
     |
     v
-Karim  (gold/market_sentiment.sql — data available now!) ⏳
+Karim  (gold/market_sentiment.sql — data available now!) ✅
     |
     v
 Ahmed (FinBERT sentiment scoring — NOT STARTED) ❌
@@ -97,8 +97,10 @@ Ahmed (FinBERT sentiment scoring — NOT STARTED) ❌
 
 ## Current Priorities
 
-1. **Karim** — Execute `dbt run && dbt test` to materialize the Gold layer. News/Social data is now available.
-2. **Ahmed** — Implement FinBERT sentiment model in notebooks and integrate as Spark UDF.
-3. **Amr** — Complete final status report (Task 2.4). Execute `sync_news_pg.py` and `sync_social_pg.py` to populate PostgreSQL.
-4. **Yassin** — All tasks complete.
-5. **Mostafa** — All tasks complete.
+1. **Airflow Automation** — Integrate the verified PySpark scripts and dbt commands into Airflow DAGs for automated scheduling.
+2. **Backend API Testing** — Verify FastAPI connects securely to the new Gold tables.
+3. **Ahmed** — Implement FinBERT sentiment model in notebooks and integrate as Spark UDF.
+4. **Amr** — All tasks complete.
+5. **Yassin** — All tasks complete.
+6. **Mostafa** — All tasks complete.
+7. **Karim** — All tasks complete.
