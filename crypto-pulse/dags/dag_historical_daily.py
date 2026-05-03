@@ -21,6 +21,9 @@ with DAG(
     tags=['crypto', 'historical', 'batch', 'dbt'],
 ) as dag:
 
+    # All JARs (delta, hadoop-azure, postgresql, kafka) are pre-installed in the Spark image.
+    # No --packages needed — faster and no network dependency.
+
     # 1. Fetch Historical OHLCV Data from Binance API
     fetch_historical = BashOperator(
         task_id='fetch_historical_data',
@@ -33,10 +36,8 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
-            '--conf spark.jars.ivy=/tmp/.ivy2 '
-            '--packages io.delta:delta-spark_2.12:3.2.0,'
-            'org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
             '/opt/spark/jobs/historical_loader.py'
         ),
     )
@@ -47,10 +48,8 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
-            '--conf spark.jars.ivy=/tmp/.ivy2 '
-            '--packages io.delta:delta-spark_2.12:3.2.0,'
-            'org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
             '/opt/spark/jobs/silver_historical_processor.py'
         ),
     )
@@ -61,11 +60,8 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
-            '--conf spark.jars.ivy=/tmp/.ivy2 '
-            '--packages io.delta:delta-spark_2.12:3.2.0,'
-            'org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
-            'org.postgresql:postgresql:42.6.0 '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
             '/opt/spark/jobs/sync_historical_pg.py'
         ),
     )
@@ -76,11 +72,8 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
-            '--conf spark.jars.ivy=/tmp/.ivy2 '
-            '--packages io.delta:delta-spark_2.12:3.2.0,'
-            'org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
-            'org.postgresql:postgresql:42.6.0 '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
             '/opt/spark/jobs/sync_news_pg.py'
         ),
     )
@@ -90,11 +83,8 @@ with DAG(
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
-            '--conf spark.jars.ivy=/tmp/.ivy2 '
-            '--packages io.delta:delta-spark_2.12:3.2.0,'
-            'org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
-            'org.postgresql:postgresql:42.6.0 '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
             '/opt/spark/jobs/sync_social_pg.py'
         ),
     )

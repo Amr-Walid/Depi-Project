@@ -22,18 +22,14 @@ with DAG(
 ) as dag:
 
     # 1. Sync Silver Prices Data from ADLS to PostgreSQL
-    # Note: bronze_consumer.py and silver_prices_processor.py are running continuously in background containers.
-    # This task just copies the latest state from Silver ADLS to PostgreSQL.
+    # JARs (delta, hadoop-azure, postgresql) are pre-installed in the Spark image.
     sync_prices_postgres = BashOperator(
         task_id='sync_prices_to_postgres',
         bash_command=(
             'docker exec spark-master '
             '/opt/spark/bin/spark-submit '
-            '--conf spark.jars.ivy=/tmp/.ivy2 '
-            '--packages io.delta:delta-spark_2.12:3.2.0,'
-            'org.apache.hadoop:hadoop-azure:3.3.4,'
-            'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
-            'org.postgresql:postgresql:42.6.0 '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
             '/opt/spark/jobs/sync_prices_pg.py'
         ),
     )
