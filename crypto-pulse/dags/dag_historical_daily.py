@@ -31,12 +31,12 @@ with DAG(
     ingest_historical = BashOperator(
         task_id='ingest_historical_to_bronze',
         bash_command=(
-            '/home/airflow/.local/bin/spark-submit '
-            '--master spark://spark-master:7077 '
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final '
-            '/opt/airflow/jobs/historical_loader.py'
+            '/opt/spark/jobs/historical_loader.py'
         ),
     )
 
@@ -44,12 +44,12 @@ with DAG(
     process_historical_silver = BashOperator(
         task_id='process_historical_to_silver',
         bash_command=(
-            '/home/airflow/.local/bin/spark-submit '
-            '--master spark://spark-master:7077 '
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final '
-            '/opt/airflow/jobs/silver_historical_processor.py'
+            '/opt/spark/jobs/silver_historical_processor.py'
         ),
     )
 
@@ -57,13 +57,13 @@ with DAG(
     sync_historical_postgres = BashOperator(
         task_id='sync_historical_to_postgres',
         bash_command=(
-            '/home/airflow/.local/bin/spark-submit '
-            '--master spark://spark-master:7077 '
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
             'org.postgresql:postgresql:42.6.0 '
-            '/opt/airflow/jobs/sync_historical_pg.py'
+            '/opt/spark/jobs/sync_historical_pg.py'
         ),
     )
 
@@ -71,26 +71,26 @@ with DAG(
     sync_news_postgres = BashOperator(
         task_id='sync_news_to_postgres',
         bash_command=(
-            '/home/airflow/.local/bin/spark-submit '
-            '--master spark://spark-master:7077 '
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
             'org.postgresql:postgresql:42.6.0 '
-            '/opt/airflow/jobs/sync_news_pg.py'
+            '/opt/spark/jobs/sync_news_pg.py'
         ),
     )
 
     sync_social_postgres = BashOperator(
         task_id='sync_social_to_postgres',
         bash_command=(
-            '/home/airflow/.local/bin/spark-submit '
-            '--master spark://spark-master:7077 '
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
             'org.postgresql:postgresql:42.6.0 '
-            '/opt/airflow/jobs/sync_social_pg.py'
+            '/opt/spark/jobs/sync_social_pg.py'
         ),
     )
 

@@ -27,13 +27,13 @@ with DAG(
     sync_prices_postgres = BashOperator(
         task_id='sync_prices_to_postgres',
         bash_command=(
-            '/home/airflow/.local/bin/spark-submit '
-            '--master spark://spark-master:7077 '
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
             '--packages io.delta:delta-spark_2.12:3.2.0,'
             'org.apache.hadoop:hadoop-azure:3.3.4,'
             'org.wildfly.openssl:wildfly-openssl:1.1.3.Final,'
             'org.postgresql:postgresql:42.6.0 '
-            '/opt/airflow/jobs/sync_prices_pg.py'
+            '/opt/spark/jobs/sync_prices_pg.py'
         ),
     )
 
