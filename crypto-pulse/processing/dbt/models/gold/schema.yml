@@ -36,10 +36,20 @@ models:
         tests:
           - not_null
       - name: close_price
+        tests:
+          - not_null
       - name: open_price
+        tests:
+          - not_null
       - name: high_price
+        tests:
+          - not_null
       - name: low_price
+        tests:
+          - not_null
       - name: total_volume
+        tests:
+          - not_null
 
   - name: gold_latest_prices
     description: "Latest prices from streaming real-time data"
@@ -52,22 +62,57 @@ models:
         tests:
           - not_null
       - name: latest_volume_24h
+        tests:
+          - not_null
       - name: last_updated
         tests:
           - not_null
 
   - name: market_sentiment
-    description: "Market sentiment from news and social media"
+    description: "Financial sentiment analysis per day per symbol using FinBERT"
     columns:
       - name: sentiment_date
         tests:
           - not_null
-      - name: source_type
+      - name: symbol
         tests:
           - not_null
-      - name: mentions
+      - name: avg_sentiment_score
+        description: "Average sentiment score from -1 (very negative) to 1 (very positive)"
         tests:
           - not_null
-      - name: sentiment_score
+      - name: total_articles
+        tests:
+          - not_null
+      - name: positive_count
+        tests:
+          - not_null
+      - name: negative_count
+        tests:
+          - not_null
+      - name: neutral_count
+        tests:
+          - not_null
+      - name: market_mood
+        description: "Bullish (score > 0.2), Bearish (score < -0.2), Neutral (otherwise)"
+
+  - name: gold_dashboard_stats
+    description: "Single-table dashboard statistics combining latest prices and sentiment"
+    columns:
+      - name: symbol
+        tests:
+          - not_null
+          - unique
+      - name: latest_price
+        tests:
+          - not_null
+      - name: latest_volume_24h
+      - name: last_updated
+        tests:
+          - not_null
+      - name: avg_sentiment_score
+      - name: market_mood
+      - name: last_sentiment_update
+      - name: active_coins
         tests:
           - not_null
