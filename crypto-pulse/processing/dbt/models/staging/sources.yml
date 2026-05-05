@@ -11,5 +11,7 @@ sources:
         description: "Real-time price ticks from Binance WebSocket via Kafka"
       - name: news
         description: "Silver news data"
+      - name: news_sentiment   # 👈 الجديد
+        description: "FinBERT sentiment scores per news article"
       - name: social
         description: "Silver social media data"
