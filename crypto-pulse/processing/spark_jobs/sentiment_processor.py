@@ -57,8 +57,16 @@ def main():
             return (0.0, "neutral")
         
         try:
+            import os
+            # Ensure workers use /tmp for caching and disable migration warnings
+            os.environ["TRANSFORMERS_CACHE"] = "/tmp"
+            os.environ["HF_HOME"] = "/tmp"
+            os.environ["TRANSFORMERS_VERBOSITY"] = "error"
+            os.environ["HF_HUB_DISABLE_SYMLINKS_WARNING"] = "1"
+            
             # We import inside to handle serialization correctly across workers
-            from transformers import pipeline
+            from transformers import pipeline, logging as hf_logging
+            hf_logging.set_verbosity_error()
             # The model will be cached on each worker after first run
             classifier = pipeline("sentiment-analysis", model="ProsusAI/finbert", device=-1)
             
@@ -92,8 +100,17 @@ def main():
         logger.info(f"Reading News from Delta (Batch): {news_adls_path}")
         df = spark.read.format("delta").load(news_adls_path)
 
-        # Apply sentiment analysis
+        # Apply sentiment analysis and extract symbol from title
+        from pyspark.sql.functions import when, lower
+        
         sentiment_df = df.withColumn("sentiment", analyze_sentiment_udf(col("title"))) \
+                         .withColumn("symbol", 
+                            when(lower(col("title")).contains("bitcoin") | lower(col("title")).contains("btc"), "BTC")
+                            .when(lower(col("title")).contains("ethereum") | lower(col("title")).contains("eth"), "ETH")
+                            .when(lower(col("title")).contains("ripple") | lower(col("title")).contains("xrp"), "XRP")
+                            .when(lower(col("title")).contains("shiba") | lower(col("title")).contains("shib"), "SHIB")
+                            .otherwise("Other")
+                         ) \
                          .select(
                              col("title"),
                              col("symbol"),
