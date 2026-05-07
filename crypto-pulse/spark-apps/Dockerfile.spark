@@ -5,7 +5,9 @@ USER root
 # Install Python dependencies needed by bronze_consumer.py and Delta Merge
 RUN pip install --no-cache-dir \
     python-dotenv==1.0.1 \
-    delta-spark==3.2.0
+    delta-spark==3.2.0 \
+    transformers
+RUN pip install --no-cache-dir torch --index-url https://download.pytorch.org/whl/cpu
 
 # Download required JARs into Spark's jars directory
 # -- Azure ADLS Gen2 Connectivity --

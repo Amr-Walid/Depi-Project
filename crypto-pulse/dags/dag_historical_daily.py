@@ -89,11 +89,23 @@ with DAG(
         ),
     )
 
-    # 6. Run dbt to generate Gold Layer (Full Models)
+    # 6. FinBERT Sentiment Analysis
+    run_sentiment_analysis = BashOperator(
+        task_id='run_sentiment_analysis',
+        bash_command=(
+            'docker exec spark-master '
+            '/opt/spark/bin/spark-submit '
+            '--conf spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension '
+            '--conf spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog '
+            '/opt/spark/jobs/sentiment_processor.py'
+        ),
+    )
+
+    # 7. Run dbt to generate Gold Layer (Full Models)
     run_dbt_gold = BashOperator(
         task_id='run_dbt_gold',
         bash_command='export POSTGRES_HOST=postgres && cd /opt/airflow/dbt && /home/airflow/.local/bin/dbt deps && /home/airflow/.local/bin/dbt run --select gold_daily_ohlcv daily_market_summary && /home/airflow/.local/bin/dbt test --select gold_daily_ohlcv daily_market_summary',
     )
 
     # Dependency Chain
-    fetch_historical >> ingest_historical >> process_historical_silver >> sync_historical_postgres >> sync_news_postgres >> sync_social_postgres >> run_dbt_gold
+    fetch_historical >> ingest_historical >> process_historical_silver >> sync_historical_postgres >> sync_news_postgres >> sync_social_postgres >> run_sentiment_analysis >> run_dbt_gold

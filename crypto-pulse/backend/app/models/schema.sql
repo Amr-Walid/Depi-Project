@@ -94,3 +94,17 @@ CREATE INDEX idx_refresh_tokens_token ON refresh_tokens(token);
 
 CREATE INDEX idx_news_published_at ON silver.news(published_at);
 CREATE INDEX idx_social_created_at ON silver.social(created_at);
+
+-- Sentiment analysis results
+CREATE TABLE IF NOT EXISTS silver.news_sentiment (
+    id SERIAL PRIMARY KEY,
+    title TEXT,
+    published_at TIMESTAMP,
+    sentiment_score DECIMAL(5, 4),
+    sentiment_label VARCHAR(20),
+    source VARCHAR(255),
+    ingested_at TIMESTAMP DEFAULT NOW()
+);
+
+CREATE INDEX idx_sentiment_published_at ON silver.news_sentiment(published_at);
+CREATE INDEX idx_sentiment_label ON silver.news_sentiment(sentiment_label);
