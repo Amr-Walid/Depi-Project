@@ -96,6 +96,7 @@ def main():
         sentiment_df = df.withColumn("sentiment", analyze_sentiment_udf(col("title"))) \
                          .select(
                              col("title"),
+                             col("symbol"),
                              col("published_at"),
                              col("sentiment.score").alias("sentiment_score"),
                              col("sentiment.label").alias("sentiment_label"),
