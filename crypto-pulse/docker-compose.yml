@@ -56,7 +56,7 @@ services:
       - kafka
     environment:
       KAFKA_CLUSTERS_0_NAME: local
-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
+      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
     ports:
       - "8080:8080"
@@ -79,16 +79,21 @@ services:
       - crypto-net
 
   airflow-webserver:
-    image: apache/airflow:2.7.3
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
     container_name: airflow-webserver
     depends_on:
       - postgres
+    env_file:
+      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
       AIRFLOW__WEBSERVER__RBAC: 'True'
       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
-      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
+    user: "0:0"
     command: webserver
     ports:
       - "8081:8080"
@@ -98,27 +103,34 @@ services:
       - ./processing/spark_jobs:/opt/airflow/jobs
       - ./ingestion:/opt/airflow/ingestion
       - ./data:/opt/data
+      - ./processing/dbt:/opt/airflow/dbt
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - crypto-net
 
   airflow-scheduler:
-    image: apache/airflow:2.7.3
+    build:
+      context: ./airflow
+      dockerfile: Dockerfile
     container_name: airflow-scheduler
     depends_on:
       - postgres
       - airflow-webserver
+    env_file:
+      - .env
     environment:
       AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
-      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
+    user: "0:0"
     command: scheduler
     volumes:
       - ./dags:/opt/airflow/dags
-      - ./logs:/opt/airflow/logs
+      - airflow_logs:/opt/airflow/logs
       - ./processing/spark_jobs:/opt/airflow/jobs
       - ./ingestion:/opt/airflow/ingestion
       - ./data:/opt/data
+      - ./processing/dbt:/opt/airflow/dbt
       - /var/run/docker.sock:/var/run/docker.sock
     networks:
       - crypto-net
@@ -131,9 +143,12 @@ services:
     container_name: spark-master
     depends_on:
       - kafka
+    env_file:
+      - .env
     environment:
       SPARK_MASTER_HOST: spark-master
       SPARK_MASTER_PORT: 7077
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
     ports:
       - "7077:7077"
@@ -150,9 +165,12 @@ services:
     container_name: spark-worker
     depends_on:
       - spark-master
+    env_file:
+      - .env
     environment:
       SPARK_WORKER_MEMORY: 4G
       SPARK_WORKER_CORES: 2
+      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
     ports:
       - "8083:8081"
@@ -177,6 +195,102 @@ services:
       - .env
     volumes:
       - ./backend/app:/app/app
+    environment:
+      - POSTGRES_HOST=postgres
+    networks:
+      - crypto-net
+
+  alert-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: alert-worker
+    depends_on:
+      - postgres
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - ./backend/app:/app/app
+    environment:
+      - POSTGRES_HOST=postgres
+    command: python -m app.services.alert_worker
+    restart: unless-stopped
+    networks:
+      - crypto-net
+
+  streaming-bronze-prices:
+    image: crypto-pulse-spark:3.5.0
+    container_name: streaming-bronze-prices
+    depends_on:
+      - spark-worker
+      - kafka
+    env_file:
+      - .env
+    volumes:
+      - ./processing/spark_jobs:/opt/spark/jobs
+      - ./data:/opt/data
+    command: >
+      /opt/spark/bin/spark-submit 
+      --master spark://spark-master:7077 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
+      /opt/spark/jobs/bronze_consumer.py
+    networks:
+      - crypto-net
+
+  streaming-bronze-news:
+    image: crypto-pulse-spark:3.5.0
+    container_name: streaming-bronze-news
+    depends_on:
+      - spark-worker
+      - kafka
+    env_file:
+      - .env
+    volumes:
+      - ./processing/spark_jobs:/opt/spark/jobs
+      - ./data:/opt/data
+    command: >
+      /opt/spark/bin/spark-submit 
+      --master spark://spark-master:7077 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
+      /opt/spark/jobs/bronze_news_consumer.py
+    networks:
+      - crypto-net
+
+  streaming-bronze-social:
+    image: crypto-pulse-spark:3.5.0
+    container_name: streaming-bronze-social
+    depends_on:
+      - spark-worker
+      - kafka
+    env_file:
+      - .env
+    volumes:
+      - ./processing/spark_jobs:/opt/spark/jobs
+      - ./data:/opt/data
+    command: >
+      /opt/spark/bin/spark-submit 
+      --master spark://spark-master:7077 
+      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
+      /opt/spark/jobs/bronze_social_consumer.py
+    networks:
+      - crypto-net
+
+  streaming-silver-prices:
+    image: crypto-pulse-spark:3.5.0
+    container_name: streaming-silver-prices
+    depends_on:
+      - spark-worker
+    env_file:
+      - .env
+    volumes:
+      - ./processing/spark_jobs:/opt/spark/jobs
+      - ./data:/opt/data
+    command: >
+      /opt/spark/bin/spark-submit 
+      --master spark://spark-master:7077 
+      --packages io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
+      /opt/spark/jobs/silver_prices_processor.py
     networks:
       - crypto-net
 
