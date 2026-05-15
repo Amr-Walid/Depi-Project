@@ -40,6 +40,7 @@ crypto-pulse/
 │   │   ├── 📄 silver_historical_processor.py ← Batch → Silver Historical [ياسين] ✅
 │   │   ├── 📄 silver_news_processor.py     ← Batch → Silver News [عمرو] ✅
 │   │   ├── 📄 silver_social_processor.py   ← Batch → Silver Social [عمرو] ✅
+│   │   ├── 📄 sentiment_processor.py       ← FinBERT Sentiment Analysis [ياسين] ✅
 │   │   ├── 📄 historical_loader.py         ← تحميل البيانات التاريخية → Bronze [ياسين] ✅
 │   │   ├── 📄 sync_historical_pg.py        ← Sync Historical ADLS → Postgres [عمرو] ✅
 │   │   ├── 📄 sync_prices_pg.py            ← Sync Prices ADLS → Postgres [عمرو] ✅
@@ -47,8 +48,21 @@ crypto-pulse/
 │   │   └── 📄 sync_social_pg.py            ← Sync Social ADLS → Postgres [عمرو] ✅
 │   └── 📁 dbt/                     ← تحويلات الطبقة الذهبية
 │       ├── 📄 dbt_project.yml          ← إعدادات مشروع dbt [كريم] ✅
-│       ├── 📁 models/                  ← نماذج dbt (Gold Layer) [كريم] ✅
-│       └── 📁 tests/                   ← اختبارات جودة البيانات [كريم] ✅
+│       ├── 📁 models/
+│       │   ├── 📁 staging/
+│       │   │   ├── 📄 stg_prices.sql, stg_historical.sql, stg_news.sql, stg_social.sql ✅
+│       │   │   ├── 📄 stg_news_sentiment.sql  ← Staging للـ Sentiment [كريم] ✅
+│       │   │   └── 📄 sources.yml              ← مع news_sentiment source [كريم] ✅
+│       │   └── 📁 gold/
+│       │       ├── 📄 daily_market_summary.sql, gold_daily_ohlcv.sql, gold_latest_prices.sql ✅
+│       │       ├── 📄 market_sentiment.sql     ← FinBERT-based sentiment [كريم] ✅
+│       │       ├── 📄 gold_dashboard_stats.sql ← Dashboard Stats Model [كريم] ✅
+│       │       └── 📄 schema.yml              ← مع أوصاف Sentiment الجديدة ✅
+│       └── 📁 tests/
+│           ├── 📄 assert_low_price_less_than_high_price.sql ✅
+│           ├── 📄 assert_no_duplicate_symbol_date.sql ✅
+│           ├── 📄 assert_total_volume_positive.sql ✅
+│           └── 📄 assert_sentiment_score_range.sql ← اختبار نطاق الـ Scores [كريم] ✅
 │
 ├── 📁 dags/
 │   ├── 📄 dag_historical_daily.py      ← DAG يومي للبيانات التاريخية [عمرو] ✅
@@ -65,14 +79,17 @@ crypto-pulse/
 │   └── 📁 tests/                   ← اختبارات API [مصطفى] ✅
 │
 ├── 📁 spark-apps/                  ← بيئة Spark Docker
-│   ├── 📄 Dockerfile.spark             ← صورة Docker لـ Spark [مصطفى] ✅
+│   ├── 📄 Dockerfile.spark             ← صورة Docker لـ Spark + FinBERT [مصطفى/ياسين] ✅
 │   └── 📄 bronze_consumer.py           ← نسخة تشغيل داخل Container [ياسين] ✅
 │
-├── 📁 ml/                          ← نماذج الذكاء الاصطناعي [ياسين/كريم] ⏳ (FinBERT)
+├── 📄 Dockerfile.airflow               ← صورة Airflow مخصصة + PySpark [ياسين] ✅
+│
+├── 📁 ml/                          ← نماذج الذكاء الاصطناعي (FinBERT متكامل في Spark) ✅
 ├── 📁 notebooks/
-│   ├── 📄 01-data-exploration.ipynb    ← تحليل استكشافي للبيانات [ياسين] ⏳
-│   ├── 📄 02-model-training.ipynb      ← تدريب نماذج ML [ياسين] ⏳
-│   └── 📄 03-poc-dashboard.ipynb       ← تم إلغاؤه لصالح Next.js [عمرو] ❌
+│   ├── 📄 01-data-exploration.ipynb    ← تحليل استكشافي للبيانات [ياسين] ✅
+│   ├── 📄 02-model-training.ipynb      ← تدريب نماذج ML [ياسين] ✅
+│   ├── 📄 03-poc-dashboard.ipynb       ← Proof of Concept Dashboard ⏳
+│   └── 📄 03-sentiment-dashboard.ipynb ← Sentiment Intelligence Dashboard [ياسين] ✅
 │
 ├── 📁 data/
 │   └── 📁 historical/              ← بيانات JSON المحفوظة محليًا [عمرو] ✅

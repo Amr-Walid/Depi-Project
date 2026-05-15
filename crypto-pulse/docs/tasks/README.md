@@ -1,6 +1,6 @@
 # CryptoPulse — Task Dashboard
 
-> Last reviewed: May 2026
+> Last reviewed: May 15, 2026
 
 ---
 
@@ -10,10 +10,11 @@
 |------|-------|
 | [00_project_structure.md](./00_project_structure.md) | Project Structure & Data Flow |
 | [01_amr_tasks.md](./01_amr_tasks.md) | Amr Walid — Lead Engineer |
-| [02_yassin_tasks.md](./02_yassin_tasks.md) | Yassin Mahmoud — Spark / DataOps |
+| [02_yassin_tasks.md](./02_yassin_tasks.md) | Yassin Mahmoud — Spark / DataOps / ML |
 | [03_mostafa_tasks.md](./03_mostafa_tasks.md) | Mostafa Matar — Backend / Docker |
-| [04_ahmed_tasks.md](./04_ahmed_tasks.md) | Ahmed Ayman — ML / Analyst |
+| [04_ahmed_tasks.md](./04_ahmed_tasks.md) | Ahmed Ayman — ML / Analyst (REMOVED) |
 | [05_karim_tasks.md](./05_karim_tasks.md) | Karim — dbt / Analytics |
+| [06_milestone3_plan.md](./06_milestone3_plan.md) | خطة عمل المرحلة الثالثة (Milestone 3) |
 
 ---
 
@@ -24,21 +25,21 @@
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
 | Progress | 100% | 100% | 0% |
-| Status | Complete | Complete ✅ | Frontend (Next.js Template) + Azure Deployment |
+| Status | Complete | Complete ✅ | Frontend (Next.js) + Azure Deployment ⏳ |
 
 ### Yassin Mahmoud
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
-| Progress | 100% | 100% | 0% |
-| Status | Complete | Complete ✅ | FinBERT Integration + Notebooks |
+| Progress | 100% | 100% | **100%** |
+| Status | Complete | Complete ✅ | **Complete ✅** — FinBERT + Notebooks + Dashboard |
 
 ### Mostafa Matar
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
 | Progress | 100% | 100% | 0% |
-| Status | Complete | Complete ✅ | Sentiment API + Alert Worker + Cleanup |
+| Status | Complete | Complete ✅ | Sentiment API + Alert Worker + Cleanup ⏳ |
 
 ### Ahmed Ayman — ❌ REMOVED FROM PROJECT
 
@@ -53,8 +54,8 @@
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
-| Progress | 100% | 100% | 0% |
-| Status | Complete | Complete ✅ | dbt Sentiment Models + Dashboard Stats |
+| Progress | 100% | 100% | **100%** |
+| Status | Complete | Complete ✅ | **Complete ✅** — dbt Sentiment Models + Dashboard Stats |
 
 ---
 
@@ -89,16 +90,16 @@ Amr (bronze_news_consumer + bronze_social_consumer) ✅
 Amr (silver_news_processor + silver_social_processor) ✅
     |
     v
-Yassin (FinBERT sentiment_processor.py) ⏳  ← NEW (Milestone 3)
+Yassin (FinBERT sentiment_processor.py) ✅  ← DONE (Milestone 3)
     |
     v
-Karim  (gold/market_sentiment.sql — FinBERT scores) ⏳  ← NEW (Milestone 3)
+Karim  (gold/market_sentiment.sql — FinBERT scores) ✅  ← DONE (Milestone 3)
     |
     v
-Mostafa (GET /api/v1/market/sentiment) ⏳  ← NEW (Milestone 3)
+Mostafa (GET /api/v1/market/sentiment) ⏳  ← PENDING (Milestone 3)
     |
     v
-Amr (Frontend Dashboard — Next.js) ⏳  ← NEW (Milestone 3)
+Amr (Frontend Dashboard — Next.js) ⏳  ← PENDING (Milestone 3)
 ```
 
 ---
@@ -116,7 +117,7 @@ Amr (Frontend Dashboard — Next.js) ⏳  ← NEW (Milestone 3)
 1. **✅ Airflow Automation** — DONE.
 2. **✅ End-to-End Pipeline Testing** — DONE.
 3. **✅ Backend API Testing** — DONE.
-4. **⏳ Yassin** — FinBERT integration in Spark + Notebooks.
-5. **⏳ Karim** — dbt sentiment models + dashboard stats.
+4. **✅ Yassin** — FinBERT integration in Spark + Notebooks — **DONE**.
+5. **✅ Karim** — dbt sentiment models + dashboard stats — **DONE**.
 6. **⏳ Mostafa** — Sentiment API endpoint + Alert Worker.
 7. **⏳ Amr** — Frontend Dashboard (Next.js) + Azure Deployment.

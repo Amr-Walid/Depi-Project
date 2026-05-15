@@ -15,8 +15,15 @@ from app.services.data_service import (
     get_coin_summary,
     get_coin_prices,
     get_market_overview,
+    get_market_sentiment,
 )
-from app.schemas.coins import CoinInfo, CoinSummary, CoinPriceHistory, MarketOverview
+from app.schemas.coins import (
+    CoinInfo,
+    CoinSummary,
+    CoinPriceHistory,
+    MarketOverview,
+    SentimentOverview,
+)
 
 router = APIRouter(prefix="/api/v1", tags=["Coins & Market Data"])
 
@@ -95,3 +102,18 @@ def market_overview(current_user: User = Depends(get_current_user), db: Session 
     top 5 gainers, and top 5 losers.
     """
     return get_market_overview(db)
+
+
+# ──────────────────────────────────────────────
+# GET /api/v1/market/sentiment
+# ──────────────────────────────────────────────
+@router.get("/market/sentiment", response_model=SentimentOverview)
+def market_sentiment(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+    """
+    Get the latest market sentiment overview.
+
+    Pulls from gold.market_sentiment when available, then falls back to
+    silver.news_sentiment while the sentiment pipeline is still being finalized.
+    """
+    return get_market_sentiment(db)
+

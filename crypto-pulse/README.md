@@ -88,11 +88,13 @@ All 4 pipelines follow the same **Medallion Architecture** flow:
 
 | Component | Count |
 |-----------|-------|
-| Spark Jobs | 13 |
+| Spark Jobs | 14 |
 | Docker Containers | 15 |
 | Airflow DAGs | 2 |
-| dbt Models | 8 (4 staging + 4 gold) |
+| dbt Models | 11 (6 staging + 5 gold) |
+| dbt Tests | 4 |
 | API Endpoints | 10+ |
+| Notebooks | 4 |
 
 ---
 
@@ -123,20 +125,26 @@ crypto-pulse/
 │   │   ├── sync_prices_pg.py          Silver/prices → PostgreSQL (JDBC)
 │   │   ├── sync_historical_pg.py      Silver/historical → PostgreSQL (JDBC)
 │   │   ├── sync_news_pg.py            Silver/news → PostgreSQL (JDBC)
-│   │   └── sync_social_pg.py          Silver/social → PostgreSQL (JDBC)
+│   │   ├── sync_social_pg.py          Silver/social → PostgreSQL (JDBC)
+│   │   └── sentiment_processor.py     FinBERT Sentiment Analysis (ADLS → PG)
 │   └── dbt/
 │       ├── dbt_project.yml            dbt project configuration
 │       ├── models/
 │       │   ├── staging/               Views that cast and clean Silver data
 │       │   │   ├── stg_prices.sql, stg_historical.sql
 │       │   │   ├── stg_news.sql, stg_social.sql
+│       │   │   ├── stg_news_sentiment.sql   FinBERT sentiment staging view
 │       │   │   └── sources.yml
 │       │   └── gold/                  Materialized tables with business metrics
 │       │       ├── gold_daily_ohlcv.sql, gold_latest_prices.sql
 │       │       ├── daily_market_summary.sql, market_sentiment.sql
+│       │       ├── gold_dashboard_stats.sql   Combined stats for Frontend
 │       │       └── schema.yml
 │       └── tests/
-│           └── assert_low_price_less_than_high_price.sql
+│           ├── assert_low_price_less_than_high_price.sql
+│           ├── assert_no_duplicate_symbol_date.sql
+│           ├── assert_total_volume_positive.sql
+│           └── assert_sentiment_score_range.sql
 │
 ├── backend/                           REST API (FastAPI)
 │   └── app/
@@ -145,7 +153,7 @@ crypto-pulse/
 │       ├── models/                    ORM models + schema.sql
 │       ├── schemas/                   Pydantic request/response schemas
 │       ├── routers/                   auth, coins, watchlists, alerts, portfolios
-│       ├── services/                  auth_service.py, data_service.py, alert_worker.py
+│       ├── services/                  auth_service.py, data_service.py
 │       └── tests/                     pytest test suite
 │
 ├── frontend/                          Next.js Web Dashboard
@@ -161,9 +169,14 @@ crypto-pulse/
 │
 ├── data/historical/                   Raw JSON OHLCV files (20 coins, from Jan 2021)
 ├── docs/                              Architecture diagram, proposal, task files
-├── notebooks/                         EDA, Model Training (FinBERT)
-├── ml/                                FinBERT sentiment models setup
-├── docker-compose.yml                 17 containerized services (Data + Backend + Frontend)
+├── notebooks/                         EDA, FinBERT Sentiment, Dashboard
+│   ├── 01-data-exploration.ipynb      Price analysis, correlation, volume trends
+│   ├── 02-model-training.ipynb        FinBERT model explanation and results
+│   ├── 03-poc-dashboard.ipynb         Proof-of-concept visualizations
+│   └── 03-sentiment-dashboard.ipynb   Interactive Plotly sentiment dashboard
+├── ml/                                FinBERT model integration (via Spark UDF)
+├── Dockerfile.airflow                 Custom Airflow image with PySpark
+├── docker-compose.yml                 15 containerized services
 ├── Makefile                           Shortcut commands
 ├── requirements.txt
 └── .env.example
@@ -322,11 +335,20 @@ Same pattern applied to news and social data streams.
 Computes OHLCV (Open, High, Low, Close, Volume) aggregates per coin per day using window functions. Output columns: `symbol`, `date`, `open_price`, `high_price`, `low_price`, `close_price`, `total_volume`.
 
 **`models/gold/market_sentiment.sql`**  
-Aggregates sentiment signals from the news and social streams.
+Aggregates FinBERT sentiment scores per coin per day from `silver.news_sentiment`. Computes `avg_sentiment_score`, `positive_count`, `negative_count`, `neutral_count`, and a derived `market_mood` label (Bullish/Bearish/Neutral based on a ±0.2 threshold). Groups by `sentiment_date` and `symbol`.
+
+**`models/gold/gold_dashboard_stats.sql`**  
+Combines `gold_latest_prices` with `market_sentiment` via a `FULL OUTER JOIN` on `symbol` to produce a single ready-to-consume table for the Frontend dashboard, including latest price, volume, sentiment score, market mood, and active coin count.
+
+**`models/staging/stg_news_sentiment.sql`**  
+Staging view that reads from `silver.news_sentiment`, filters null sentiment scores, and provides clean data for the gold sentiment models.
 
 ### Tests
 
-`tests/assert_low_price_less_than_high_price.sql` — a custom data test that asserts data integrity: `low_price` must always be less than or equal to `high_price` in `daily_market_summary`.
+- `assert_low_price_less_than_high_price.sql` — Data integrity: `low_price ≤ high_price` in `daily_market_summary`
+- `assert_no_duplicate_symbol_date.sql` — No duplicate `(symbol, date)` combinations
+- `assert_total_volume_positive.sql` — All volumes are positive
+- `assert_sentiment_score_range.sql` — All sentiment scores are between -1 and 1
 
 ---
 
@@ -367,7 +389,7 @@ Tracks user portfolio positions (coin, quantity, buy price). Calculates current 
 
 ### Database Schema (`models/schema.sql`)
 
-PostgreSQL tables: `users`, `refresh_tokens`, `watchlists`, `alerts`, `portfolios`.
+PostgreSQL tables: `users`, `refresh_tokens`, `user_sessions`, `watchlists`, `alerts`, `portfolios`, `silver.news`, `silver.social`, `silver.news_sentiment`.
 
 ---
 
@@ -405,6 +427,9 @@ sync_news_to_postgres           ← docker exec spark-master spark-submit ...
         │
         ▼
 sync_social_to_postgres         ← docker exec spark-master spark-submit ...
+        │
+        ▼
+run_sentiment_analysis          ← docker exec spark-master spark-submit ... (FinBERT)
         │
         ▼
 run_dbt_gold                    ← dbt run && dbt test (inside Airflow)
@@ -456,7 +481,7 @@ All services communicate over a shared Docker bridge network named `crypto-net`.
 
 Extends `apache/spark:3.5.0` and pre-installs all required JARs and Python packages:
 
-- Python: `python-dotenv==1.0.1`, `delta-spark==3.2.0`
+- Python: `python-dotenv==1.0.1`, `delta-spark==3.2.0`, `transformers`, `torch` (CPU)
 - JARs (downloaded into `/opt/spark/jars/`):
   - `hadoop-azure:3.3.4` + `wildfly-openssl:1.1.3.Final` — ADLS Gen2 connectivity
   - `azure-storage-blob`, `azure-storage-common`, `azure-core`, `azure-identity`, `msal4j` — Azure SDK
@@ -665,6 +690,8 @@ make restart   # Restart everything
 The project underwent a final end-to-end audit in May 2026, confirming the stability and accuracy of the entire pipeline:
 - **Orchestration:** Airflow successfully triggers Spark jobs via the Docker socket without Java overhead.
 - **Data Quality:** Gold layer tables accurately represent multi-year OHLCV data with 37,000+ records.
+- **Sentiment Analysis:** FinBERT (ProsusAI/finbert) integrated as a Spark UDF, processing news titles and writing sentiment scores to PostgreSQL. dbt gold models consume these scores to produce per-day, per-symbol market mood indicators (Bullish/Bearish/Neutral).
+- **Notebooks:** 4 Jupyter notebooks with interactive Plotly visualizations covering EDA, FinBERT model explanation, sentiment distribution, and timeline momentum.
 - **Security:** JWT authentication with token rotation is fully operational.
 - **Integrity:** The system handles source failures and reconnects automatically with no data duplication (idempotency).
 

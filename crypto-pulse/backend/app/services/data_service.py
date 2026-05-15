@@ -1,11 +1,13 @@
-import random
-from datetime import datetime, timedelta, timezone
+import logging
+from datetime import date, datetime, timezone
 from typing import List, Optional
 from sqlalchemy.orm import Session
 from sqlalchemy import text
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.config import SUPPORTED_COINS
-from app.database import get_db
+
+logger = logging.getLogger(__name__)
 
 
 # ──────────────────────────────────────────────
@@ -34,31 +36,6 @@ COIN_NAMES = {
     "FILUSDT": "Filecoin",
 }
 
-# Mock base prices for realistic data generation
-MOCK_BASE_PRICES = {
-    "BTCUSDT": 68500.0,
-    "ETHUSDT": 3450.0,
-    "BNBUSDT": 580.0,
-    "XRPUSDT": 0.55,
-    "ADAUSDT": 0.45,
-    "SOLUSDT": 145.0,
-    "DOTUSDT": 7.2,
-    "DOGEUSDT": 0.16,
-    "MATICUSDT": 0.72,
-    "LINKUSDT": 14.5,
-    "AVAXUSDT": 35.0,
-    "UNIUSDT": 7.8,
-    "ATOMUSDT": 8.9,
-    "LTCUSDT": 82.0,
-    "ETCUSDT": 26.0,
-    "XLMUSDT": 0.11,
-    "ALGOUSDT": 0.18,
-    "VETUSDT": 0.028,
-    "ICPUSDT": 12.5,
-    "FILUSDT": 5.8,
-}
-
-
 def get_supported_coins() -> List[dict]:
     """
     Return list of all supported cryptocurrency coins.
@@ -74,6 +51,100 @@ def get_supported_coins() -> List[dict]:
         }
         for symbol in SUPPORTED_COINS
     ]
+
+
+def _format_date(value) -> str:
+    """Format DB date values from PostgreSQL or SQLite consistently."""
+    if isinstance(value, (datetime, date)):
+        return value.strftime("%Y-%m-%d")
+    return str(value)[:10]
+
+
+def _format_timestamp(value) -> Optional[str]:
+    """Format DB date/timestamp values as an API UTC timestamp string."""
+    if value is None:
+        return None
+    if isinstance(value, datetime):
+        return value.strftime("%Y-%m-%dT%H:%M:%SZ")
+    if isinstance(value, date):
+        return value.strftime("%Y-%m-%dT00:00:00Z")
+
+    text_value = str(value)
+    if text_value.endswith("Z") and "T" in text_value:
+        return text_value
+    if len(text_value) >= 10 and text_value[4] == "-" and text_value[7] == "-":
+        return f"{text_value[:10]}T00:00:00Z"
+    return text_value
+
+
+def _neutral_sentiment_response() -> dict:
+    return {
+        "overall_score": 0.0,
+        "overall_label": "Neutral",
+        "positive_pct": 0.0,
+        "negative_pct": 0.0,
+        "neutral_pct": 0.0,
+        "article_count": 0,
+        "last_updated": None,
+        "status": "sentiment_data_not_ready",
+    }
+
+
+def _sentiment_label(score: float) -> str:
+    if score > 0.2:
+        return "Bullish"
+    if score < -0.2:
+        return "Bearish"
+    return "Neutral"
+
+
+def _format_sentiment_row(row) -> Optional[dict]:
+    if not row:
+        return None
+
+    data = row._mapping
+    article_count = int(data.get("article_count") or 0)
+    if article_count <= 0:
+        return None
+
+    overall_score = float(data.get("overall_score") or 0.0)
+    positive_count = float(data.get("positive_count") or 0.0)
+    negative_count = float(data.get("negative_count") or 0.0)
+    neutral_count = float(data.get("neutral_count") or 0.0)
+
+    return {
+        "overall_score": round(overall_score, 4),
+        "overall_label": data.get("overall_label") or _sentiment_label(overall_score),
+        "positive_pct": round((positive_count / article_count) * 100, 2),
+        "negative_pct": round((negative_count / article_count) * 100, 2),
+        "neutral_pct": round((neutral_count / article_count) * 100, 2),
+        "article_count": article_count,
+        "last_updated": _format_timestamp(data.get("last_updated")),
+        "status": None,
+    }
+
+
+def _run_sentiment_queries(db: Session, source_name: str, queries: List) -> Optional[dict]:
+    errors = []
+    for query in queries:
+        try:
+            row = db.execute(query).fetchone()
+            sentiment = _format_sentiment_row(row)
+            if sentiment:
+                return sentiment
+
+            logger.info("%s is available but has no usable sentiment rows.", source_name)
+            return None
+        except SQLAlchemyError as exc:
+            db.rollback()
+            errors.append(f"{exc.__class__.__name__}: {exc}")
+        except (AttributeError, TypeError, ValueError) as exc:
+            db.rollback()
+            errors.append(f"{exc.__class__.__name__}: {exc}")
+
+    if errors:
+        logger.warning("%s unavailable or incompatible: %s", source_name, " | ".join(errors))
+    return None
 
 
 def get_coin_summary(symbol: str, db: Session) -> Optional[dict]:
@@ -104,7 +175,7 @@ def get_coin_summary(symbol: str, db: Session) -> Optional[dict]:
 
     return {
         "symbol": result.symbol,
-        "trading_date": result.date.strftime("%Y-%m-%d"),
+        "trading_date": _format_date(result.date),
         "day_open": round(open_p, 4),
         "day_close": round(close_p, 4),
         "day_high": round(float(result.high_price), 4),
@@ -139,7 +210,7 @@ def get_coin_prices(symbol: str, days: int, db: Session) -> Optional[dict]:
     # Reverse to return chronologically (oldest first)
     for row in reversed(results):
         prices.append({
-            "timestamp": row.date.strftime("%Y-%m-%dT00:00:00Z"),
+            "timestamp": _format_timestamp(row.date),
             "open": float(row.open_price),
             "high": float(row.high_price),
             "low": float(row.low_price),
@@ -219,5 +290,85 @@ def get_market_overview(db: Session) -> dict:
         "active_coins": len(SUPPORTED_COINS),
         "top_gainers": top_gainers,
         "top_losers": top_losers,
-        "last_updated": latest_date_result.strftime("%Y-%m-%dT00:00:00Z"),
+        "last_updated": _format_timestamp(latest_date_result),
     }
+
+
+def get_market_sentiment(db: Session) -> dict:
+    """
+    Get the latest market-wide sentiment overview.
+
+    Uses gold.market_sentiment first, falls back to silver.news_sentiment while
+    the sentiment pipeline is still being finalized, and returns a neutral
+    structure when no sentiment data is ready.
+    """
+    gold_queries = [
+        text("""
+            SELECT
+                sentiment_date AS last_updated,
+                AVG(avg_sentiment_score) AS overall_score,
+                SUM(article_count) AS article_count,
+                SUM(positive_count) AS positive_count,
+                SUM(negative_count) AS negative_count,
+                SUM(neutral_count) AS neutral_count
+            FROM gold.market_sentiment
+            WHERE sentiment_date = (
+                SELECT MAX(sentiment_date)
+                FROM gold.market_sentiment
+            )
+            GROUP BY sentiment_date
+        """),
+        text("""
+            SELECT
+                sentiment_date AS last_updated,
+                CASE
+                    WHEN SUM(total_articles) > 0
+                    THEN SUM(avg_sentiment_score * total_articles) / SUM(total_articles)
+                    ELSE AVG(avg_sentiment_score)
+                END AS overall_score,
+                SUM(total_articles) AS article_count,
+                SUM(positive_count) AS positive_count,
+                SUM(negative_count) AS negative_count,
+                SUM(neutral_count) AS neutral_count
+            FROM gold.market_sentiment
+            WHERE sentiment_date = (
+                SELECT MAX(sentiment_date)
+                FROM gold.market_sentiment
+            )
+            GROUP BY sentiment_date
+        """),
+    ]
+
+    gold_sentiment = _run_sentiment_queries(db, "gold.market_sentiment", gold_queries)
+    if gold_sentiment:
+        return gold_sentiment
+
+    logger.info("Falling back to silver.news_sentiment for market sentiment.")
+    silver_queries = [
+        text("""
+            SELECT
+                DATE(published_at) AS last_updated,
+                AVG(sentiment_score) AS overall_score,
+                COUNT(*) AS article_count,
+                SUM(CASE WHEN LOWER(sentiment_label) = 'positive' THEN 1 ELSE 0 END) AS positive_count,
+                SUM(CASE WHEN LOWER(sentiment_label) = 'negative' THEN 1 ELSE 0 END) AS negative_count,
+                SUM(CASE WHEN LOWER(sentiment_label) = 'neutral' THEN 1 ELSE 0 END) AS neutral_count
+            FROM silver.news_sentiment
+            WHERE sentiment_score IS NOT NULL
+              AND published_at IS NOT NULL
+              AND DATE(published_at) = (
+                  SELECT MAX(DATE(published_at))
+                  FROM silver.news_sentiment
+                  WHERE sentiment_score IS NOT NULL
+                    AND published_at IS NOT NULL
+              )
+            GROUP BY DATE(published_at)
+        """),
+    ]
+
+    silver_sentiment = _run_sentiment_queries(db, "silver.news_sentiment", silver_queries)
+    if silver_sentiment:
+        return silver_sentiment
+
+    logger.warning("Returning neutral fallback because sentiment data is not ready.")
+    return _neutral_sentiment_response()

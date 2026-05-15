@@ -169,16 +169,16 @@
 
 ## 👤 ياسين محمود — FinBERT + Spark Integration
 
-### Task 3.1 — تجهيز بيئة FinBERT في Spark Docker Image [NOT STARTED]
+### Task 3.1 — تجهيز بيئة FinBERT في Spark Docker Image [COMPLETE]
 
 **الملف:** `spark-apps/Dockerfile.spark`
 
-- [ ] إضافة مكتبات Python المطلوبة للـ Image:
+- [x] إضافة مكتبات Python المطلوبة للـ Image:
   ```dockerfile
   RUN pip install transformers torch --no-cache-dir
   ```
-- [ ] إعادة بناء الـ Image: `docker compose build spark-master`
-- [ ] اختبار إن المكتبات موجودة:
+- [x] إعادة بناء الـ Image: `docker compose build spark-master`
+- [x] اختبار إن المكتبات موجودة:
   ```bash
   docker exec spark-master python -c "from transformers import pipeline; print('OK')"
   ```
@@ -187,19 +187,19 @@
 
 ---
 
-### Task 3.2 — إنشاء Sentiment Processor Script [NOT STARTED]
+### Task 3.2 — إنشاء Sentiment Processor Script [COMPLETE]
 
 **الملف:** `processing/spark_jobs/sentiment_processor.py`
 
 هذا السكريبت يقرأ من `silver.news` و `silver.social` في PostgreSQL، يمرر العناوين على FinBERT، ويكتب النتيجة.
 
-- [ ] إنشاء الملف `processing/spark_jobs/sentiment_processor.py`
-- [ ] قراءة البيانات من PostgreSQL:
+- [x] إنشاء الملف `processing/spark_jobs/sentiment_processor.py`
+- [x] قراءة البيانات من PostgreSQL:
   ```python
   news_df = spark.read.jdbc(url=jdbc_url, table="silver.news", properties=jdbc_properties)
   social_df = spark.read.jdbc(url=jdbc_url, table="silver.social", properties=jdbc_properties)
   ```
-- [ ] تطبيق FinBERT كـ UDF:
+- [x] تطبيق FinBERT كـ UDF:
   ```python
   from transformers import pipeline
   from pyspark.sql.functions import udf
@@ -227,23 +227,23 @@
       result = sentiment_model(text[:512])
       return result[0]['label']
   ```
-- [ ] إضافة الأعمدة الجديدة:
+- [x] إضافة الأعمدة الجديدة:
   ```python
   enriched_news = news_df.withColumn("sentiment_score", get_sentiment_score("title")) \
                          .withColumn("sentiment_label", get_sentiment_label("title"))
   ```
-- [ ] كتابة النتيجة في جدول جديد في PostgreSQL:
+- [x] كتابة النتيجة في جدول جديد في PostgreSQL:
   ```python
   enriched_news.write.jdbc(url=jdbc_url, table="silver.news_sentiment", mode="overwrite", properties=jdbc_properties)
   ```
 
 ---
 
-### Task 3.3 — إضافة جدول Sentiment في قاعدة البيانات [NOT STARTED]
+### Task 3.3 — إضافة جدول Sentiment في قاعدة البيانات [COMPLETE]
 
 **الملف:** `backend/app/models/schema.sql`
 
-- [ ] إضافة الجدول التالي (بالتنسيق مع كريم):
+- [x] إضافة الجدول التالي (بالتنسيق مع كريم):
   ```sql
   CREATE TABLE IF NOT EXISTS silver.news_sentiment (
       source VARCHAR(255),
@@ -261,11 +261,11 @@
 
 ---
 
-### Task 3.4 — إضافة Sentiment Job للـ Airflow DAG [NOT STARTED]
+### Task 3.4 — إضافة Sentiment Job للـ Airflow DAG [COMPLETE]
 
 **الملف:** `dags/dag_historical_daily.py`
 
-- [ ] إضافة تاسك جديد بعد `sync_news_to_postgres`:
+- [x] إضافة تاسك جديد بعد `sync_news_to_postgres`:
   ```python
   run_sentiment = BashOperator(
       task_id='run_sentiment_analysis',
@@ -278,34 +278,34 @@
       ),
   )
   ```
-- [ ] تحديث الـ Dependency Chain:
+- [x] تحديث الـ Dependency Chain:
   ```python
   sync_news_postgres >> sync_social_postgres >> run_sentiment >> run_dbt_gold
   ```
 
 ---
 
-### Task 3.5 — ملء Notebook التحليل الاستكشافي [NOT STARTED]
+### Task 3.5 — ملء Notebook التحليل الاستكشافي [COMPLETE]
 
 **الملف:** `notebooks/01-data-exploration.ipynb`
 
-- [ ] إضافة خلايا تقرأ من PostgreSQL:
+- [x] إضافة خلايا تقرأ من PostgreSQL:
   - توزيع الأسعار لكل عملة (Histogram)
   - حجم التداول اليومي (Line Chart)
   - Correlation Matrix بين العملات
   - عدد الأخبار مع الوقت
-- [ ] كل خلية تحتوي على شرح Markdown يوضح ماذا يفعل الكود وما هي الاستنتاجات
+- [x] كل خلية تحتوي على شرح Markdown يوضح ماذا يفعل الكود وما هي الاستنتاجات
 
 ---
 
-### Task 3.6 — ملء Notebook تدريب النموذج [NOT STARTED]
+### Task 3.6 — ملء Notebook تدريب النموذج [COMPLETE]
 
 **الملف:** `notebooks/02-model-training.ipynb`
 
-- [ ] شرح نموذج FinBERT وكيفية عمله
-- [ ] عرض نتائج الـ Sentiment Analysis على عينة من الأخبار
-- [ ] Confusion matrix أو Classification report
-- [ ] رسم بياني يوضح العلاقة بين sentiment score وتغير السعر
+- [x] شرح نموذج FinBERT وكيفية عمله
+- [x] عرض نتائج الـ Sentiment Analysis على عينة من الأخبار
+- [x] Confusion matrix أو Classification report
+- [x] رسم بياني يوضح العلاقة بين sentiment score وتغير السعر
 
 ---
 
@@ -467,11 +467,11 @@
 
 ## 👤 كريم أحمد — dbt Gold Models + Analytics
 
-### Task 3.1 — تحديث market_sentiment.sql بأعمدة FinBERT [NOT STARTED]
+### Task 3.1 — تحديث market_sentiment.sql بأعمدة FinBERT [COMPLETE]
 
 **الملف:** `processing/dbt/models/gold/market_sentiment.sql`
 
-- [ ] **استبدال** المنطق الحالي (keyword-based: `ILIKE '%bull%'`) بقراءة مباشرة من `silver.news_sentiment`:
+- [x] **استبدال** المنطق الحالي (keyword-based: `ILIKE '%bull%'`) بقراءة مباشرة من `silver.news_sentiment`:
   ```sql
   {{ config(materialized='table') }}
 
@@ -503,11 +503,11 @@
 
 ---
 
-### Task 3.2 — تحديث sources.yml [NOT STARTED]
+### Task 3.2 — تحديث sources.yml [COMPLETE]
 
 **الملف:** `processing/dbt/models/staging/sources.yml`
 
-- [ ] إضافة جدول الـ Sentiment الجديد:
+- [x] إضافة جدول الـ Sentiment الجديد:
   ```yaml
   - name: news_sentiment
     description: "News articles enriched with FinBERT sentiment scores"
@@ -515,11 +515,11 @@
 
 ---
 
-### Task 3.3 — إنشاء Staging Model للـ Sentiment [NOT STARTED]
+### Task 3.3 — إنشاء Staging Model للـ Sentiment [COMPLETE]
 
 **الملف:** `processing/dbt/models/staging/stg_news_sentiment.sql`
 
-- [ ] إنشاء View بسيط:
+- [x] إنشاء View بسيط:
   ```sql
   {{ config(materialized='view') }}
 
@@ -536,11 +536,11 @@
 
 ---
 
-### Task 3.4 — إنشاء Gold Model للـ Dashboard Stats [NOT STARTED]
+### Task 3.4 — إنشاء Gold Model للـ Dashboard Stats [COMPLETE]
 
 **الملف:** `processing/dbt/models/gold/gold_dashboard_stats.sql`
 
-- [ ] إنشاء موديل يجمع كل الإحصائيات في استعلام واحد للـ Frontend:
+- [x] إنشاء موديل يجمع كل الإحصائيات في استعلام واحد للـ Frontend:
   ```sql
   {{ config(materialized='table') }}
 
@@ -572,26 +572,26 @@
 
 ---
 
-### Task 3.5 — إضافة اختبارات جودة بيانات جديدة [NOT STARTED]
+### Task 3.5 — إضافة اختبارات جودة بيانات جديدة [COMPLETE]
 
 **المجلد:** `processing/dbt/tests/`
 
-- [ ] إنشاء `assert_sentiment_score_range.sql`:
+- [x] إنشاء `assert_sentiment_score_range.sql`:
   ```sql
   -- يتأكد إن كل الـ sentiment scores في النطاق المقبول (-1 إلى 1)
   SELECT *
   FROM {{ ref('market_sentiment') }}
   WHERE avg_sentiment_score < -1 OR avg_sentiment_score > 1
   ```
-- [ ] تحديث `schema.yml` بأوصاف الأعمدة الجديدة
+- [x] تحديث `schema.yml` بأوصاف الأعمدة الجديدة
 
 ---
 
-### Task 3.6 — تحديث الـ dbt DAG في Airflow [NOT STARTED]
+### Task 3.6 — تحديث الـ dbt DAG في Airflow [COMPLETE]
 
 **الملف:** `dags/dag_historical_daily.py`
 
-- [ ] تحديث أمر dbt ليشمل الـ Models الجديدة:
+- [x] تحديث أمر dbt ليشمل الـ Models الجديدة:
   ```python
   bash_command='export POSTGRES_HOST=postgres && cd /opt/airflow/dbt && '
                '/home/airflow/.local/bin/dbt run && '

@@ -272,55 +272,55 @@ A custom singular test that asserts data integrity — `low_price` must always b
 
 ---
 
-### Task 3.1 — تحديث market_sentiment.sql بأعمدة FinBERT [NOT STARTED]
+### Task 3.1 — تحديث market_sentiment.sql بأعمدة FinBERT [COMPLETE]
 
 **الملف:** `processing/dbt/models/gold/market_sentiment.sql`
 
-- [ ] استبدال المنطق الحالي (keyword-based: `ILIKE '%bull%'`) بقراءة مباشرة من `silver.news_sentiment`
-- [ ] حساب `avg_sentiment_score`, `positive_count`, `negative_count`, `neutral_count`
-- [ ] إضافة عمود `market_mood` (Bullish / Bearish / Neutral) بناءً على المتوسط
+- [x] استبدال المنطق الحالي (keyword-based: `ILIKE '%bull%'`) بقراءة مباشرة من `silver.news_sentiment`
+- [x] حساب `avg_sentiment_score`, `positive_count`, `negative_count`, `neutral_count`
+- [x] إضافة عمود `market_mood` (Bullish / Bearish / Neutral) بناءً على المتوسط
 
-### Task 3.2 — تحديث sources.yml [NOT STARTED]
+### Task 3.2 — تحديث sources.yml [COMPLETE]
 
 **الملف:** `processing/dbt/models/staging/sources.yml`
 
-- [ ] إضافة جدول `news_sentiment` كـ source جديد
+- [x] إضافة جدول `news_sentiment` كـ source جديد
 
-### Task 3.3 — إنشاء Staging Model للـ Sentiment [NOT STARTED]
+### Task 3.3 — إنشاء Staging Model للـ Sentiment [COMPLETE]
 
 **الملف الجديد:** `processing/dbt/models/staging/stg_news_sentiment.sql`
 
-- [ ] View بسيط يقرأ من `silver.news_sentiment`
-- [ ] يعمل CAST للـ sentiment_score كـ `DECIMAL(5, 4)`
-- [ ] يفلتر الصفوف اللي فيها `sentiment_score IS NOT NULL`
+- [x] View بسيط يقرأ من `silver.news_sentiment`
+- [x] يعمل CAST للـ sentiment_score كـ `DECIMAL(5, 4)`
+- [x] يفلتر الصفوف اللي فيها `sentiment_score IS NOT NULL`
 
-### Task 3.4 — إنشاء Gold Model للـ Dashboard Stats [NOT STARTED]
+### Task 3.4 — إنشاء Gold Model للـ Dashboard Stats [COMPLETE]
 
 **الملف الجديد:** `processing/dbt/models/gold/gold_dashboard_stats.sql`
 
-- [ ] يجمع كل الإحصائيات في استعلام واحد
-- [ ] `active_coins`, `total_volume_24h`, `overall_sentiment`
+- [x] يجمع كل الإحصائيات في استعلام واحد
+- [x] `active_coins`, `total_volume_24h`, `overall_sentiment`
 
-### Task 3.5 — إضافة اختبارات جودة بيانات جديدة [NOT STARTED]
+### Task 3.5 — إضافة اختبارات جودة بيانات جديدة [COMPLETE]
 
 **المجلد:** `processing/dbt/tests/`
 
-- [ ] `assert_sentiment_score_range.sql` — التأكد إن الـ scores في نطاق -1 إلى 1
-- [ ] تحديث `schema.yml` بأوصاف الأعمدة الجديدة
+- [x] `assert_sentiment_score_range.sql` — التأكد إن الـ scores في نطاق -1 إلى 1
+- [x] تحديث `schema.yml` بأوصاف الأعمدة الجديدة
 
-### Task 3.6 — تحديث الـ dbt DAG في Airflow [NOT STARTED]
+### Task 3.6 — تحديث الـ dbt DAG في Airflow [COMPLETE]
 
 **الملف:** `dags/dag_historical_daily.py`
 
-- [ ] تحديث أمر dbt ليشمل كل الـ Models الجديدة: `dbt run && dbt test`
+- [x] تحديث أمر dbt ليشمل كل الـ Models الجديدة: `dbt run && dbt test`
 
 ---
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 3.1 | تحديث market_sentiment.sql | Not started |
-| 3.2 | تحديث sources.yml | Not started |
-| 3.3 | Staging Model للـ Sentiment | Not started |
-| 3.4 | Gold Dashboard Stats Model | Not started |
-| 3.5 | اختبارات جودة بيانات جديدة | Not started |
-| 3.6 | تحديث الـ dbt DAG | Not started |
+| 3.1 | تحديث market_sentiment.sql | Complete |
+| 3.2 | تحديث sources.yml | Complete |
+| 3.3 | Staging Model للـ Sentiment | Complete |
+| 3.4 | Gold Dashboard Stats Model | Complete |
+| 3.5 | اختبارات جودة بيانات جديدة | Complete |
+| 3.6 | تحديث الـ dbt DAG | Complete |

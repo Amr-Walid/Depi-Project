@@ -54,3 +54,15 @@ class MarketOverview(BaseModel):
     top_gainers: List[dict]
     top_losers: List[dict]
     last_updated: str
+
+
+class SentimentOverview(BaseModel):
+    """Market-wide sentiment overview."""
+    overall_score: float
+    overall_label: str
+    positive_pct: float
+    negative_pct: float
+    neutral_pct: float
+    article_count: int
+    last_updated: Optional[str] = None
+    status: Optional[str] = None

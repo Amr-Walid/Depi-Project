@@ -200,6 +200,25 @@ services:
     networks:
       - crypto-net
 
+  alert-worker:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: alert-worker
+    depends_on:
+      - postgres
+      - backend
+    env_file:
+      - .env
+    volumes:
+      - ./backend/app:/app/app
+    environment:
+      - POSTGRES_HOST=postgres
+    command: python -m app.services.alert_worker
+    restart: unless-stopped
+    networks:
+      - crypto-net
+
   streaming-bronze-prices:
     image: crypto-pulse-spark:3.5.0
     container_name: streaming-bronze-prices

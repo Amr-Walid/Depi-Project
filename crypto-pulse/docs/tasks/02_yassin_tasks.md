@@ -154,62 +154,62 @@
 
 ---
 
-### Task 3.1 — تجهيز بيئة FinBERT في Spark Docker Image [NOT STARTED]
+### Task 3.1 — تجهيز بيئة FinBERT في Spark Docker Image [COMPLETE]
 
 **الملف:** `spark-apps/Dockerfile.spark`
 
-- [ ] إضافة `transformers` و `torch` (أو `torch-cpu`) للـ Dockerfile
-- [ ] إعادة بناء الـ Image: `docker compose build spark-master`
-- [ ] اختبار إن المكتبات تعمل داخل الـ Container
+- [x] إضافة `transformers` و `torch` (أو `torch-cpu`) للـ Dockerfile
+- [x] إعادة بناء الـ Image: `docker compose build spark-master`
+- [x] اختبار إن المكتبات تعمل داخل الـ Container
 
-### Task 3.2 — إنشاء Sentiment Processor Script [NOT STARTED]
+### Task 3.2 — إنشاء Sentiment Processor Script [COMPLETE]
 
 **الملف الجديد:** `processing/spark_jobs/sentiment_processor.py`
 
-- [ ] قراءة `silver.news` و `silver.social` من PostgreSQL
-- [ ] تطبيق FinBERT كـ Spark UDF على عمود `title`
-- [ ] إضافة أعمدة: `sentiment_score` (float, -1 to 1) و `sentiment_label` (string)
-- [ ] كتابة النتيجة في `silver.news_sentiment` (mode=overwrite)
-- [ ] إضافة `spark.stop()` في النهاية للتوافق مع Airflow
+- [x] قراءة `silver.news` و `silver.social` من PostgreSQL
+- [x] تطبيق FinBERT كـ Spark UDF على عمود `title`
+- [x] إضافة أعمدة: `sentiment_score` (float, -1 to 1) و `sentiment_label` (string)
+- [x] كتابة النتيجة في `silver.news_sentiment` (mode=overwrite)
+- [x] إضافة `spark.stop()` في النهاية للتوافق مع Airflow
 
-### Task 3.3 — إضافة جدول Sentiment في schema.sql [NOT STARTED]
+### Task 3.3 — إضافة جدول Sentiment في schema.sql [COMPLETE]
 
 **الملف:** `backend/app/models/schema.sql`
 
-- [ ] إضافة `CREATE TABLE IF NOT EXISTS silver.news_sentiment` مع أعمدة sentiment_score و sentiment_label
-- [ ] إضافة indexes على `published_at` و `sentiment_label`
+- [x] إضافة `CREATE TABLE IF NOT EXISTS silver.news_sentiment` مع أعمدة sentiment_score و sentiment_label
+- [x] إضافة indexes على `published_at` و `sentiment_label`
 
-### Task 3.4 — إضافة Sentiment Job للـ Airflow DAG [NOT STARTED]
+### Task 3.4 — إضافة Sentiment Job للـ Airflow DAG [COMPLETE]
 
 **الملف:** `dags/dag_historical_daily.py`
 
-- [ ] إضافة BashOperator `run_sentiment_analysis` يشغل `sentiment_processor.py` عبر `docker exec`
-- [ ] وضعه بعد `sync_news_postgres` وقبل `run_dbt_gold`
+- [x] إضافة BashOperator `run_sentiment_analysis` يشغل `sentiment_processor.py` عبر `docker exec`
+- [x] وضعه بعد `sync_news_postgres` وقبل `run_dbt_gold`
 
-### Task 3.5 — ملء Notebook التحليل الاستكشافي [NOT STARTED]
+### Task 3.5 — ملء Notebook التحليل الاستكشافي [COMPLETE]
 
 **الملف:** `notebooks/01-data-exploration.ipynb`
 
-- [ ] قراءة بيانات الأسعار من PostgreSQL وعرض توزيعاتها
-- [ ] Correlation Matrix بين العملات
-- [ ] حجم التداول اليومي مع الوقت
-- [ ] شرح Markdown لكل خلية
+- [x] قراءة بيانات الأسعار من PostgreSQL وعرض توزيعاتها
+- [x] Correlation Matrix بين العملات
+- [x] حجم التداول اليومي مع الوقت
+- [x] شرح Markdown لكل خلية
 
-### Task 3.6 — ملء Notebook تدريب النموذج [NOT STARTED]
+### Task 3.6 — ملء Notebook تدريب النموذج [COMPLETE]
 
 **الملف:** `notebooks/02-model-training.ipynb`
 
-- [ ] شرح نموذج FinBERT وطريقة عمله
-- [ ] عرض نتائج الـ Sentiment على عينة من الأخبار
-- [ ] رسم العلاقة بين Sentiment Score وتغير السعر
+- [x] شرح نموذج FinBERT وطريقة عمله
+- [x] عرض نتائج الـ Sentiment على عينة من الأخبار
+- [x] رسم العلاقة بين Sentiment Score وتغير السعر
 
 ---
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 3.1 | تجهيز بيئة FinBERT في Docker | Not started |
-| 3.2 | إنشاء Sentiment Processor Script | Not started |
-| 3.3 | إضافة جدول Sentiment في schema.sql | Not started |
-| 3.4 | إضافة Sentiment Job للـ Airflow DAG | Not started |
-| 3.5 | ملء Notebook التحليل الاستكشافي | Not started |
-| 3.6 | ملء Notebook تدريب النموذج | Not started |
+| 3.1 | تجهيز بيئة FinBERT في Docker | Complete |
+| 3.2 | إنشاء Sentiment Processor Script | Complete |
+| 3.3 | إضافة جدول Sentiment في schema.sql | Complete |
+| 3.4 | إضافة Sentiment Job للـ Airflow DAG | Complete |
+| 3.5 | ملء Notebook التحليل الاستكشافي | Complete |
+| 3.6 | ملء Notebook تدريب النموذج | Complete |

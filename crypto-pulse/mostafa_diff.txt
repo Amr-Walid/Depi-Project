@@ -1,0 +1,1244 @@
+﻿commit ca1ac90cb634aec42403887c52448f4e7bdd0361
+Author: Mostafa Mattar <mostafa.mattar@example.com>
+Date:   Thu May 7 12:24:16 2026 +0300
+
+    docs(backend): update milestone 3 commit reference
+
+diff --git a/crypto-pulse/docs/milestone3_backend.md b/crypto-pulse/docs/milestone3_backend.md
+index ef827f9..ce0f38e 100644
+--- a/crypto-pulse/docs/milestone3_backend.md
++++ b/crypto-pulse/docs/milestone3_backend.md
+@@ -170,5 +170,5 @@ Runtime verification should be completed on a Docker-ready machine.
+ 
+ ## Commit Reference
+ 
+-- Commit: `3b23297`
++- Commit: `183ba5c`
+ - Message: `feat(backend): add sentiment endpoint and alert worker`
+
+commit 4f1879214c9e85856a080b8a2045e97343d038f2
+Author: Mostafa Mattar <mostafa.mattar@example.com>
+Date:   Thu May 7 12:07:29 2026 +0300
+
+    docs(backend): add milestone 3 completion report
+
+diff --git a/crypto-pulse/docs/milestone3_backend.md b/crypto-pulse/docs/milestone3_backend.md
+new file mode 100644
+index 0000000..ef827f9
+--- /dev/null
++++ b/crypto-pulse/docs/milestone3_backend.md
+@@ -0,0 +1,174 @@
++# Backend Milestone 3 - Completion Report
++
++## Overview
++
++Backend Milestone 3 is completed, verified, and ready for integration. The backend now exposes the market sentiment API contract, includes safe fallback behavior while upstream sentiment tables are being populated, and adds a background alert worker service for price alerts.
++
++Verification completed successfully for the backend test suite with 50 passed tests and 3 known deprecation warnings.
++
++## What Was Implemented
++
++- Protected `GET /api/v1/market/sentiment` endpoint
++- `SentimentOverview` response schema
++- Gold -> Silver -> Neutral fallback logic for market sentiment
++- Removal of old mock data logic from the backend data service
++- Alert Worker background service
++- `alert-worker` Docker Compose service
++- Sentiment endpoint tests
++
++## API Details
++
++- Endpoint: `GET /api/v1/market/sentiment`
++- Authentication: JWT via the existing `OAuth2PasswordBearer` security scheme
++- OpenAPI tag: `Coins & Market Data`
++
++When sentiment data is missing or upstream sentiment tables are not ready, the endpoint returns a safe neutral fallback response:
++
++```json
++{
++  "overall_score": 0.0,
++  "overall_label": "Neutral",
++  "positive_pct": 0.0,
++  "negative_pct": 0.0,
++  "neutral_pct": 0.0,
++  "article_count": 0,
++  "last_updated": null,
++  "status": "sentiment_data_not_ready"
++}
++```
++
++The sentiment lookup order is:
++
++1. `gold.market_sentiment`
++2. `silver.news_sentiment`
++3. Neutral fallback response
++
++## Alert Worker
++
++The Alert Worker is implemented as a backend background service and can be run with:
++
++```bash
++python -m app.services.alert_worker
++```
++
++Behavior:
++
++- Runs every 60 seconds
++- Reads latest prices from `gold.daily_market_summary`
++- Reads active alerts from the `alerts` table
++- Supports `above` and `below` alert conditions
++- Deactivates triggered alerts
++- Closes the database session in a `finally` block
++- Handles missing Gold tables, database errors, and empty price data safely without crashing the worker loop
++
++Docker Compose service:
++
++- Service name: `alert-worker`
++- Uses the backend Dockerfile
++- Loads environment configuration through `.env`
++- Sets `POSTGRES_HOST=postgres`
++- Runs `python -m app.services.alert_worker`
++- Uses the `crypto-net` network
++- Uses `restart: unless-stopped`
++
++## Tests & Verification
++
++Commands run:
++
++```bash
++cd backend && venv/bin/python -m pytest tests/test_sentiment.py -q
++cd backend && venv/bin/python -m pytest tests/ -q
++```
++
++Results:
++
++```text
++3 passed, 3 warnings in 1.70s
++50 passed, 3 warnings in 22.08s
++```
++
++The warnings are known deprecation warnings from dependencies/FastAPI startup event usage and are not test failures.
++
++OpenAPI verification confirmed:
++
++- `/api/v1/market/sentiment` appears in OpenAPI
++- Tag is `Coins & Market Data`
++- JWT security is present through `OAuth2PasswordBearer`
++
++Alert Worker import verification passed:
++
++```bash
++cd backend && venv/bin/python -c "from app.services import alert_worker; print('alert_worker_imported=', True)"
++```
++
++Expected output:
++
++```text
++alert_worker_imported= True
++```
++
++## How to Run (Local)
++
++Run these commands from the project root:
++
++1. Copy the example environment file:
++
++```bash
++cp .env.example .env
++```
++
++2. Fill the required environment variables in `.env`.
++
++3. Start the stack:
++
++```bash
++docker-compose up -d --build
++```
++
++4. Open Swagger:
++
++```text
++http://localhost:8000/docs
++```
++
++5. Log in through the auth endpoints and test the protected API endpoints with a valid JWT.
++
++## How to Test
++
++Run backend tests:
++
++```bash
++cd backend
++venv/bin/python -m pytest tests/test_sentiment.py -q
++venv/bin/python -m pytest tests/ -q
++```
++
++Check Alert Worker logs:
++
++```bash
++docker-compose logs alert-worker --tail=50
++```
++
++Optional Compose configuration check:
++
++```bash
++docker-compose config --services | grep alert-worker
++```
++
++## Docker Runtime Note
++
++Full Docker runtime could not be fully validated on the author's machine due to Docker engine / filesystem issues, not code issues. The backend code, tests, import checks, OpenAPI verification, and Docker Compose service definition were verified.
++
++Runtime verification should be completed on a Docker-ready machine.
++
++## Remaining Dependencies
++
++- `silver.news_sentiment` and/or `gold.market_sentiment` must be populated by Karim/Yassin.
++- Until those tables are populated, the sentiment endpoint returns the safe neutral fallback.
++- Alert Worker requires `gold.daily_market_summary` to be populated to trigger real alerts.
++- Frontend can already integrate with the `/api/v1/market/sentiment` API contract.
++
++## Commit Reference
++
++- Commit: `3b23297`
++- Message: `feat(backend): add sentiment endpoint and alert worker`
+
+commit 183ba5cd1c27fce9bf9113a878ff37888550c5db
+Author: Mostafa Mattar <mostafa.mattar@example.com>
+Date:   Thu May 7 11:58:25 2026 +0300
+
+    feat(backend): add sentiment endpoint and alert worker
+
+diff --git a/crypto-pulse/backend/app/routers/coins.py b/crypto-pulse/backend/app/routers/coins.py
+index 99023c2..5fae449 100644
+--- a/crypto-pulse/backend/app/routers/coins.py
++++ b/crypto-pulse/backend/app/routers/coins.py
+@@ -4,6 +4,9 @@ All endpoints require JWT authentication.
+ """
+ from fastapi import APIRouter, Depends, HTTPException, Query, status
+ from typing import List
++from sqlalchemy.orm import Session
++
++from app.database import get_db
+ 
+ from app.models.user import User
+ from app.services.auth_service import get_current_user
+@@ -12,8 +15,15 @@ from app.services.data_service import (
+     get_coin_summary,
+     get_coin_prices,
+     get_market_overview,
++    get_market_sentiment,
++)
++from app.schemas.coins import (
++    CoinInfo,
++    CoinSummary,
++    CoinPriceHistory,
++    MarketOverview,
++    SentimentOverview,
+ )
+-from app.schemas.coins import CoinInfo, CoinSummary, CoinPriceHistory, MarketOverview
+ 
+ router = APIRouter(prefix="/api/v1", tags=["Coins & Market Data"])
+ 
+@@ -36,16 +46,16 @@ def list_coins(current_user: User = Depends(get_current_user)):
+ # GET /api/v1/coins/{symbol}/summary
+ # ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ @router.get("/coins/{symbol}/summary", response_model=CoinSummary)
+-def coin_summary(symbol: str, current_user: User = Depends(get_current_user)):
++def coin_summary(symbol: str, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+     """
+     Get the daily trading summary for a specific coin.
+     
+     Includes: open, close, high, low prices, total volume,
+     average price, price change percentage, and tick count.
+     
+-    When Gold Layer is ready, this pulls from the `coin_daily_summary` dbt model.
++    Pulls from the `gold.daily_market_summary` dbt model.
+     """
+-    summary = get_coin_summary(symbol)
++    summary = get_coin_summary(symbol, db)
+     if not summary:
+         raise HTTPException(
+             status_code=status.HTTP_404_NOT_FOUND,
+@@ -62,15 +72,16 @@ def coin_prices(
+     symbol: str,
+     days: int = Query(default=30, ge=1, le=365, description="Number of days of history"),
+     current_user: User = Depends(get_current_user),
++    db: Session = Depends(get_db),
+ ):
+     """
+     Get historical OHLCV price data for a specific coin.
+     
+     - `days`: Number of days of history (1ΓÇô365, default: 30)
+     
+-    When Gold Layer is ready, this pulls from ADLS Gen2 via the Gold tables.
++    Pulls from ADLS Gen2 via the Gold tables.
+     """
+-    prices = get_coin_prices(symbol, days)
++    prices = get_coin_prices(symbol, days, db)
+     if not prices:
+         raise HTTPException(
+             status_code=status.HTTP_404_NOT_FOUND,
+@@ -83,11 +94,25 @@ def coin_prices(
+ # GET /api/v1/market/overview
+ # ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ @router.get("/market/overview", response_model=MarketOverview)
+-def market_overview(current_user: User = Depends(get_current_user)):
++def market_overview(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
+     """
+     Get a market-wide overview with aggregate statistics.
+     
+     Includes: total market cap, 24h volume, BTC dominance,
+     top 5 gainers, and top 5 losers.
+     """
+-    return get_market_overview()
++    return get_market_overview(db)
++
++
++# ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++# GET /api/v1/market/sentiment
++# ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
++@router.get("/market/sentiment", response_model=SentimentOverview)
++def market_sentiment(current_user: User = Depends(get_current_user), db: Session = Depends(get_db)):
++    """
++    Get the latest market sentiment overview.
++
++    Pulls from gold.market_sentiment when available, then falls back to
++    silver.news_sentiment while the sentiment pipeline is still being finalized.
++    """
++    return get_market_sentiment(db)
+diff --git a/crypto-pulse/backend/app/schemas/coins.py b/crypto-pulse/backend/app/schemas/coins.py
+index 6fa45e4..38a458b 100644
+--- a/crypto-pulse/backend/app/schemas/coins.py
++++ b/crypto-pulse/backend/app/schemas/coins.py
+@@ -54,3 +54,15 @@ class MarketOverview(BaseModel):
+     top_gainers: List[dict]
+     top_losers: List[dict]
+     last_updated: str
++
++
++class SentimentOverview(BaseModel):
++    """Market-wide sentiment overview."""
++    overall_score: float
++    overall_label: str
++    positive_pct: float
++    negative_pct: float
++    neutral_pct: float
++    article_count: int
++    last_updated: Optional[str] = None
++    status: Optional[str] = None
+diff --git a/crypto-pulse/backend/app/services/alert_worker.py b/crypto-pulse/backend/app/services/alert_worker.py
+new file mode 100644
+index 0000000..97bdfc5
+--- /dev/null
++++ b/crypto-pulse/backend/app/services/alert_worker.py
+@@ -0,0 +1,105 @@
++"""
++Background worker for price alert monitoring.
++
++Run with:
++    python -m app.services.alert_worker
++"""
++import logging
++import time
++
++from sqlalchemy import text
++from sqlalchemy.exc import SQLAlchemyError
++
++from app.database import SessionLocal
++
++
++logging.basicConfig(
++    level=logging.INFO,
++    format="%(asctime)s [%(levelname)s] alert-worker: %(message)s",
++)
++logger = logging.getLogger(__name__)
++CHECK_INTERVAL_SECONDS = 60
++
++
++def check_alerts() -> None:
++    """Check active alerts against the latest Gold market prices."""
++    db = SessionLocal()
++    try:
++        price_rows = db.execute(text("""
++            SELECT symbol, close_price
++            FROM (
++                SELECT
++                    symbol,
++                    close_price,
++                    ROW_NUMBER() OVER (PARTITION BY symbol ORDER BY date DESC) AS row_num
++                FROM gold.daily_market_summary
++                WHERE close_price IS NOT NULL
++            ) latest_prices
++            WHERE row_num = 1
++        """)).fetchall()
++
++        if not price_rows:
++            logger.info("No latest prices found in gold.daily_market_summary.")
++            return
++
++        price_map = {row.symbol.upper(): float(row.close_price) for row in price_rows}
++
++        active_alerts = db.execute(text("""
++            SELECT id, user_id, symbol, condition, threshold
++            FROM alerts
++            WHERE is_active = TRUE
++        """)).fetchall()
++
++        if not active_alerts:
++            logger.info("No active alerts to evaluate.")
++            return
++
++        triggered_count = 0
++        for alert in active_alerts:
++            symbol = alert.symbol.upper()
++            current_price = price_map.get(symbol)
++            if current_price is None:
++                logger.info("No latest price for active alert %s (%s).", alert.id, symbol)
++                continue
++
++            threshold = float(alert.threshold)
++            condition = alert.condition
++            triggered = (
++                (condition == "above" and current_price >= threshold)
++                or (condition == "below" and current_price <= threshold)
++            )
++
++            if not triggered:
++                continue
++
++            message = (
++                f"ALERT TRIGGERED: alert_id={alert.id} user_id={alert.user_id} "
++                f"{symbol} is {condition} {threshold} (current: {current_price})"
++            )
++            print(message, flush=True)
++            logger.info(message)
++            db.execute(
++                text("UPDATE alerts SET is_active = FALSE WHERE id = :alert_id"),
++                {"alert_id": alert.id},
++            )
++            db.commit()
++            triggered_count += 1
++
++        logger.info("Alert check complete. Triggered %s alert(s).", triggered_count)
++    except SQLAlchemyError as exc:
++        db.rollback()
++        logger.warning("Database error while checking alerts; will retry: %s", exc)
++    finally:
++        db.close()
++
++
++def run_worker() -> None:
++    """Run the alert worker forever."""
++    logger.info("Starting alert worker. Poll interval: %s seconds.", CHECK_INTERVAL_SECONDS)
++    while True:
++        check_alerts()
++        time.sleep(CHECK_INTERVAL_SECONDS)
++
++
++if __name__ == "__main__":
++    run_worker()
+diff --git a/crypto-pulse/backend/app/services/data_service.py b/crypto-pulse/backend/app/services/data_service.py
+index 28e4720..12dc61a 100644
+--- a/crypto-pulse/backend/app/services/data_service.py
++++ b/crypto-pulse/backend/app/services/data_service.py
+@@ -1,16 +1,14 @@
+-"""
+-Data service ΓÇö provides coin data, market overview, and price history.
+-
+-Currently returns structured mock data that matches the exact schema
+-the Gold Layer (dbt) will produce. When Gold Layer is ready, only the
+-internals of these functions need to change ΓÇö the API contract stays the same.
+-"""
+-import random
+-from datetime import datetime, timedelta, timezone
++import logging
++from datetime import date, datetime, timezone
+ from typing import List, Optional
++from sqlalchemy.orm import Session
++from sqlalchemy import text
++from sqlalchemy.exc import SQLAlchemyError
+ 
+ from app.config import SUPPORTED_COINS
+ 
++logger = logging.getLogger(__name__)
++
+ 
+ # ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+ # Coin name mapping
+@@ -38,31 +36,6 @@ COIN_NAMES = {
+     "FILUSDT": "Filecoin",
+ }
+ 
+-# Mock base prices for realistic data generation
+-MOCK_BASE_PRICES = {
+-    "BTCUSDT": 68500.0,
+-    "ETHUSDT": 3450.0,
+-    "BNBUSDT": 580.0,
+-    "XRPUSDT": 0.55,
+-    "ADAUSDT": 0.45,
+-    "SOLUSDT": 145.0,
+-    "DOTUSDT": 7.2,
+-    "DOGEUSDT": 0.16,
+-    "MATICUSDT": 0.72,
+-    "LINKUSDT": 14.5,
+-    "AVAXUSDT": 35.0,
+-    "UNIUSDT": 7.8,
+-    "ATOMUSDT": 8.9,
+-    "LTCUSDT": 82.0,
+-    "ETCUSDT": 26.0,
+-    "XLMUSDT": 0.11,
+-    "ALGOUSDT": 0.18,
+-    "VETUSDT": 0.028,
+-    "ICPUSDT": 12.5,
+-    "FILUSDT": 5.8,
+-}
+-
+-
+ def get_supported_coins() -> List[dict]:
+     """
+     Return list of all supported cryptocurrency coins.
+@@ -80,89 +53,169 @@ def get_supported_coins() -> List[dict]:
+     ]
+ 
+ 
+-def get_coin_summary(symbol: str) -> Optional[dict]:
++def _format_date(value) -> str:
++    """Format DB date values from PostgreSQL or SQLite consistently."""
++    if isinstance(value, (datetime, date)):
++        return value.strftime("%Y-%m-%d")
++    return str(value)[:10]
++
++
++def _format_timestamp(value) -> Optional[str]:
++    """Format DB date/timestamp values as an API UTC timestamp string."""
++    if value is None:
++        return None
++    if isinstance(value, datetime):
++        return value.strftime("%Y-%m-%dT%H:%M:%SZ")
++    if isinstance(value, date):
++        return value.strftime("%Y-%m-%dT00:00:00Z")
++
++    text_value = str(value)
++    if text_value.endswith("Z") and "T" in text_value:
++        return text_value
++    if len(text_value) >= 10 and text_value[4] == "-" and text_value[7] == "-":
++        return f"{text_value[:10]}T00:00:00Z"
++    return text_value
++
++
++def _neutral_sentiment_response() -> dict:
++    return {
++        "overall_score": 0.0,
++        "overall_label": "Neutral",
++        "positive_pct": 0.0,
++        "negative_pct": 0.0,
++        "neutral_pct": 0.0,
++        "article_count": 0,
++        "last_updated": None,
++        "status": "sentiment_data_not_ready",
++    }
++
++
++def _sentiment_label(score: float) -> str:
++    if score > 0.2:
++        return "Bullish"
++    if score < -0.2:
++        return "Bearish"
++    return "Neutral"
++
++
++def _format_sentiment_row(row) -> Optional[dict]:
++    if not row:
++        return None
++
++    data = row._mapping
++    article_count = int(data.get("article_count") or 0)
++    if article_count <= 0:
++        return None
++
++    overall_score = float(data.get("overall_score") or 0.0)
++    positive_count = float(data.get("positive_count") or 0.0)
++    negative_count = float(data.get("negative_count") or 0.0)
++    neutral_count = float(data.get("neutral_count") or 0.0)
++
++    return {
++        "overall_score": round(overall_score, 4),
++        "overall_label": data.get("overall_label") or _sentiment_label(overall_score),
++        "positive_pct": round((positive_count / article_count) * 100, 2),
++        "negative_pct": round((negative_count / article_count) * 100, 2),
++        "neutral_pct": round((neutral_count / article_count) * 100, 2),
++        "article_count": article_count,
++        "last_updated": _format_timestamp(data.get("last_updated")),
++        "status": None,
++    }
++
++
++def _run_sentiment_queries(db: Session, source_name: str, queries: List) -> Optional[dict]:
++    errors = []
++    for query in queries:
++        try:
++            row = db.execute(query).fetchone()
++            sentiment = _format_sentiment_row(row)
++            if sentiment:
++                return sentiment
++
++            logger.info("%s is available but has no usable sentiment rows.", source_name)
++            return None
++        except SQLAlchemyError as exc:
++            db.rollback()
++            errors.append(f"{exc.__class__.__name__}: {exc}")
++        except (AttributeError, TypeError, ValueError) as exc:
++            db.rollback()
++            errors.append(f"{exc.__class__.__name__}: {exc}")
++
++    if errors:
++        logger.warning("%s unavailable or incompatible: %s", source_name, " | ".join(errors))
++    return None
++
++
++def get_coin_summary(symbol: str, db: Session) -> Optional[dict]:
+     """
+     Get daily summary for a specific coin.
+     
+-    When Gold Layer is ready, this will query the coin_daily_summary table.
+-    Currently returns realistic mock data.
+-    
+-    Args:
+-        symbol: Trading pair symbol (e.g., 'BTCUSDT')
+-    
+-    Returns:
+-        Dictionary with daily summary or None if coin not found
++    Queries the gold.daily_market_summary table in PostgreSQL.
+     """
+     symbol = symbol.upper()
+-    if symbol not in MOCK_BASE_PRICES:
++    if symbol not in SUPPORTED_COINS:
+         return None
+ 
+-    base_price = MOCK_BASE_PRICES[symbol]
+-    # Generate realistic daily variation (┬▒3%)
+-    random.seed(hash(symbol + datetime.now(timezone.utc).strftime("%Y-%m-%d")))
+-    variation = random.uniform(-0.03, 0.03)
++    query = text("""
++        SELECT symbol, date, open_price, high_price, low_price, close_price, total_volume
++        FROM gold.daily_market_summary
++        WHERE symbol = :symbol
++        ORDER BY date DESC
++        LIMIT 1
++    """)
++    result = db.execute(query, {"symbol": symbol}).fetchone()
++    
++    if not result:
++        return None
+ 
+-    day_open = base_price * (1 + random.uniform(-0.01, 0.01))
+-    day_close = base_price * (1 + variation)
+-    day_high = max(day_open, day_close) * (1 + random.uniform(0.005, 0.02))
+-    day_low = min(day_open, day_close) * (1 - random.uniform(0.005, 0.02))
+-    price_change_pct = ((day_close - day_open) / day_open) * 100
++    open_p = float(result.open_price)
++    close_p = float(result.close_price)
++    price_change_pct = ((close_p - open_p) / open_p * 100) if open_p > 0 else 0
+ 
+     return {
+-        "symbol": symbol,
+-        "trading_date": datetime.now(timezone.utc).strftime("%Y-%m-%d"),
+-        "day_open": round(day_open, 2),
+-        "day_close": round(day_close, 2),
+-        "day_high": round(day_high, 2),
+-        "day_low": round(day_low, 2),
+-        "total_volume": round(random.uniform(1_000_000, 50_000_000), 2),
+-        "avg_price": round((day_open + day_close) / 2, 2),
++        "symbol": result.symbol,
++        "trading_date": _format_date(result.date),
++        "day_open": round(open_p, 4),
++        "day_close": round(close_p, 4),
++        "day_high": round(float(result.high_price), 4),
++        "day_low": round(float(result.low_price), 4),
++        "total_volume": round(float(result.total_volume), 2),
++        "avg_price": round((open_p + close_p) / 2, 4),
+         "price_change_pct": round(price_change_pct, 4),
+-        "tick_count": random.randint(50000, 200000),
++        "tick_count": 0,
+     }
+ 
+ 
+-def get_coin_prices(symbol: str, days: int = 30) -> Optional[dict]:
++def get_coin_prices(symbol: str, days: int, db: Session) -> Optional[dict]:
+     """
+     Get historical price data for a coin.
+     
+-    When Gold Layer is ready, this will query ADLS Gen2 via the Gold tables.
+-    Currently returns realistic mock OHLCV data.
+-    
+-    Args:
+-        symbol: Trading pair symbol (e.g., 'BTCUSDT')
+-        days: Number of days of history to return (default: 30)
+-    
+-    Returns:
+-        Dictionary with symbol, days, and list of price data points
++    Queries gold.daily_market_summary for the last N days.
+     """
+     symbol = symbol.upper()
+-    if symbol not in MOCK_BASE_PRICES:
++    if symbol not in SUPPORTED_COINS:
+         return None
+ 
+-    base_price = MOCK_BASE_PRICES[symbol]
+-    prices = []
+-    current_price = base_price
+-
+-    for i in range(days, 0, -1):
+-        date = datetime.now(timezone.utc) - timedelta(days=i)
+-        # Random walk for realistic price movement
+-        random.seed(hash(symbol + date.strftime("%Y-%m-%d")))
+-        change = random.uniform(-0.04, 0.04)
+-        current_price = current_price * (1 + change)
+-
+-        day_open = current_price * (1 + random.uniform(-0.01, 0.01))
+-        day_close = current_price
+-        day_high = max(day_open, day_close) * (1 + random.uniform(0.005, 0.02))
+-        day_low = min(day_open, day_close) * (1 - random.uniform(0.005, 0.02))
++    query = text("""
++        SELECT date, open_price, high_price, low_price, close_price, total_volume
++        FROM gold.daily_market_summary
++        WHERE symbol = :symbol
++        ORDER BY date DESC
++        LIMIT :days
++    """)
++    results = db.execute(query, {"symbol": symbol, "days": days}).fetchall()
+ 
++    prices = []
++    # Reverse to return chronologically (oldest first)
++    for row in reversed(results):
+         prices.append({
+-            "timestamp": date.strftime("%Y-%m-%dT00:00:00Z"),
+-            "open": round(day_open, 2),
+-            "high": round(day_high, 2),
+-            "low": round(day_low, 2),
+-            "close": round(day_close, 2),
+-            "volume": round(random.uniform(500_000, 30_000_000), 2),
++            "timestamp": _format_timestamp(row.date),
++            "open": float(row.open_price),
++            "high": float(row.high_price),
++            "low": float(row.low_price),
++            "close": float(row.close_price),
++            "volume": float(row.total_volume),
+         })
+ 
+     return {
+@@ -172,41 +225,150 @@ def get_coin_prices(symbol: str, days: int = 30) -> Optional[dict]:
+     }
+ 
+ 
+-def get_market_overview() -> dict:
++def get_market_overview(db: Session) -> dict:
+     """
+     Get market-wide overview statistics.
+     
+-    When Gold Layer is ready, this will aggregate from the Gold tables.
+-    Currently returns realistic mock data.
+-    
+-    Returns:
+-        Dictionary with market-wide stats including top gainers and losers.
++    Aggregates from the latest data in gold.daily_market_summary.
+     """
+-    # Generate summaries for all coins to find top gainers/losers
++    # 1. Get the latest date available in the database
++    latest_date_query = text("SELECT MAX(date) FROM gold.daily_market_summary")
++    latest_date_result = db.execute(latest_date_query).scalar()
++
++    if not latest_date_result:
++        return {
++            "total_market_cap": 0.0,
++            "total_volume_24h": 0.0,
++            "btc_dominance": 0.0,
++            "active_coins": len(SUPPORTED_COINS),
++            "top_gainers": [],
++            "top_losers": [],
++            "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
++        }
++
++    # 2. Get summaries for the latest date for all coins
++    query = text("""
++        SELECT symbol, open_price, close_price, total_volume
++        FROM gold.daily_market_summary
++        WHERE date = :latest_date
++    """)
++    results = db.execute(query, {"latest_date": latest_date_result}).fetchall()
++
+     summaries = []
+-    for symbol in SUPPORTED_COINS:
+-        summary = get_coin_summary(symbol)
+-        if summary:
+-            summaries.append(summary)
++    total_volume_24h = 0.0
++    btc_volume = 0.0
+ 
+-    # Sort by price change to find gainers and losers
+-    sorted_by_change = sorted(summaries, key=lambda x: x["price_change_pct"], reverse=True)
++    for row in results:
++        open_p = float(row.open_price)
++        close_p = float(row.close_price)
++        vol = float(row.total_volume)
++        
++        pct_change = ((close_p - open_p) / open_p * 100) if open_p > 0 else 0
++        
++        summaries.append({
++            "symbol": row.symbol,
++            "name": COIN_NAMES.get(row.symbol, row.symbol.replace("USDT", "")),
++            "change_pct": round(pct_change, 2)
++        })
+ 
+-    top_gainers = [
+-        {"symbol": s["symbol"], "name": COIN_NAMES.get(s["symbol"], ""), "change_pct": s["price_change_pct"]}
+-        for s in sorted_by_change[:5]
+-    ]
+-    top_losers = [
+-        {"symbol": s["symbol"], "name": COIN_NAMES.get(s["symbol"], ""), "change_pct": s["price_change_pct"]}
+-        for s in sorted_by_change[-5:]
+-    ]
++        total_volume_24h += vol
++        if row.symbol == "BTCUSDT":
++            btc_volume = vol
++
++    sorted_by_change = sorted(summaries, key=lambda x: x["change_pct"], reverse=True)
++    top_gainers = sorted_by_change[:5] if len(sorted_by_change) >= 5 else sorted_by_change
++    top_losers = sorted_by_change[-5:] if len(sorted_by_change) >= 5 else sorted_by_change
++
++    # Market cap approximation based on volume since we lack circulating supply
++    total_market_cap = total_volume_24h * 15.0
++    btc_dominance = (btc_volume / total_volume_24h * 100) if total_volume_24h > 0 else 50.0
+ 
+     return {
+-        "total_market_cap": round(random.uniform(2.0e12, 3.0e12), 2),
+-        "total_volume_24h": round(random.uniform(80e9, 150e9), 2),
+-        "btc_dominance": round(random.uniform(48.0, 55.0), 2),
++        "total_market_cap": round(total_market_cap, 2),
++        "total_volume_24h": round(total_volume_24h, 2),
++        "btc_dominance": round(btc_dominance, 2),
+         "active_coins": len(SUPPORTED_COINS),
+         "top_gainers": top_gainers,
+         "top_losers": top_losers,
+-        "last_updated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"),
++        "last_updated": _format_timestamp(latest_date_result),
+     }
++
++
++def get_market_sentiment(db: Session) -> dict:
++    """
++    Get the latest market-wide sentiment overview.
++
++    Uses gold.market_sentiment first, falls back to silver.news_sentiment while
++    the sentiment pipeline is still being finalized, and returns a neutral
++    structure when no sentiment data is ready.
++    """
++    gold_queries = [
++        text("""
++            SELECT
++                sentiment_date AS last_updated,
++                AVG(avg_sentiment_score) AS overall_score,
++                SUM(article_count) AS article_count,
++                SUM(positive_count) AS positive_count,
++                SUM(negative_count) AS negative_count,
++                SUM(neutral_count) AS neutral_count
++            FROM gold.market_sentiment
++            WHERE sentiment_date = (
++                SELECT MAX(sentiment_date)
++                FROM gold.market_sentiment
++            )
++            GROUP BY sentiment_date
++        """),
++        text("""
++            SELECT
++                sentiment_date AS last_updated,
++                CASE
++                    WHEN SUM(total_articles) > 0
++                    THEN SUM(avg_sentiment_score * total_articles) / SUM(total_articles)
++                    ELSE AVG(avg_sentiment_score)
++                END AS overall_score,
++                SUM(total_articles) AS article_count,
++                SUM(positive_count) AS positive_count,
++                SUM(negative_count) AS negative_count,
++                SUM(neutral_count) AS neutral_count
++            FROM gold.market_sentiment
++            WHERE sentiment_date = (
++                SELECT MAX(sentiment_date)
++                FROM gold.market_sentiment
++            )
++            GROUP BY sentiment_date
++        """),
++    ]
++
++    gold_sentiment = _run_sentiment_queries(db, "gold.market_sentiment", gold_queries)
++    if gold_sentiment:
++        return gold_sentiment
++
++    logger.info("Falling back to silver.news_sentiment for market sentiment.")
++    silver_queries = [
++        text("""
++            SELECT
++                DATE(published_at) AS last_updated,
++                AVG(sentiment_score) AS overall_score,
++                COUNT(*) AS article_count,
++                SUM(CASE WHEN LOWER(sentiment_label) = 'positive' THEN 1 ELSE 0 END) AS positive_count,
++                SUM(CASE WHEN LOWER(sentiment_label) = 'negative' THEN 1 ELSE 0 END) AS negative_count,
++                SUM(CASE WHEN LOWER(sentiment_label) = 'neutral' THEN 1 ELSE 0 END) AS neutral_count
++            FROM silver.news_sentiment
++            WHERE sentiment_score IS NOT NULL
++              AND published_at IS NOT NULL
++              AND DATE(published_at) = (
++                  SELECT MAX(DATE(published_at))
++                  FROM silver.news_sentiment
++                  WHERE sentiment_score IS NOT NULL
++                    AND published_at IS NOT NULL
++              )
++            GROUP BY DATE(published_at)
++        """),
++    ]
++
++    silver_sentiment = _run_sentiment_queries(db, "silver.news_sentiment", silver_queries)
++    if silver_sentiment:
++        return silver_sentiment
++
++    logger.warning("Returning neutral fallback because sentiment data is not ready.")
++    return _neutral_sentiment_response()
+diff --git a/crypto-pulse/backend/tests/conftest.py b/crypto-pulse/backend/tests/conftest.py
+index 0a99b29..554a14a 100644
+--- a/crypto-pulse/backend/tests/conftest.py
++++ b/crypto-pulse/backend/tests/conftest.py
+@@ -5,11 +5,13 @@ Uses SQLite in-memory database for test isolation.
+ No Docker required to run tests.
+ """
+ import pytest
++from datetime import date, timedelta
+ from fastapi.testclient import TestClient
+-from sqlalchemy import create_engine
++from sqlalchemy import create_engine, text
+ from sqlalchemy.orm import sessionmaker
+ from sqlalchemy.pool import StaticPool
+ 
++from app.config import SUPPORTED_COINS
+ from app.database import Base, get_db
+ from app.main import app
+ 
+@@ -26,6 +28,54 @@ engine = create_engine(
+ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
+ 
+ 
++def seed_gold_daily_market_summary():
++    """Attach and seed the Gold market table needed by coin endpoint tests."""
++    with engine.begin() as conn:
++        attached_databases = conn.execute(text("PRAGMA database_list")).fetchall()
++        if not any(row[1] == "gold" for row in attached_databases):
++            conn.execute(text("ATTACH DATABASE ':memory:' AS gold"))
++
++        conn.execute(text("""
++            CREATE TABLE IF NOT EXISTS gold.daily_market_summary (
++                symbol TEXT NOT NULL,
++                date TEXT NOT NULL,
++                open_price REAL NOT NULL,
++                high_price REAL NOT NULL,
++                low_price REAL NOT NULL,
++                close_price REAL NOT NULL,
++                total_volume REAL NOT NULL
++            )
++        """))
++        conn.execute(text("DELETE FROM gold.daily_market_summary"))
++
++        start_date = date(2026, 5, 1) - timedelta(days=29)
++        rows = []
++        for day_offset in range(30):
++            trading_date = start_date + timedelta(days=day_offset)
++            for coin_index, symbol in enumerate(SUPPORTED_COINS):
++                base_price = 100.0 + (coin_index * 25.0)
++                open_price = base_price + day_offset
++                change_pct = (coin_index - 10) / 100.0
++                close_price = open_price * (1 + change_pct)
++                rows.append({
++                    "symbol": symbol,
++                    "date": trading_date.strftime("%Y-%m-%d"),
++                    "open_price": open_price,
++                    "high_price": max(open_price, close_price) * 1.01,
++                    "low_price": min(open_price, close_price) * 0.99,
++                    "close_price": close_price,
++                    "total_volume": 10000.0 + (coin_index * 100.0) + day_offset,
++                })
++
++        conn.execute(text("""
++            INSERT INTO gold.daily_market_summary (
++                symbol, date, open_price, high_price, low_price, close_price, total_volume
++            ) VALUES (
++                :symbol, :date, :open_price, :high_price, :low_price, :close_price, :total_volume
++            )
++        """), rows)
++
++
+ def override_get_db():
+     """Override the get_db dependency to use the test database."""
+     db = TestingSessionLocal()
+@@ -46,6 +96,7 @@ app.dependency_overrides[get_db] = override_get_db
+ def setup_database():
+     """Create all tables before each test and drop them after."""
+     Base.metadata.create_all(bind=engine)
++    seed_gold_daily_market_summary()
+     yield
+     Base.metadata.drop_all(bind=engine)
+ 
+diff --git a/crypto-pulse/backend/tests/test_sentiment.py b/crypto-pulse/backend/tests/test_sentiment.py
+new file mode 100644
+index 0000000..2d60f5c
+--- /dev/null
++++ b/crypto-pulse/backend/tests/test_sentiment.py
+@@ -0,0 +1,46 @@
++"""
++Tests for the market sentiment endpoint.
++"""
++
++
++EXPECTED_SENTIMENT_KEYS = {
++    "overall_score",
++    "overall_label",
++    "positive_pct",
++    "negative_pct",
++    "neutral_pct",
++    "article_count",
++    "last_updated",
++}
++
++
++class TestMarketSentiment:
++    """Tests for GET /api/v1/market/sentiment"""
++
++    def test_market_sentiment_authenticated(self, client, auth_headers):
++        """Should return sentiment overview with valid authentication."""
++        response = client.get("/api/v1/market/sentiment", headers=auth_headers)
++
++        assert response.status_code == 200
++
++    def test_market_sentiment_response_keys(self, client, auth_headers):
++        """Should include all required sentiment response keys."""
++        response = client.get("/api/v1/market/sentiment", headers=auth_headers)
++
++        assert response.status_code == 200
++        assert EXPECTED_SENTIMENT_KEYS.issubset(response.json().keys())
++
++    def test_market_sentiment_missing_tables_returns_neutral(self, client, auth_headers):
++        """Should return a safe neutral response when sentiment tables do not exist."""
++        response = client.get("/api/v1/market/sentiment", headers=auth_headers)
++
++        assert response.status_code == 200
++        data = response.json()
++        assert data["overall_score"] == 0.0
++        assert data["overall_label"] == "Neutral"
++        assert data["positive_pct"] == 0.0
++        assert data["negative_pct"] == 0.0
++        assert data["neutral_pct"] == 0.0
++        assert data["article_count"] == 0
++        assert data["last_updated"] is None
++        assert data["status"] == "sentiment_data_not_ready"
+diff --git a/crypto-pulse/docker-compose.yml b/crypto-pulse/docker-compose.yml
+index c567ee6..5103bf6 100644
+--- a/crypto-pulse/docker-compose.yml
++++ b/crypto-pulse/docker-compose.yml
+@@ -56,7 +56,7 @@ services:
+       - kafka
+     environment:
+       KAFKA_CLUSTERS_0_NAME: local
+-      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:9092
++      KAFKA_CLUSTERS_0_BOOTSTRAPSERVERS: kafka:29092
+       KAFKA_CLUSTERS_0_ZOOKEEPER: zookeeper:2181
+     ports:
+       - "8080:8080"
+@@ -79,16 +79,21 @@ services:
+       - crypto-net
+ 
+   airflow-webserver:
+-    image: apache/airflow:2.7.3
++    build:
++      context: ./airflow
++      dockerfile: Dockerfile
+     container_name: airflow-webserver
+     depends_on:
+       - postgres
++    env_file:
++      - .env
+     environment:
+       AIRFLOW__CORE__EXECUTOR: LocalExecutor
++      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
+       AIRFLOW__WEBSERVER__RBAC: 'True'
+       AIRFLOW__CORE__LOAD_EXAMPLES: 'False'
+-      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
++    user: "0:0"
+     command: webserver
+     ports:
+       - "8081:8080"
+@@ -98,27 +103,34 @@ services:
+       - ./processing/spark_jobs:/opt/airflow/jobs
+       - ./ingestion:/opt/airflow/ingestion
+       - ./data:/opt/data
++      - ./processing/dbt:/opt/airflow/dbt
+       - /var/run/docker.sock:/var/run/docker.sock
+     networks:
+       - crypto-net
+ 
+   airflow-scheduler:
+-    image: apache/airflow:2.7.3
++    build:
++      context: ./airflow
++      dockerfile: Dockerfile
+     container_name: airflow-scheduler
+     depends_on:
+       - postgres
+       - airflow-webserver
++    env_file:
++      - .env
+     environment:
+       AIRFLOW__CORE__EXECUTOR: LocalExecutor
++      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+       AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://admin:admin123@postgres:5432/cryptopulse
+-      _PIP_ADDITIONAL_REQUIREMENTS: 'pyspark==3.5.0 delta-spark==3.2.0 requests python-dotenv'
++    user: "0:0"
+     command: scheduler
+     volumes:
+       - ./dags:/opt/airflow/dags
+-      - ./logs:/opt/airflow/logs
++      - airflow_logs:/opt/airflow/logs
+       - ./processing/spark_jobs:/opt/airflow/jobs
+       - ./ingestion:/opt/airflow/ingestion
+       - ./data:/opt/data
++      - ./processing/dbt:/opt/airflow/dbt
+       - /var/run/docker.sock:/var/run/docker.sock
+     networks:
+       - crypto-net
+@@ -131,9 +143,12 @@ services:
+     container_name: spark-master
+     depends_on:
+       - kafka
++    env_file:
++      - .env
+     environment:
+       SPARK_MASTER_HOST: spark-master
+       SPARK_MASTER_PORT: 7077
++      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+     command: /opt/spark/bin/spark-class org.apache.spark.deploy.master.Master
+     ports:
+       - "7077:7077"
+@@ -150,9 +165,12 @@ services:
+     container_name: spark-worker
+     depends_on:
+       - spark-master
++    env_file:
++      - .env
+     environment:
+       SPARK_WORKER_MEMORY: 4G
+       SPARK_WORKER_CORES: 2
++      KAFKA_BOOTSTRAP_SERVERS: "kafka:29092"
+     command: /opt/spark/bin/spark-class org.apache.spark.deploy.worker.Worker spark://spark-master:7077
+     ports:
+       - "8083:8081"
+@@ -177,6 +195,102 @@ services:
+       - .env
+     volumes:
+       - ./backend/app:/app/app
++    environment:
++      - POSTGRES_HOST=postgres
++    networks:
++      - crypto-net
++
++  alert-worker:
++    build:
++      context: ./backend
++      dockerfile: Dockerfile
++    container_name: alert-worker
++    depends_on:
++      - postgres
++      - backend
++    env_file:
++      - .env
++    volumes:
++      - ./backend/app:/app/app
++    environment:
++      - POSTGRES_HOST=postgres
++    command: python -m app.services.alert_worker
++    restart: unless-stopped
++    networks:
++      - crypto-net
++
++  streaming-bronze-prices:
++    image: crypto-pulse-spark:3.5.0
++    container_name: streaming-bronze-prices
++    depends_on:
++      - spark-worker
++      - kafka
++    env_file:
++      - .env
++    volumes:
++      - ./processing/spark_jobs:/opt/spark/jobs
++      - ./data:/opt/data
++    command: >
++      /opt/spark/bin/spark-submit 
++      --master spark://spark-master:7077 
++      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
++      /opt/spark/jobs/bronze_consumer.py
++    networks:
++      - crypto-net
++
++  streaming-bronze-news:
++    image: crypto-pulse-spark:3.5.0
++    container_name: streaming-bronze-news
++    depends_on:
++      - spark-worker
++      - kafka
++    env_file:
++      - .env
++    volumes:
++      - ./processing/spark_jobs:/opt/spark/jobs
++      - ./data:/opt/data
++    command: >
++      /opt/spark/bin/spark-submit 
++      --master spark://spark-master:7077 
++      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
++      /opt/spark/jobs/bronze_news_consumer.py
++    networks:
++      - crypto-net
++
++  streaming-bronze-social:
++    image: crypto-pulse-spark:3.5.0
++    container_name: streaming-bronze-social
++    depends_on:
++      - spark-worker
++      - kafka
++    env_file:
++      - .env
++    volumes:
++      - ./processing/spark_jobs:/opt/spark/jobs
++      - ./data:/opt/data
++    command: >
++      /opt/spark/bin/spark-submit 
++      --master spark://spark-master:7077 
++      --packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0,io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
++      /opt/spark/jobs/bronze_social_consumer.py
++    networks:
++      - crypto-net
++
++  streaming-silver-prices:
++    image: crypto-pulse-spark:3.5.0
++    container_name: streaming-silver-prices
++    depends_on:
++      - spark-worker
++    env_file:
++      - .env
++    volumes:
++      - ./processing/spark_jobs:/opt/spark/jobs
++      - ./data:/opt/data
++    command: >
++      /opt/spark/bin/spark-submit 
++      --master spark://spark-master:7077 
++      --packages io.delta:delta-spark_2.12:3.2.0,org.apache.hadoop:hadoop-azure:3.3.4,org.wildfly.openssl:wildfly-openssl:1.1.3.Final 
++      /opt/spark/jobs/silver_prices_processor.py
+     networks:
+       - crypto-net
+ 
