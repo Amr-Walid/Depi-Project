@@ -11,13 +11,18 @@ load_dotenv()
 # ──────────────────────────────────────────────
 # PostgreSQL Database
 # ──────────────────────────────────────────────
-POSTGRES_USER = os.getenv("POSTGRES_USER") or "admin"
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD") or "admin123"
+from urllib.parse import quote_plus
+
+POSTGRES_USER = os.getenv("POSTGRES_USER") or "postgres"
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD") or ""
 POSTGRES_HOST = os.getenv("POSTGRES_HOST") or "localhost"
 POSTGRES_PORT = os.getenv("POSTGRES_PORT") or "5432"
-POSTGRES_DB = os.getenv("POSTGRES_DB") or "cryptopulse"
+POSTGRES_DB = os.getenv("POSTGRES_DB") or "postgres"
 
-DATABASE_URL = os.getenv("DATABASE_URL") or f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}?sslmode=require"
+# Encode password to handle special characters like '@'
+encoded_password = quote_plus(POSTGRES_PASSWORD)
+
+DATABASE_URL = os.getenv("DATABASE_URL") or f"postgresql://{POSTGRES_USER}:{encoded_password}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}?sslmode=require"
 
 # ──────────────────────────────────────────────
 # JWT Authentication
