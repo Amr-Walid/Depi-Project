@@ -89,7 +89,7 @@ All 4 pipelines follow the same **Medallion Architecture** flow:
 | Component | Count |
 |-----------|-------|
 | Spark Jobs | 14 |
-| Docker Containers | 15 |
+| Docker Containers | 16 |
 | Airflow DAGs | 2 |
 | dbt Models | 11 (6 staging + 5 gold) |
 | dbt Tests | 4 |
@@ -153,8 +153,8 @@ crypto-pulse/
 │       ├── models/                    ORM models + schema.sql
 │       ├── schemas/                   Pydantic request/response schemas
 │       ├── routers/                   auth, coins, watchlists, alerts, portfolios
-│       ├── services/                  auth_service.py, data_service.py
-│       └── tests/                     pytest test suite
+│       ├── services/                  auth_service.py, data_service.py, alert_worker.py
+│       └── tests/                     pytest test suite (50 tests)
 │
 ├── frontend/                          Next.js Web Dashboard
 │   └── app/                           React components, API hooks, and UI pages
@@ -176,7 +176,7 @@ crypto-pulse/
 │   └── 03-sentiment-dashboard.ipynb   Interactive Plotly sentiment dashboard
 ├── ml/                                FinBERT model integration (via Spark UDF)
 ├── Dockerfile.airflow                 Custom Airflow image with PySpark
-├── docker-compose.yml                 15 containerized services
+├── docker-compose.yml                 16 containerized services
 ├── Makefile                           Shortcut commands
 ├── requirements.txt
 └── .env.example
@@ -387,6 +387,18 @@ Allows users to configure price alerts (e.g., "notify me when BTC > $70,000"). S
 
 Tracks user portfolio positions (coin, quantity, buy price). Calculates current value against live prices.
 
+### Market Sentiment — `routers/coins.py`
+
+Provides real-time market sentiment from the FinBERT pipeline.
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/market/sentiment` | GET | Returns overall sentiment score, label, positive/negative/neutral percentages, and article count. Falls back gracefully: Gold → Silver → Neutral when sentiment data is not yet available. |
+
+### Alert Worker — `services/alert_worker.py`
+
+A background service that runs every 60 seconds, reads the latest prices from `gold.daily_market_summary`, compares them against active alerts in the `alerts` table, triggers matching alerts (printing a message and deactivating them), and handles database errors without crashing.
+
 ### Database Schema (`models/schema.sql`)
 
 PostgreSQL tables: `users`, `refresh_tokens`, `user_sessions`, `watchlists`, `alerts`, `portfolios`, `silver.news`, `silver.social`, `silver.news_sentiment`.
@@ -468,7 +480,7 @@ All services communicate over a shared Docker bridge network named `crypto-net`.
 | `streaming-bronze-social` | `crypto-pulse-spark:3.5.0` | — | Kafka → Bronze/social (continuous) |
 | `streaming-silver-prices` | `crypto-pulse-spark:3.5.0` | — | Bronze → Silver/prices (continuous) |
 | `backend` | Custom (from `backend/Dockerfile`) | 8000 | FastAPI REST API |
-| `alert-worker` | Custom (from `backend/Dockerfile`) | — | Background service monitoring price alerts |
+| `alert-worker` | Custom (from `backend/Dockerfile`) | — | Background service monitoring price alerts (60s poll interval) |
 | `frontend` | `node:18-alpine` | 3000 | Next.js Dashboard UI |
 
 **Kafka topic auto-creation:** The `kafka-init-topics` container runs once on startup and creates: `crypto.realtime.prices`, `crypto.market.data`, `crypto.news`, `crypto.social`.

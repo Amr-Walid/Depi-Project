@@ -311,18 +311,18 @@
 
 ## 👤 مصطفى مطر — Backend Updates + Alert Worker
 
-### Task 3.1 — إنشاء Sentiment API Endpoint [NOT STARTED]
+### Task 3.1 — إنشاء Sentiment API Endpoint [COMPLETE]
 
 **الملف:** `backend/app/routers/coins.py`
 
-- [ ] إضافة endpoint جديد:
+- [x] إضافة endpoint جديد:
   ```python
   @router.get("/market/sentiment")
   def market_sentiment(db: Session = Depends(get_db)):
-      """Get current market sentiment from FinBERT analysis."""
+      """مع منطق Gold → Silver → Neutral fallback"""
   ```
-- [ ] الـ Endpoint يقرأ من `gold.market_sentiment` (الجدول اللي كريم هيحدثه)
-- [ ] يرجع:
+- [x] الـ Endpoint يقرأ من `gold.market_sentiment` (الجدول اللي كريم حدثه)
+- [x] يرجع:
   ```json
   {
     "overall_score": 0.65,
@@ -337,11 +337,11 @@
 
 ---
 
-### Task 3.2 — تحديث Pydantic Schema للـ Sentiment [NOT STARTED]
+### Task 3.2 — تحديث Pydantic Schema للـ Sentiment [COMPLETE]
 
 **الملف:** `backend/app/schemas/coins.py`
 
-- [ ] إضافة schema جديد:
+- [x] إضافة schema جديد:
   ```python
   class SentimentOverview(BaseModel):
       overall_score: float
@@ -355,12 +355,12 @@
 
 ---
 
-### Task 3.3 — تحديث data_service.py [NOT STARTED]
+### Task 3.3 — تحديث data_service.py [COMPLETE]
 
 **الملف:** `backend/app/services/data_service.py`
 
-- [ ] **حذف** `MOCK_BASE_PRICES` (سطر 37-59) و `import random` (سطر 1) — كود قديم غير مستخدم
-- [ ] إضافة function `get_market_sentiment(db)`:
+- [x] **حذف** `MOCK_BASE_PRICES` (سطر 37-59) و `import random` (سطر 1) — كود قديم غير مستخدم
+- [x] إضافة function `get_market_sentiment(db)` مع Gold → Silver → Neutral fallback:
   ```python
   def get_market_sentiment(db: Session) -> dict:
       query = text("""
@@ -379,11 +379,11 @@
 
 ---
 
-### Task 3.4 — بناء Alert Worker (Background Service) [NOT STARTED]
+### Task 3.4 — بناء Alert Worker (Background Service) [COMPLETE]
 
 **الملف:** `backend/app/services/alert_worker.py`
 
-- [ ] إنشاء سكريبت يعمل كـ Background Worker:
+- [x] إنشاء سكريبت يعمل كـ Background Worker:
   ```python
   import time
   from sqlalchemy import text
@@ -433,11 +433,11 @@
 
 ---
 
-### Task 3.5 — إضافة Alert Worker للـ Docker Compose [NOT STARTED]
+### Task 3.5 — إضافة Alert Worker للـ Docker Compose [COMPLETE]
 
 **الملف:** `docker-compose.yml`
 
-- [ ] إضافة service جديدة:
+- [x] إضافة service جديدة:
   ```yaml
   alert-worker:
     build:
@@ -455,13 +455,13 @@
 
 ---
 
-### Task 3.6 — تنظيف الـ Backend Code [NOT STARTED]
+### Task 3.6 — تنظيف الـ Backend Code [COMPLETE]
 
 **الملف:** `backend/app/services/data_service.py`
 
-- [ ] حذف `import random` (سطر 1)
-- [ ] حذف قاموس `MOCK_BASE_PRICES` بالكامل (سطر 37-59) — كود Mock قديم لم يعد مستخدماً
-- [ ] التأكد إن كل الـ Endpoints بترجع داتا حقيقية من PostgreSQL فقط
+- [x] حذف `import random` (سطر 1)
+- [x] حذف قاموس `MOCK_BASE_PRICES` بالكامل (سطر 37-59) — كود Mock قديم لم يعد مستخدماً
+- [x] التأكد إن كل الـ Endpoints بترجع داتا حقيقية من PostgreSQL فقط
 
 ---
 

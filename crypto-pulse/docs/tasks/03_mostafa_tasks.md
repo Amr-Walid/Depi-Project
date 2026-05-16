@@ -183,57 +183,57 @@
 
 ---
 
-### Task 3.1 — إنشاء Sentiment API Endpoint [NOT STARTED]
+### Task 3.1 — إنشاء Sentiment API Endpoint [COMPLETE]
 
 **الملف:** `backend/app/routers/coins.py`
 
-- [ ] إضافة `GET /api/v1/market/sentiment`
-- [ ] يقرأ من `gold.market_sentiment` أو `silver.news_sentiment`
-- [ ] يرجع: `overall_score`, `overall_label`, `positive_pct`, `negative_pct`, `article_count`
+- [x] إضافة `GET /api/v1/market/sentiment`
+- [x] يقرأ من `gold.market_sentiment` أو `silver.news_sentiment`
+- [x] يرجع: `overall_score`, `overall_label`, `positive_pct`, `negative_pct`, `article_count`
 
-### Task 3.2 — تحديث Pydantic Schema للـ Sentiment [NOT STARTED]
+### Task 3.2 — تحديث Pydantic Schema للـ Sentiment [COMPLETE]
 
 **الملف:** `backend/app/schemas/coins.py`
 
-- [ ] إضافة `SentimentOverview` schema جديد
+- [x] إضافة `SentimentOverview` schema جديد
 
-### Task 3.3 — تحديث data_service.py [NOT STARTED]
+### Task 3.3 — تحديث data_service.py [COMPLETE]
 
 **الملف:** `backend/app/services/data_service.py`
 
-- [ ] حذف `import random` (سطر 1) — كود قديم
-- [ ] حذف `MOCK_BASE_PRICES` (سطر 37-59) — كود Mock غير مستخدم
-- [ ] إضافة function `get_market_sentiment(db)` يقرأ من PostgreSQL
+- [x] حذف `import random` (سطر 1) — كود قديم
+- [x] حذف `MOCK_BASE_PRICES` (سطر 37-59) — كود Mock غير مستخدم
+- [x] إضافة function `get_market_sentiment(db)` يقرأ من PostgreSQL
 
-### Task 3.4 — بناء Alert Worker (Background Service) [NOT STARTED]
+### Task 3.4 — بناء Alert Worker (Background Service) [COMPLETE]
 
 **الملف الجديد:** `backend/app/services/alert_worker.py`
 
-- [ ] Worker يلف كل دقيقة يقرأ أحدث الأسعار من `gold.daily_market_summary`
-- [ ] يقارن بجدول `alerts` (condition: above/below)
-- [ ] يطبع تنبيه ويعطل الـ Alert (`is_active = FALSE`)
+- [x] Worker يلف كل دقيقة يقرأ أحدث الأسعار من `gold.daily_market_summary`
+- [x] يقارن بجدول `alerts` (condition: above/below)
+- [x] يطبع تنبيه ويعطل الـ Alert (`is_active = FALSE`)
 
-### Task 3.5 — إضافة Alert Worker للـ Docker Compose [NOT STARTED]
+### Task 3.5 — إضافة Alert Worker للـ Docker Compose [COMPLETE]
 
 **الملف:** `docker-compose.yml`
 
-- [ ] إضافة service `alert-worker` يستخدم نفس `backend/Dockerfile`
-- [ ] يشتغل كـ: `python -m app.services.alert_worker`
+- [x] إضافة service `alert-worker` يستخدم نفس `backend/Dockerfile`
+- [x] يشتغل كـ: `python -m app.services.alert_worker`
 
-### Task 3.6 — تنظيف الـ Backend Code [NOT STARTED]
+### Task 3.6 — تنظيف الـ Backend Code [COMPLETE]
 
 **الملف:** `backend/app/services/data_service.py`
 
-- [ ] التأكد إن كل الـ Endpoints بترجع داتا حقيقية من PostgreSQL فقط
-- [ ] إزالة أي references للـ Mock data
+- [x] التأكد إن كل الـ Endpoints بترجع داتا حقيقية من PostgreSQL فقط
+- [x] إزالة أي references للـ Mock data
 
 ---
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 3.1 | Sentiment API Endpoint | Not started |
-| 3.2 | Pydantic Schema للـ Sentiment | Not started |
-| 3.3 | تحديث data_service.py | Not started |
-| 3.4 | Alert Worker | Not started |
-| 3.5 | Alert Worker في Docker | Not started |
-| 3.6 | تنظيف الـ Backend Code | Not started |
+| 3.1 | Sentiment API Endpoint | Complete ✅ |
+| 3.2 | Pydantic Schema للـ Sentiment | Complete ✅ |
+| 3.3 | تحديث data_service.py | Complete ✅ |
+| 3.4 | Alert Worker | Complete ✅ |
+| 3.5 | Alert Worker في Docker | Complete ✅ |
+| 3.6 | تنظيف الـ Backend Code | Complete ✅ |

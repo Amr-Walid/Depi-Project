@@ -42,18 +42,8 @@ def main():
     adls_path = f"abfss://{container}@{storage_account}.dfs.core.windows.net/silver/social"
     
     # PostgreSQL Configuration
-    pg_host = os.getenv("POSTGRES_HOST", "postgres")
-    pg_port = os.getenv("POSTGRES_PORT", "5432")
-    pg_db = os.getenv("POSTGRES_DB", "cryptopulse")
-    pg_user = os.getenv("POSTGRES_USER", "admin")
-    pg_password = os.getenv("POSTGRES_PASSWORD", "admin123")
-    
-    jdbc_url = f"jdbc:postgresql://{pg_host}:{pg_port}/{pg_db}"
-    jdbc_properties = {
-        "user": pg_user,
-        "password": pg_password,
-        "driver": "org.postgresql.Driver"
-    }
+    from supabase_utils import get_supabase_jdbc_config
+    jdbc_url, jdbc_properties = get_supabase_jdbc_config()
     
     pg_table = "silver.social"
     

@@ -76,6 +76,9 @@ crypto-pulse/
 │   │   ├── 📁 models/
 │   │   │   └── 📄 schema.sql           ← مخطط قاعدة البيانات [كريم] ✅
 │   │   └── 📁 services/                ← منطق الأعمال [مصطفى] ✅
+│   │       ├── 📄 auth_service.py
+│   │       ├── 📄 data_service.py          ← حقيقي من PostgreSQL (بدون Mock) ✅
+│   │       └── 📄 alert_worker.py          ← Background Alert Service [مصطفى] ✅
 │   └── 📁 tests/                   ← اختبارات API [مصطفى] ✅
 │
 ├── 📁 spark-apps/                  ← بيئة Spark Docker
@@ -191,5 +194,5 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
 | streaming-bronze-social | — | Kafka → Bronze/social (مستمر 24/7) |
 | streaming-silver-prices | — | Bronze → Silver/prices (مستمر 24/7) |
 | backend | 8000 | FastAPI Application |
-| alert-worker | — | خدمة التنبيهات في الخلفية ⏳ |
+| alert-worker | — | خدمة التنبيهات في الخلفية ✅ |
 | frontend | 3000 | واجهة Next.js (Dashboard) ⏳ |

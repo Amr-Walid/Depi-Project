@@ -104,7 +104,17 @@ with DAG(
     # 7. Run dbt to generate Gold Layer (Full Models)
     run_dbt_gold = BashOperator(
         task_id='run_dbt_gold',
-        bash_command='export POSTGRES_HOST=postgres && cd /opt/airflow/dbt && /home/airflow/.local/bin/dbt deps && /home/airflow/.local/bin/dbt run --select gold_daily_ohlcv daily_market_summary && /home/airflow/.local/bin/dbt test --select gold_daily_ohlcv daily_market_summary',
+        bash_command=(
+            'export POSTGRES_HOST=${POSTGRES_HOST} && '
+            'export POSTGRES_USER=${POSTGRES_USER} && '
+            'export POSTGRES_PASSWORD=${POSTGRES_PASSWORD} && '
+            'export POSTGRES_DB=${POSTGRES_DB} && '
+            'export POSTGRES_PORT=${POSTGRES_PORT} && '
+            'cd /opt/airflow/dbt && '
+            '/home/airflow/.local/bin/dbt deps && '
+            '/home/airflow/.local/bin/dbt run --select gold_daily_ohlcv daily_market_summary && '
+            '/home/airflow/.local/bin/dbt test --select gold_daily_ohlcv daily_market_summary'
+        ),
     )
 
     # Dependency Chain

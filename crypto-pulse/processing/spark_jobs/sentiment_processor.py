@@ -82,18 +82,8 @@ def main():
     checkpoint_path = f"abfss://{container}@{sa}.dfs.core.windows.net/checkpoints/sentiment/news"
     
     # --- PostgreSQL Setup ---
-    pg_host = os.getenv("POSTGRES_HOST", "postgres")
-    pg_port = os.getenv("POSTGRES_PORT", "5432")
-    pg_db = os.getenv("POSTGRES_DB", "cryptopulse")
-    pg_user = os.getenv("POSTGRES_USER", "admin")
-    pg_password = os.getenv("POSTGRES_PASSWORD", "admin123")
-    
-    jdbc_url = f"jdbc:postgresql://{pg_host}:{pg_port}/{pg_db}"
-    jdbc_properties = {
-        "user": pg_user,
-        "password": pg_password,
-        "driver": "org.postgresql.Driver"
-    }
+    from supabase_utils import get_supabase_jdbc_config
+    jdbc_url, jdbc_properties = get_supabase_jdbc_config()
     target_pg_table = "silver.news_sentiment"
 
     try:

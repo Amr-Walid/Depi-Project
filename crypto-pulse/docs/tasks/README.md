@@ -38,8 +38,8 @@
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
-| Progress | 100% | 100% | 0% |
-| Status | Complete | Complete ✅ | Sentiment API + Alert Worker + Cleanup ⏳ |
+| Progress | 100% | 100% | **100%** |
+| Status | Complete | Complete ✅ | **Complete ✅** — Sentiment API + Alert Worker + Code Cleanup |
 
 ### Ahmed Ayman — ❌ REMOVED FROM PROJECT
 
@@ -96,7 +96,7 @@ Yassin (FinBERT sentiment_processor.py) ✅  ← DONE (Milestone 3)
 Karim  (gold/market_sentiment.sql — FinBERT scores) ✅  ← DONE (Milestone 3)
     |
     v
-Mostafa (GET /api/v1/market/sentiment) ⏳  ← PENDING (Milestone 3)
+Mostafa (GET /api/v1/market/sentiment) ✅  ← DONE (Milestone 3)
     |
     v
 Amr (Frontend Dashboard — Next.js) ⏳  ← PENDING (Milestone 3)
@@ -119,5 +119,5 @@ Amr (Frontend Dashboard — Next.js) ⏳  ← PENDING (Milestone 3)
 3. **✅ Backend API Testing** — DONE.
 4. **✅ Yassin** — FinBERT integration in Spark + Notebooks — **DONE**.
 5. **✅ Karim** — dbt sentiment models + dashboard stats — **DONE**.
-6. **⏳ Mostafa** — Sentiment API endpoint + Alert Worker.
+6. **✅ Mostafa** — Sentiment API endpoint + Alert Worker — **DONE**.
 7. **⏳ Amr** — Frontend Dashboard (Next.js) + Azure Deployment.
