@@ -11,16 +11,13 @@ load_dotenv()
 # ──────────────────────────────────────────────
 # PostgreSQL Database
 # ──────────────────────────────────────────────
-POSTGRES_USER = os.getenv("POSTGRES_USER", "admin")
-POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD", "admin123")
-POSTGRES_HOST = os.getenv("POSTGRES_HOST", "localhost")
-POSTGRES_PORT = os.getenv("POSTGRES_PORT", "5432")
-POSTGRES_DB = os.getenv("POSTGRES_DB", "cryptopulse")
+POSTGRES_USER = os.getenv("POSTGRES_USER") or "admin"
+POSTGRES_PASSWORD = os.getenv("POSTGRES_PASSWORD") or "admin123"
+POSTGRES_HOST = os.getenv("POSTGRES_HOST") or "localhost"
+POSTGRES_PORT = os.getenv("POSTGRES_PORT") or "5432"
+POSTGRES_DB = os.getenv("POSTGRES_DB") or "cryptopulse"
 
-DATABASE_URL = os.getenv(
-    "DATABASE_URL",
-    f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}?sslmode=require"
-)
+DATABASE_URL = os.getenv("DATABASE_URL") or f"postgresql://{POSTGRES_USER}:{POSTGRES_PASSWORD}@{POSTGRES_HOST}:{POSTGRES_PORT}/{POSTGRES_DB}?sslmode=require"
 
 # ──────────────────────────────────────────────
 # JWT Authentication
