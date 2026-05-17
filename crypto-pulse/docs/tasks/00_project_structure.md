@@ -105,7 +105,7 @@ crypto-pulse/
 ├── 📁 airflow/                     ← صورة Docker مخصصة للـ Airflow
 │   └── 📄 Dockerfile                  ← Airflow + Docker CLI 27.4.1 + dbt [عمرو] ✅
 │
-├── 📁 frontend/                    ← واجهة المستخدم (Next.js Dashboard) [عمرو] ⏳
+├── 📁 frontend/                    ← واجهة المستخدم (Next.js 16 Dashboard) [عمرو] ✅
 └── 📁 orchestration/               ← (محجوز للتوسع المستقبلي)
 ```
 
@@ -153,15 +153,15 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
                                               /silver/prices/ | /news/ | /social/ | /historical/
                                                         │
                                                         ▼
-                                              Gold Layer (dbt models) ✅
+                                              Gold Layer (dbt models → Supabase) ✅
                                               /gold/daily_summary/ | /sentiment/ | /latest_prices/
                                                         │
                                                         ▼
-                                              FastAPI Backend ✅
+                                              FastAPI Backend (→ Supabase Cloud) ✅
                                               /api/v1/coins/ | /market/sentiment/ | /alerts/
                                                         │
                                                         ▼
-                                              Frontend Dashboard (Next.js) ⏳
+                                              Frontend Dashboard (Next.js 16) ✅
 ```
 
 ---
@@ -184,7 +184,7 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
 | zookeeper | 2181 | إدارة Kafka |
 | kafka | 9092 | Message Broker |
 | kafka-ui | 8080 | واجهة مراقبة Kafka |
-| postgres | 5432 | قاعدة بيانات Airflow + Backend |
+| postgres | 5432 | قاعدة بيانات Airflow (محلي) — Backend يستخدم Supabase Cloud |
 | airflow-webserver | 8081 | واجهة Airflow (صورة مخصصة + Docker CLI) |
 | airflow-scheduler | — | Scheduler — ينفذ Spark jobs عبر `docker exec` |
 | spark-master | 7077 / 8082 | Spark Master Node |
@@ -193,6 +193,6 @@ RSS Feeds (CoinTelegraph, NewsBTC) ───────────────
 | streaming-bronze-news | — | Kafka → Bronze/news (مستمر 24/7) |
 | streaming-bronze-social | — | Kafka → Bronze/social (مستمر 24/7) |
 | streaming-silver-prices | — | Bronze → Silver/prices (مستمر 24/7) |
-| backend | 8000 | FastAPI Application |
+| backend | 8000 | FastAPI Application (→ Supabase Cloud) |
 | alert-worker | — | خدمة التنبيهات في الخلفية ✅ |
-| frontend | 3000 | واجهة Next.js (Dashboard) ⏳ |
+| frontend | 3000 | واجهة Next.js 16 (Dashboard) ✅ |

@@ -234,59 +234,72 @@
 
 ---
 
-## Milestone 3 — Frontend Dashboard + Cloud Deployment
+## Milestone 3 — Frontend Dashboard + Supabase Migration
 
-**Goal:** بناء واجهة رسومية للمشروع باستخدام قالب Next.js جاهز، وربطها بالـ API، ونشر المشروع على Azure.
+**Goal:** بناء واجهة رسومية للمشروع باستخدام Next.js 16، ربطها بالـ API، ترحيل قاعدة البيانات لـ Supabase Cloud، وتفعيل AI Assistant.
 
 > **ملاحظة:** التفاصيل الكاملة لكل التاسكات موجودة في [06_milestone3_plan.md](./06_milestone3_plan.md)
 
 ---
 
-### Task 3.1 — اختيار وتنظيف قالب Next.js [NOT STARTED]
+### Task 3.1 — اختيار وتنظيف قالب Next.js [COMPLETE ✅]
 
-- [ ] البحث عن قالب Crypto Dashboard مناسب (مفتوح المصدر)
-- [ ] تشغيل القالب محلياً في مجلد `frontend/`
-- [ ] إزالة المكونات غير المطلوبة
-- [ ] إعداد هيكل المجلدات (components, lib, pages)
+- [x] اختيار قالب Shadcn Admin Dashboard (Next.js 16 + Tailwind CSS v4)
+- [x] تشغيل القالب محلياً في مجلد `frontend/`
+- [x] إزالة المكونات غير المطلوبة (Discord, Kanban, Better-Auth)
+- [x] إعداد هيكل المجلدات (components, hooks, features, contexts)
 
-### Task 3.2 — شاشة تسجيل الدخول [NOT STARTED]
+### Task 3.2 — شاشة تسجيل الدخول [COMPLETE ✅]
 
-- [ ] إنشاء Login form (Email + Password)
-- [ ] ربطها بـ `POST /api/v1/auth/login` و `POST /api/v1/auth/signup`
-- [ ] تخزين الـ Token في cookies/localStorage
+- [x] إنشاء Login form (Email + Password)
+- [x] ربطها بـ `POST /api/v1/auth/login` و `POST /api/v1/auth/signup`
+- [x] تخزين الـ Token في `AuthContext` (Client-side JWT)
 
-### Task 3.3 — لوحة التحكم الرئيسية (Dashboard) [NOT STARTED]
+### Task 3.3 — لوحة التحكم الرئيسية (Dashboard) [COMPLETE ✅]
 
-- [ ] عرض Market Overview cards (Market Cap, Volume, BTC Dominance)
-- [ ] جدول عملات تفاعلي من `GET /api/v1/coins`
-- [ ] Top Gainers / Losers من `GET /api/v1/market/overview`
-- [ ] مؤشر Sentiment Gauge من `GET /api/v1/market/sentiment`
+- [x] عرض Market Overview cards (Market Cap, Volume, Active Coins)
+- [x] جدول عملات تفاعلي من `GET /api/v1/coins`
+- [x] Top Gainers / Losers من `GET /api/v1/market/overview`
+- [x] مؤشر Sentiment من `GET /api/v1/market/sentiment`
+- [x] BTC Price Chart مع بيانات تاريخية
 
-### Task 3.4 — صفحة تفاصيل العملة [NOT STARTED]
+### Task 3.4 — صفحات المستخدم (Watchlist, Portfolio, Alerts) [COMPLETE ✅]
 
-- [ ] رسم بياني OHLCV من `GET /api/v1/coins/{symbol}/prices?days=30`
-- [ ] جدول Daily Summary
-- [ ] أزرار تغيير الفترة الزمنية (7d / 30d / 90d / 1y)
+- [x] صفحة Watchlist — إضافة/حذف عملات من المفضلة
+- [x] صفحة Portfolio — تتبع المحفظة (Quantity, Buy Price, P/L)
+- [x] صفحة Alerts — إنشاء تنبيهات سعر (Above/Below)
+- [x] إصلاح NaN warnings في حقول الإدخال
 
-### Task 3.5 — إضافة Frontend للـ Docker Compose [NOT STARTED]
+### Task 3.5 — AI Assistant (Google Gemini) [COMPLETE ✅]
 
-- [ ] إنشاء `frontend/Dockerfile`
-- [ ] إضافة service `frontend` في `docker-compose.yml` على port 3000
+- [x] ربط Vercel AI SDK مع Google Gemini 1.5 Flash
+- [x] صفحة AI Chat كاملة مع Markdown rendering (streamdown)
+- [x] Auto-scroll مع `use-stick-to-bottom`
 
-### Task 3.6 — النشر على Azure [NOT STARTED]
+### Task 3.6 — ترحيل قاعدة البيانات لـ Supabase Cloud [COMPLETE ✅]
 
-- [ ] إنشاء Azure VM (Ubuntu 22.04)
-- [ ] تثبيت Docker وتشغيل المشروع
-- [ ] فتح البورتات (3000, 8000) في NSG
-- [ ] اختبار الوصول من المتصفح
+- [x] إنشاء `processing/spark_jobs/supabase_utils.py` — JDBC SSL config
+- [x] تحديث كل sync jobs لتستخدم Supabase بدل Docker Postgres
+- [x] تحديث `dbt profiles.yml` بـ `sslmode: require`
+- [x] تحديث `backend/app/config.py` مع URL encoding للباسورد
+- [x] تحديث `.env` بمتغيرات Supabase
+
+### Task 3.7 — تحسين الأداء وإصلاح الأخطاء [COMPLETE ✅]
+
+- [x] حل مشكلة Infinite Compilation Loop (حذف Orphaned Imports)
+- [x] الانتقال من Turbopack لـ Webpack لتقليل استهلاك الذاكرة
+- [x] إضافة `--max-old-space-size=512` لمنع انهيار النظام
+- [x] إعادة تثبيت المكتبات المفقودة (streamdown, use-stick-to-bottom)
 
 ---
 
 | Task | Description | Status |
 |------|-------------|--------|
-| 3.1 | اختيار وتنظيف قالب Next.js | Not started |
-| 3.2 | شاشة تسجيل الدخول | Not started |
-| 3.3 | لوحة التحكم الرئيسية | Not started |
-| 3.4 | صفحة تفاصيل العملة | Not started |
-| 3.5 | إضافة Frontend للـ Docker | Not started |
-| 3.6 | النشر على Azure | Not started |
+| 3.1 | اختيار وتنظيف قالب Next.js | Complete ✅ |
+| 3.2 | شاشة تسجيل الدخول | Complete ✅ |
+| 3.3 | لوحة التحكم الرئيسية | Complete ✅ |
+| 3.4 | صفحات المستخدم (Watchlist, Portfolio, Alerts) | Complete ✅ |
+| 3.5 | AI Assistant (Google Gemini) | Complete ✅ |
+| 3.6 | ترحيل قاعدة البيانات لـ Supabase | Complete ✅ |
+| 3.7 | تحسين الأداء وإصلاح الأخطاء | Complete ✅ |
+

@@ -66,7 +66,7 @@ Docker Compose service:
 - Service name: `alert-worker`
 - Uses the backend Dockerfile
 - Loads environment configuration through `.env`
-- Sets `POSTGRES_HOST=postgres`
+- Connects to **Supabase Cloud PostgreSQL** via `POSTGRES_HOST`
 - Runs `python -m app.services.alert_worker`
 - Uses the `crypto-net` network
 - Uses `restart: unless-stopped`
@@ -163,10 +163,10 @@ Runtime verification should be completed on a Docker-ready machine.
 
 ## Remaining Dependencies
 
-- `silver.news_sentiment` and/or `gold.market_sentiment` must be populated by Karim/Yassin.
-- Until those tables are populated, the sentiment endpoint returns the safe neutral fallback.
-- Alert Worker requires `gold.daily_market_summary` to be populated to trigger real alerts.
-- Frontend can already integrate with the `/api/v1/market/sentiment` API contract.
+- ✅ `silver.news_sentiment` and `gold.market_sentiment` — **populated** by Yassin (FinBERT) and Karim (dbt).
+- ✅ Alert Worker requires `gold.daily_market_summary` — **populated** with 37,000+ records.
+- ✅ All data endpoints serve real data from **Supabase Cloud PostgreSQL**.
+- ✅ Frontend is fully integrated with all API endpoints.
 
 ## Commit Reference
 

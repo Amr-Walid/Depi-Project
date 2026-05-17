@@ -1,6 +1,6 @@
 # CryptoPulse — Task Dashboard
 
-> Last reviewed: May 15, 2026
+> Last reviewed: May 17, 2026
 
 ---
 
@@ -24,8 +24,8 @@
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
-| Progress | 100% | 100% | 0% |
-| Status | Complete | Complete ✅ | Frontend (Next.js) + Azure Deployment ⏳ |
+| Progress | 100% | 100% | **100%** |
+| Status | Complete | Complete ✅ | **Complete ✅** — Frontend (Next.js) + Supabase Migration + AI Chat |
 
 ### Yassin Mahmoud
 
@@ -71,13 +71,13 @@ Yassin (bronze_consumer.py — Streaming) ✅
 Yassin (silver_prices_processor.py — Streaming Upsert) ✅
     |
     v
-Amr (sync_*_pg.py — Silver → PostgreSQL) ✅
+Amr (sync_*_pg.py — Silver → Supabase Cloud PostgreSQL) ✅
     |
     v
-Karim  (dbt staging + gold models) ✅
+Karim  (dbt staging + gold models → Supabase) ✅
     |
     v
-Mostafa (FastAPI — data_service reads Gold layer) ✅
+Mostafa (FastAPI — data_service reads Gold layer from Supabase) ✅
 
 ---
 
@@ -99,7 +99,7 @@ Karim  (gold/market_sentiment.sql — FinBERT scores) ✅  ← DONE (Milestone 3
 Mostafa (GET /api/v1/market/sentiment) ✅  ← DONE (Milestone 3)
     |
     v
-Amr (Frontend Dashboard — Next.js) ⏳  ← PENDING (Milestone 3)
+Amr (Frontend Dashboard — Next.js) ✅  ← DONE (Milestone 3)
 ```
 
 ---
@@ -120,4 +120,13 @@ Amr (Frontend Dashboard — Next.js) ⏳  ← PENDING (Milestone 3)
 4. **✅ Yassin** — FinBERT integration in Spark + Notebooks — **DONE**.
 5. **✅ Karim** — dbt sentiment models + dashboard stats — **DONE**.
 6. **✅ Mostafa** — Sentiment API endpoint + Alert Worker — **DONE**.
-7. **⏳ Amr** — Frontend Dashboard (Next.js) + Azure Deployment.
+7. **✅ Amr** — Frontend Dashboard (Next.js) + Supabase Migration — **DONE**.
+
+---
+
+## Key Infrastructure Updates (May 2026)
+
+- **Database Migration:** PostgreSQL moved from local Docker container to **Supabase Cloud** (`aws-0-eu-west-1.pooler.supabase.com`).
+- **Spark JDBC Sync:** All sync jobs (`sync_*_pg.py`) updated to use `supabase_utils.py` with `sslmode=require`.
+- **dbt Target:** `profiles.yml` updated to point to Supabase with SSL.
+- **Frontend:** Complete Next.js 16 dashboard with AI Assistant (Google Gemini), Watchlists, Portfolios, Alerts, and Dark Mode.
