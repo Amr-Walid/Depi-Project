@@ -59,16 +59,17 @@ All 4 pipelines follow the same **Medallion Architecture** flow:
 │ 🟡 Binance API  │────►│ (batch)  │────►│ historical_loader    │────►│ silver_hist_proc     │────►│sync_hist │────►│           │     │         │
 │   (Daily)       │     │          │     │                      │     │                      │     │          │     │           │     │         │
 ├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     │         │
+├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
 │ 🟢 NewsAPI      │────►│ .news    │────►│ bronze_news_consumer │────►│ silver_news_proc     │────►│sync_news │────►│market_    │     │         │
 │   (15 min)      │     │          │     │                      │     │                      │     │          │     │sentiment  │     │         │
 ├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
 │ 🔵 RSS Feeds    │────►│ .social  │────►│ bronze_social_cons   │────►│ silver_social_proc   │────►│sync_socl │────►│           │     │         │
 │   (10 min)      │     │          │     │                      │     │                      │     │          │     │           │     │         │
 └─────────────────┘     └──────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┘     └───────────┘     └─────────┘
-                                                  │                            │                                          │
-                                                  ▼                            ▼                                          ▼
-                                         Azure ADLS Gen2               Azure ADLS Gen2                             PostgreSQL
-                                         (stcryptopulsedev2)           (stcryptopulsedev2)                        (localhost:5432)
+                                                   │                            │                                          │
+                                                   ▼                            ▼                                          ▼
+                                          Azure ADLS Gen2               Azure ADLS Gen2                          Supabase Cloud
+                                          (stcryptopulsedev2)           (stcryptopulsedev2)                       (PostgreSQL DB)
                                                                                                                       │
                                                                                                                       ▼
                                                                                                               Frontend Dashboard
@@ -358,7 +359,7 @@ Staging view that reads from `silver.news_sentiment`, filters null sentiment sco
 **Base URL:** `http://localhost:8000`  
 **Interactive Docs:** `http://localhost:8000/docs`
 
-The backend is a full-featured REST API built with FastAPI and SQLAlchemy, backed by a PostgreSQL database. It auto-creates all database tables on startup via `create_tables()`.
+The backend is a full-featured REST API built with FastAPI and SQLAlchemy, backed by a **Supabase Cloud PostgreSQL** database. It auto-creates all database tables on startup via `create_tables()`.
 
 ### Authentication — `routers/auth.py`
 
@@ -520,8 +521,12 @@ NEWS_API_KEY=<your-newsapi-key>
 KAFKA_BOOTSTRAP_SERVERS=localhost:9092           # Use this for the host-side Python producer
 KAFKA_TOPIC_REALTIME_PRICES=crypto.realtime.prices
 
-# PostgreSQL (used by the FastAPI backend)
-POSTGRES_URL=postgresql://admin:admin123@postgres:5432/cryptopulse
+# Supabase Cloud PostgreSQL (used by the FastAPI backend & Spark JDBC sync)
+POSTGRES_HOST=aws-0-eu-west-1.pooler.supabase.com
+POSTGRES_PORT=5432
+POSTGRES_DB=postgres
+POSTGRES_USER=postgres.idiidwhgddbxdbnpamag
+POSTGRES_PASSWORD=your_supabase_password
 ```
 
 > **Important:** The Spark and Airflow jobs running **inside Docker** use `kafka:29092` (the internal listener), not `localhost:9092`. This is configured automatically via the `KAFKA_BOOTSTRAP_SERVERS=kafka:29092` environment variable set in `docker-compose.yml` for those services. You do not need to change your `.env` file for this.
@@ -700,6 +705,7 @@ make restart   # Restart everything
 ## 12. Final Audit & Success (May 2026)
 
 The project underwent a final end-to-end audit in May 2026, confirming the stability and accuracy of the entire pipeline:
+- **Database & Data Warehouse Migration:** Successfully migrated the PostgreSQL instance and dbt target warehouse from a local Docker container to **Supabase Cloud (PostgreSQL)**. Configured PySpark JDBC with custom SSL utilities (`supabase_utils.py` with `sslmode=require`) to enable secure, direct data syncing from Azure ADLS Gen2 to Supabase.
 - **Orchestration:** Airflow successfully triggers Spark jobs via the Docker socket without Java overhead.
 - **Data Quality:** Gold layer tables accurately represent multi-year OHLCV data with 37,000+ records.
 - **Sentiment Analysis:** FinBERT (ProsusAI/finbert) integrated as a Spark UDF, processing news titles and writing sentiment scores to PostgreSQL. dbt gold models consume these scores to produce per-day, per-symbol market mood indicators (Bullish/Bearish/Neutral).
