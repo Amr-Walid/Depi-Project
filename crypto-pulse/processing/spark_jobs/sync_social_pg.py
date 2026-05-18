@@ -70,6 +70,7 @@ def main():
         query = df.writeStream \
             .foreachBatch(write_to_pg) \
             .option("checkpointLocation", checkpoint_path) \
+            .trigger(availableNow=True) \
             .start()
             
         query.awaitTermination()
