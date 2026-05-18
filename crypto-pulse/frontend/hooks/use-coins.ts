@@ -9,12 +9,17 @@ export interface CoinInfo {
 
 export interface CoinSummary {
   symbol: string;
-  price: number;
-  open: number;
-  high: number;
-  low: number;
-  volume: number;
+  trading_date: string;
+  day_open: number;
+  day_close: number;
+  day_high: number;
+  day_low: number;
+  total_volume: number;
+  avg_price: number;
   price_change_pct: number;
+  tick_count: number;
+  // Computed values for convenience
+  price?: number;
 }
 
 export interface PricePoint {
@@ -61,10 +66,15 @@ export function useCoinDetail(symbol: string) {
     try {
       const [summaryData, historyData] = await Promise.all([
         apiClient<CoinSummary>(`/api/v1/coins/${symbol}/summary`),
-        apiClient<{ history: PricePoint[] }>(`/api/v1/coins/${symbol}/prices?days=30`),
+        apiClient<{ prices: PricePoint[] }>(`/api/v1/coins/${symbol}/prices?days=30`),
       ]);
-      setSummary(summaryData);
-      setHistory(historyData.history);
+      // Add computed price field for backwards compatibility with UI components
+      const enhancedSummary = {
+        ...summaryData,
+        price: summaryData.day_close,
+      };
+      setSummary(enhancedSummary);
+      setHistory(historyData.prices || []);
     } catch (err: any) {
       setError(err.message || "Failed to fetch coin details");
     } finally {

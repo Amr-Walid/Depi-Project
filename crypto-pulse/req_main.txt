@@ -1,0 +1,20 @@
+# 🚀 CryptoPulse Lightweight Requirements
+# Minimal requirements to run the pipeline scripts and backend on a constrained Linux machine
+
+# --- Pipeline Scripts ---
+psycopg2-binary>=2.9.9
+python-dotenv>=1.0.0
+requests>=2.31.0
+feedparser>=6.0.10
+
+# --- dbt (Analytics Engineering) ---
+dbt-core==1.7.0
+dbt-postgres==1.7.0
+
+# --- Backend (FastAPI) ---
+fastapi>=0.104.0
+uvicorn[standard]>=0.24.0
+sqlalchemy>=2.0.0
+python-jose[cryptography]>=3.3.0
+passlib[bcrypt]>=1.7.4
+httpx>=0.25.0

@@ -97,7 +97,8 @@ CREATE INDEX idx_social_created_at ON silver.social(created_at);
 
 -- Sentiment analysis results
 CREATE TABLE IF NOT EXISTS silver.news_sentiment (
-    id SERIAL PRIMARY KEY,
+    article_id SERIAL PRIMARY KEY,
+    symbol VARCHAR(20),
     title TEXT,
     published_at TIMESTAMP,
     sentiment_score DECIMAL(5, 4),
@@ -108,3 +109,4 @@ CREATE TABLE IF NOT EXISTS silver.news_sentiment (
 
 CREATE INDEX idx_sentiment_published_at ON silver.news_sentiment(published_at);
 CREATE INDEX idx_sentiment_label ON silver.news_sentiment(sentiment_label);
+CREATE INDEX idx_sentiment_symbol ON silver.news_sentiment(symbol);

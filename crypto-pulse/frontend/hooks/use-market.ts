@@ -4,14 +4,22 @@ import { apiClient } from "@/lib/api-client";
 export interface MarketStats {
   total_market_cap: number;
   total_volume_24h: number;
-  active_coins_count: number;
-  market_cap_change_24h: number;
+  active_coins: number;
+  btc_dominance: number;
+  top_gainers: any[];
+  top_losers: any[];
+  last_updated: string;
 }
 
 export interface MarketSentiment {
-  sentiment_score: number;
-  sentiment_label: string; // Bullish, Bearish, Neutral
-  description: string;
+  overall_score: number;
+  overall_label: string; // Bullish, Bearish, Neutral
+  positive_pct: number;
+  negative_pct: number;
+  neutral_pct: number;
+  article_count: number;
+  last_updated?: string;
+  status?: string;
 }
 
 export function useMarket() {

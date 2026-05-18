@@ -50,7 +50,7 @@ export function SectionCards() {
     {
       title: "Total Market Cap",
       value: formatCurrency(stats?.total_market_cap || 0),
-      change: stats?.market_cap_change_24h || 0,
+      change: 0, // Placeholder, backend API doesn't compute this yet
       icon: DollarSign,
       footer: "last 24 hours",
     },
@@ -62,16 +62,16 @@ export function SectionCards() {
     },
     {
       title: "Active Coins",
-      value: stats?.active_coins_count || 0,
+      value: stats?.active_coins || 0,
       icon: Coins,
       footer: "Tracked by CryptoPulse",
     },
     {
       title: "Market Sentiment",
-      value: sentiment?.sentiment_label || "Neutral",
-      sentimentScore: sentiment?.sentiment_score || 50,
+      value: sentiment?.overall_label || "Neutral",
+      sentimentScore: sentiment?.overall_score || 0,
       icon: Brain,
-      footer: sentiment?.description || "Market mood",
+      footer: "Market mood",
     },
   ];
 
