@@ -83,6 +83,7 @@ def main():
         .format("delta") \
         .outputMode("append") \
         .option("checkpointLocation", checkpoint_path) \
+        .trigger(availableNow=True) \
         .start(output_path)
 
     query.awaitTermination()

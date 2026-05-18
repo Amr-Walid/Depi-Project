@@ -196,7 +196,7 @@ def write_to_bronze(raw_df, config):
         .outputMode("append")
         .option("path", bronze_path)
         .option("checkpointLocation", checkpoint_path)
-        .trigger(processingTime="30 seconds")
+        .trigger(availableNow=True)
         .queryName("bronze_prices_stream")
         .start()
     )

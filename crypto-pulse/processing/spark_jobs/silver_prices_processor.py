@@ -219,7 +219,7 @@ def process_bronze_prices_to_silver_stream(spark: SparkSession, config: dict) ->
         .foreachBatch(upsert_to_silver)
         .outputMode("update")
         .option("checkpointLocation", checkpoint_path)
-        .trigger(processingTime="30 seconds")
+        .trigger(availableNow=True)
         .queryName("silver_prices_stream")
         .start()
     )
