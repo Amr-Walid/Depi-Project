@@ -67,6 +67,7 @@ def main():
         .option("kafka.bootstrap.servers", kafka_bootstrap_servers) \
         .option("subscribe", kafka_topic) \
         .option("startingOffsets", "earliest") \
+        .option("failOnDataLoss", "false") \
         .load()
 
     # Parse JSON and add ingestion timestamp
