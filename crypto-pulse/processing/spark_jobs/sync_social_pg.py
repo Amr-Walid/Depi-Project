@@ -49,7 +49,7 @@ def main():
     
     try:
         logger.info(f"Reading STREAM from ADLS: {adls_path}")
-        df = spark.readStream.format("delta").load(adls_path)
+        df = spark.readStream.format("delta").option("ignoreChanges", "true").load(adls_path)
         
         def write_to_pg(batch_df, batch_id):
             batch_count = batch_df.count()
