@@ -48,7 +48,7 @@ export function ProfileDropdown() {
   };
 
   if (!user) return null;
-  const initials = user.name
+  const initials = (user.name || user.email || "U")
     .split(" ")
     .map((name) => name[0])
     .join("");
@@ -66,7 +66,7 @@ export function ProfileDropdown() {
       <DropdownMenuContent className="w-56" align="end" forceMount>
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
-            <p className="text-sm leading-none font-medium">{user.name}</p>
+            <p className="text-sm leading-none font-medium">{user.name || "User"}</p>
             <p className="text-muted-foreground text-xs leading-none">
               {user.email}
             </p>
