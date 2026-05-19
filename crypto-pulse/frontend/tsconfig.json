@@ -20,6 +20,14 @@
     ],
     "baseUrl": ".",
     "paths": {
+      "@/components/*": ["./components/*"],
+      "@/lib/*": ["./lib/*"],
+      "@/hooks/*": ["./hooks/*"],
+      "@/contexts/*": ["./contexts/*"],
+      "@/features/*": ["./features/*"],
+      "@/constants/*": ["./constants/*"],
+      "@/helpers/*": ["./helpers/*"],
+      "@/utils/*": ["./utils/*"],
       "@/*": ["./*"]
     }
   },
