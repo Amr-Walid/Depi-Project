@@ -41,7 +41,14 @@ SYMBOLS = [
 ]
 
 def get_connection():
-    conn = psycopg2.connect(DSN)
+    conn = psycopg2.connect(
+        host=POSTGRES_HOST,
+        port=POSTGRES_PORT,
+        dbname=POSTGRES_DB,
+        user=POSTGRES_USER,
+        password=POSTGRES_PASSWORD,
+        sslmode="require"
+    )
     conn.autocommit = False
     return conn
 
