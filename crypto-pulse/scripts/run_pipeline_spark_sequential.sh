@@ -51,7 +51,8 @@ if [ ! -d "venv" ]; then
 fi
 source venv/bin/activate
 echo "📦 Installing required Python dependencies (fast, no PySpark)..."
-pip install -q kafka-python websocket-client requests feedparser psycopg2-binary python-dotenv dbt-postgres fastapi uvicorn supabase pydantic --break-system-packages
+pip install -q kafka-python websocket-client requests feedparser psycopg2-binary python-dotenv dbt-postgres --break-system-packages
+pip install -q -r backend/requirements.txt --break-system-packages
 
 # Run Binance Producer for 45 seconds to collect a batch of prices
 run_with_timeout "python ingestion/producers/producer_binance.py" 45 "Binance Real-time Prices"
