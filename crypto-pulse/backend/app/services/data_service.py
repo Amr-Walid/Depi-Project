@@ -154,6 +154,9 @@ def get_coin_summary(symbol: str, db: Session) -> Optional[dict]:
     Queries the gold.daily_market_summary table in PostgreSQL.
     """
     symbol = symbol.upper()
+    if not symbol.endswith("USDT") and f"{symbol}USDT" in SUPPORTED_COINS:
+        symbol = f"{symbol}USDT"
+
     if symbol not in SUPPORTED_COINS:
         return None
 
@@ -194,6 +197,9 @@ def get_coin_prices(symbol: str, days: int, db: Session) -> Optional[dict]:
     Queries gold.daily_market_summary for the last N days.
     """
     symbol = symbol.upper()
+    if not symbol.endswith("USDT") and f"{symbol}USDT" in SUPPORTED_COINS:
+        symbol = f"{symbol}USDT"
+
     if symbol not in SUPPORTED_COINS:
         return None
 
