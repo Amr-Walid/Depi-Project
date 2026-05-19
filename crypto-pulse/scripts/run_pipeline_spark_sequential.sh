@@ -44,10 +44,14 @@ sleep 30
 # ── 2. Collect Real Data (Producers) ──
 echo -e "\n📡 [2/7] Collecting Real Data into Kafka..."
 
-# Start python virtual environment if it exists, otherwise assume dependencies are installed
-if [ -d "venv" ]; then
-    source venv/bin/activate
+# Setup python virtual environment and lightweight dependencies
+if [ ! -d "venv" ]; then
+    echo "📦 Creating Python virtual environment..."
+    python3 -m venv venv
 fi
+source venv/bin/activate
+echo "📦 Installing required Python dependencies (fast, no PySpark)..."
+pip install -q kafka-python websocket-client requests feedparser psycopg2-binary python-dotenv dbt-postgres fastapi uvicorn supabase pydantic --break-system-packages
 
 # Run Binance Producer for 45 seconds to collect a batch of prices
 run_with_timeout "python ingestion/producers/producer_binance.py" 45 "Binance Real-time Prices"
