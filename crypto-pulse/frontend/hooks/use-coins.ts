@@ -74,7 +74,11 @@ export function useCoinDetail(symbol: string) {
         price: summaryData.day_close,
       };
       setSummary(enhancedSummary);
-      setHistory(historyData.prices || []);
+      const mappedHistory = (historyData.prices || []).map((p: any) => ({
+        ...p,
+        price: p.close || p.price || 0,
+      }));
+      setHistory(mappedHistory);
     } catch (err: any) {
       setError(err.message || "Failed to fetch coin details");
     } finally {
