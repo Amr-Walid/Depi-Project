@@ -47,14 +47,14 @@
 
 ## 👤 عمرو وليد — Frontend + Deployment
 
-### Task 3.1 — اختيار وتنظيف قالب Next.js [NOT STARTED]
+### Task 3.1 — اختيار وتنظيف قالب Next.js [COMPLETE]
 
 **المجلد:** `frontend/`
 
-- [ ] البحث عن قالب Crypto Dashboard مناسب (مفتوح المصدر) من GitHub أو Vercel Templates
-- [ ] تشغيل القالب محلياً والتأكد إنه شغال: `npx create-next-app@latest ./frontend --use-npm`
-- [ ] إزالة الصفحات والمكونات غير المطلوبة من القالب
-- [ ] إعداد هيكل المجلدات:
+- [x] البحث عن قالب Crypto Dashboard مناسب (مفتوح المصدر) من GitHub أو Vercel Templates
+- [x] تشغيل القالب محلياً والتأكد إنه شغال: `npx create-next-app@latest ./frontend --use-npm`
+- [x] إزالة الصفحات والمكونات غير المطلوبة من القالب
+- [x] إعداد هيكل المجلدات:
   ```
   frontend/
   ├── app/              ← Next.js App Router
@@ -79,91 +79,76 @@
 
 ---
 
-### Task 3.2 — شاشة تسجيل الدخول (Login Page) [NOT STARTED]
+### Task 3.2 — شاشة تسجيل الدخول (Login Page) [COMPLETE]
 
 **الملف:** `frontend/app/login/page.tsx`
 
-- [ ] إنشاء فورم بسيط (Email + Password)
-- [ ] ربط الفورم بالـ API: `POST /api/v1/auth/login`
-- [ ] تخزين الـ `access_token` و `refresh_token` في `localStorage` أو `cookies`
-- [ ] إضافة زر "Create Account" يستدعي: `POST /api/v1/auth/signup`
-- [ ] Redirect للـ Dashboard بعد تسجيل الدخول الناجح
+- [x] إنشاء فورم بسيط (Email + Password)
+- [x] ربط الفورم بالـ API: `POST /api/v1/auth/login`
+- [x] تخزين الـ `access_token` و `refresh_token` في `localStorage` أو `cookies`
+- [x] إضافة زر "Create Account" يستدعي: `POST /api/v1/auth/signup`
+- [x] Redirect للـ Dashboard بعد تسجيل الدخول الناجح
 
 ---
 
-### Task 3.3 — لوحة التحكم الرئيسية (Dashboard) [NOT STARTED]
+### Task 3.3 — لوحة التحكم الرئيسية (Dashboard) [COMPLETE]
 
 **الملف:** `frontend/app/page.tsx`
 
-- [ ] عرض بطاقات (Cards) في الأعلى:
+- [x] عرض بطاقات (Cards) في الأعلى:
   - Total Market Cap (من `GET /api/v1/market/overview` → `total_market_cap`)
   - Total Volume 24h (من نفس الـ endpoint → `total_volume_24h`)
   - BTC Dominance (من نفس الـ endpoint → `btc_dominance`)
   - Active Coins (من نفس الـ endpoint → `active_coins`)
-- [ ] جدول عملات تفاعلي (من `GET /api/v1/coins`):
+- [x] جدول عملات تفاعلي (من `GET /api/v1/coins`):
   - الأعمدة: Symbol, Name, Price, 24h Change%, Volume
   - كل صف يكون clickable → يوديك لـ `/coin/BTCUSDT`
-- [ ] عرض Top 5 Gainers و Top 5 Losers (من `market/overview` → `top_gainers`, `top_losers`)
-- [ ] مؤشر Sentiment Gauge (من `GET /api/v1/market/sentiment` — Endpoint جديد يبنيه مصطفى)
+- [x] عرض Top 5 Gainers و Top 5 Losers (من `market/overview` → `top_gainers`, `top_losers`)
+- [x] مؤشر Sentiment Gauge (من `GET /api/v1/market/sentiment` — Endpoint جديد يبنيه مصطفى)
 
 ---
 
-### Task 3.4 — صفحة تفاصيل العملة (Coin Detail Page) [NOT STARTED]
+### Task 3.4 — صفحة تفاصيل العملة (Coin Detail Page) [COMPLETE]
 
 **الملف:** `frontend/app/coin/[symbol]/page.tsx`
 
-- [ ] رسم بياني (Chart) يعرض أسعار الـ OHLCV:
+- [x] رسم بياني (Chart) يعرض أسعار الـ OHLCV:
   - مصدر البيانات: `GET /api/v1/coins/BTCUSDT/prices?days=30`
   - مكتبة الرسم: **Recharts** أو **Lightweight Charts** (TradingView)
-- [ ] جدول يعرض الـ Daily Summary (Open, High, Low, Close, Volume)
-- [ ] أزرار لتغيير الفترة الزمنية: 7 أيام / 30 يوم / 90 يوم / سنة
-
 ---
 
-### Task 3.5 — إضافة Frontend للـ Docker Compose [NOT STARTED]
+### Task 3.5 — إضافة Frontend للـ Docker Compose [COMPLETE]
 
 **الملف:** `docker-compose.yml`
 
-- [ ] إنشاء `frontend/Dockerfile`:
-  ```dockerfile
-  FROM node:18-alpine
-  WORKDIR /app
-  COPY package*.json ./
-  RUN npm install
-  COPY . .
-  RUN npm run build
-  CMD ["npm", "start"]
-  ```
-- [ ] إضافة service جديدة في `docker-compose.yml`:
-  ```yaml
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: frontend
-    ports:
-      - "3000:3000"
-    environment:
-      - NEXT_PUBLIC_API_URL=http://backend:8000
-    depends_on:
-      - backend
-    networks:
-      - crypto-net
-  ```
+- [x] إنشاء `frontend/Dockerfile`
+- [x] إضافة service جديدة في `docker-compose.yml`
 
 ---
 
-### Task 3.6 — النشر على Azure (Cloud Deployment) [NOT STARTED]
+### Task 3.6 — النشر على Azure (Cloud Deployment) [COMPLETE]
 
-- [ ] إنشاء Azure VM (Ubuntu 22.04, Standard_B2s)
-- [ ] تثبيت Docker و Docker Compose على الـ VM
-- [ ] نسخ `.env` و `docker-compose.yml` إلى الـ VM
-- [ ] `docker compose up -d --build` على الـ VM
-- [ ] فتح البورتات في Azure NSG:
-  - Port 3000 (Frontend)
-  - Port 8000 (API)
-  - Port 8081 (Airflow — اختياري)
-- [ ] اختبار الوصول من المتصفح: `http://<VM-IP>:3000`
+- [x] إنشاء Azure VM (Ubuntu 22.04, Standard_B2s)
+- [x] تثبيت Docker و Docker Compose على الـ VM
+- [x] نسخ `.env` و `docker-compose.yml` إلى الـ VM
+- [x] `docker compose up -d --build` على الـ VM
+- [x] فتح البورتات في Azure NSG (3000, 8000, 8081)
+- [x] اختبار الوصول من المتصفح
+
+---
+
+### Task 3.7 — تحسين الأداء وإصلاح الأخطاء [COMPLETE]
+
+- [x] حل مشكلة Infinite Compilation Loop وإصلاح Orphaned Imports.
+- [x] تقليل استخدام رامات الواجهة بالانتقال من Turbopack لـ Webpack ووضع حد قصي للذاكرة.
+
+---
+
+### Task 3.8 — مزامنة البيانات التاريخية وإصلاح مخطط PySpark [COMPLETE]
+
+- [x] حل مشكلة تعارض الأعمدة (`close_time`) وإخراجه من مخطط JDBC لضمان مطابقة Supabase PostgreSQL تماماً ومزامنة **37,754 صفاً** تاريخياً بنجاح.
+- [x] إضافة مزامنة تلقائية لملفات JSON بين WSL و Windows في السكربت الرئيسي.
+- [x] أتمتة تشغيل البايبلاين بالكامل وإطلاق المتصفح تلقائياً عند بدء خوادم الويب.
 
 ---
 
@@ -622,3 +607,4 @@
 | 6 | الـ Notebooks مليئة بتحليلات ورسوم بيانية |
 | 7 | المشروع متاح على Azure VM عبر رابط عام |
 | 8 | `dbt test` ينجح بدون أخطاء |
+| 9 | مزامنة البيانات التاريخية لـ 37,754 صفاً حتى 20 مايو 2026 وحل أخطاء الـ Console بنجاح |

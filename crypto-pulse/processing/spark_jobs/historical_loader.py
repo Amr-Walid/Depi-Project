@@ -61,13 +61,9 @@ def create_spark_session(config):
         SparkSession.builder
         .appName("HistoricalLoader")
         .master("spark://spark-master:7077")
-        .config("spark.jars.packages", ",".join([
-            "org.apache.hadoop:hadoop-azure:3.3.4",
-            "org.wildfly.openssl:wildfly-openssl:1.1.3.Final",
-            "io.delta:delta-spark_2.12:3.2.0"
-        ]))
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config("spark.sql.shuffle.partitions", "2")
         .config(f"fs.azure.account.auth.type.{sa}.dfs.core.windows.net", "OAuth")
         .config(f"fs.azure.account.oauth.provider.type.{sa}.dfs.core.windows.net", "org.apache.hadoop.fs.azurebfs.oauth2.ClientCredsTokenProvider")
         .config(f"fs.azure.account.oauth2.client.id.{sa}.dfs.core.windows.net", config["azure_client_id"])

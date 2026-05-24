@@ -705,6 +705,8 @@ make restart   # Restart everything
 
 The project underwent a final end-to-end audit in May 2026, confirming the stability and accuracy of the entire pipeline:
 - **Database & Data Warehouse Migration:** Successfully migrated the PostgreSQL instance and dbt target warehouse from a local Docker container to **Supabase Cloud (PostgreSQL)**. Configured PySpark JDBC with custom SSL utilities (`supabase_utils.py` with `sslmode=require`) to enable secure, direct data syncing from Azure ADLS Gen2 to Supabase.
+- **Spark JDBC Schema Projection & Fix:** Addressed a critical PySpark JDBC column-mapping issue (`close_time` schema mismatch) by implementing explicit schema projection in the Spark JDBC writer, successfully synchronizing **37,754 historical records** up to **May 20, 2026** directly to Supabase.
+- **Orchestration & Automation Runner:** Developed a robust sequential Spark/Kafka pipeline runner script (`run_pipeline_spark_sequential.sh`) featuring automatic directory synchronization between WSL and Windows, sequential container orchestration to prevent OOM crashes, and automatic launching of the default Windows host browser directly to the dashboard page upon service startup.
 - **Orchestration:** Airflow successfully triggers Spark jobs via the Docker socket without Java overhead.
 - **Data Quality:** Gold layer tables accurately represent multi-year OHLCV data with 37,000+ records.
 - **Sentiment Analysis:** FinBERT (ProsusAI/finbert) integrated as a Spark UDF, processing news titles and writing sentiment scores to PostgreSQL. dbt gold models consume these scores to produce per-day, per-symbol market mood indicators (Bullish/Bearish/Neutral).

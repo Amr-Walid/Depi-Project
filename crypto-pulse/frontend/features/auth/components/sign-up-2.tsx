@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Eye, EyeOff } from "lucide-react";
@@ -24,6 +25,7 @@ import { blockDisallowedPasswordChars } from "../utils/password-validation";
 import { SignUp2Schema, signUp2Schema } from "../utils/sign-up-2-schema";
 
 export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
+  const { signup } = useAuth();
   const [isLoading, setIsLoading] = useState(false);
   const [isSocialLoading, setIsSocialLoading] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -57,12 +59,16 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
   const onSubmit = async (data: SignUp2Schema) => {
     try {
       setIsLoading(true);
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      console.log("Sign up data:", data);
+      await signup(data.email, data.password);
       toast.success("Account created successfully!");
       window.location.href = "/dashboard";
-    } catch {
-      toast.error("Failed to create account. Please try again.");
+    } catch (error) {
+      console.error("Signup error:", error);
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : "Failed to create account. Please try again."
+      );
     } finally {
       setIsLoading(false);
     }

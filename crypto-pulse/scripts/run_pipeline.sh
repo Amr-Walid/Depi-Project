@@ -74,6 +74,11 @@ fi
 if [ "$step" == "start" ]; then
     echo -e "\n✅ Backend running on PID $BACKEND_PID (http://localhost:8000)"
     echo -e "✅ Frontend running on PID $FRONTEND_PID (http://localhost:3000)"
+    
+    # 🌐 Automatically open default Windows host browser
+    echo -e "\n🌐 Opening Next.js Frontend in your default browser..."
+    explorer.exe "http://localhost:3000" 2>/dev/null || cmd.exe /c start "http://localhost:3000" 2>/dev/null || true
+
     echo -e "\n🛑 Press Ctrl+C to stop both servers."
     wait $BACKEND_PID $FRONTEND_PID
 elif [ "$run_all" = true ]; then

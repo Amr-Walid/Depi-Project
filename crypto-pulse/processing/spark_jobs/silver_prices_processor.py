@@ -86,14 +86,10 @@ def create_spark_session(config: dict) -> SparkSession:
         SparkSession.builder
         .appName("SilverPricesProcessor")
         .master("spark://spark-master:7077")
-        .config("spark.jars.packages", ",".join([
-            "org.apache.hadoop:hadoop-azure:3.3.4",
-            "org.wildfly.openssl:wildfly-openssl:1.1.3.Final",
-            "io.delta:delta-spark_2.12:3.2.0",
-        ]))
         .config("spark.sql.extensions",        "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
         .config("spark.databricks.delta.retentionDurationCheck.enabled", "false")
+        .config("spark.sql.shuffle.partitions", "2")
         # ── Azure OAuth2 / Service Principal ──
         .config(f"fs.azure.account.auth.type.{sa}.dfs.core.windows.net", "OAuth")
         .config(f"fs.azure.account.oauth.provider.type.{sa}.dfs.core.windows.net",
@@ -176,6 +172,7 @@ def process_bronze_prices_to_silver_stream(spark: SparkSession, config: dict) ->
         Takes the micro-batch DataFrame and merges it into the Silver Delta Table.
         This ensures duplicate events (same symbol & time) are updated instead of appended twice.
         """
+        microBatchOutputDF.sparkSession.conf.set("spark.sql.shuffle.partitions", "2")
         count = microBatchOutputDF.count()
         logger.info(f"Processing micro-batch {batchId} with {count} records...")
         

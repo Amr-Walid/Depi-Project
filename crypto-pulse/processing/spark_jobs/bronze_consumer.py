@@ -89,18 +89,10 @@ def create_spark_session(config):
     spark = (
         SparkSession.builder
         .appName("BronzeConsumer")
-        .config(
-            "spark.jars.packages",
-            ",".join([
-                "org.apache.hadoop:hadoop-azure:3.3.4",
-                "org.wildfly.openssl:wildfly-openssl:1.1.3.Final",
-                "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0",
-                "io.delta:delta-spark_2.12:3.2.0",
-            ]),
-        )
         # ── Delta Lake ──
         .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension")
         .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog")
+        .config("spark.sql.shuffle.partitions", "2")
         # ── Azure ADLS Gen2 - OAuth2 / Service Principal ──
         .config(
             f"fs.azure.account.auth.type.{storage_account}.dfs.core.windows.net",

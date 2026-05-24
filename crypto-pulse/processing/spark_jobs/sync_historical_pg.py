@@ -60,8 +60,12 @@ def main():
         if df.isEmpty():
             logger.info("No new records to sync.")
         else:
-            logger.info(f"Writing {df.count()} records to PostgreSQL table: {pg_table} (mode: append)")
-            df.write.jdbc(
+            # Select only columns that match PostgreSQL silver.historical schema exactly
+            columns_to_sync = ["symbol", "open_time", "open", "high", "low", "close", "volume", "year", "month", "day", "processed_at"]
+            df_to_sync = df.select(*columns_to_sync)
+            
+            logger.info(f"Writing {df_to_sync.count()} records to PostgreSQL table: {pg_table} (mode: append)")
+            df_to_sync.write.jdbc(
                 url=jdbc_url,
                 table=pg_table,
                 mode="append",

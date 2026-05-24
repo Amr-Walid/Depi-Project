@@ -68,6 +68,13 @@ echo "▶️  Fetching Historical Data..."
 python ingestion/historical/historical_fetcher.py
 echo "✅ Historical data collection complete."
 
+# 🔄 Sync WSL native and Windows mount data folders if they are out of sync
+if [ -d "/home/amr/test/crypto-pulse/data/historical" ] && [ -d "data/historical" ]; then
+    echo "🔄 Syncing historical JSON files between WSL native and Windows mount..."
+    cp -u /home/amr/test/crypto-pulse/data/historical/*.json data/historical/ 2>/dev/null || true
+    cp -u data/historical/*.json /home/amr/test/crypto-pulse/data/historical/ 2>/dev/null || true
+fi
+
 
 # ── 3. Start Spark Cluster ──
 echo -e "\n🔥 [3/7] Starting Spark Cluster..."
@@ -157,6 +164,11 @@ cd ..
 echo -e "\n🎉 Pipeline execution complete! Servers are starting up."
 echo -e "✅ Backend running on PID $BACKEND_PID (http://localhost:8000)"
 echo -e "✅ Frontend running on PID $FRONTEND_PID (http://localhost:3000)"
+
+# 🌐 Automatically open default Windows host browser
+echo -e "\n🌐 Opening Next.js Frontend in your default browser..."
+explorer.exe "http://localhost:3000" 2>/dev/null || cmd.exe /c start "http://localhost:3000" 2>/dev/null || true
+
 echo -e "\n🛑 Press Ctrl+C to stop both servers."
 
 wait $BACKEND_PID $FRONTEND_PID
