@@ -37,7 +37,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         const userData = await apiClient<User>("/api/v1/auth/me");
         setUser(userData);
       } catch (error) {
-        console.error("Failed to restore session:", error);
+        console.warn("Session expired or invalid token:", error);
         localStorage.removeItem("access_token");
         localStorage.removeItem("refresh_token");
       } finally {

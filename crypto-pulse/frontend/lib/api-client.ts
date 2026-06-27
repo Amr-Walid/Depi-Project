@@ -33,6 +33,7 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
   // 4. Make the request
   const response = await fetch(url.toString(), {
     ...rest,
+    cache: "no-store",
     headers: {
       ...defaultHeaders,
       ...headers,

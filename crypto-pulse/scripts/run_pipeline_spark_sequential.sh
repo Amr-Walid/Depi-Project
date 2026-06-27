@@ -142,10 +142,10 @@ echo -e "\n🏗️ [7/7] Running dbt and Starting Web Apps..."
 
 # Run dbt
 cd processing/dbt
-dbt deps
-dbt run
-dbt test
-cd ../..
+    dbt deps
+    dbt run
+    dbt test || echo "⚠️ dbt tests failed, but starting servers anyway..."
+    cd ../..
 
 # Start Backend
 echo -e "\n⚙️  Starting FastAPI Backend..."

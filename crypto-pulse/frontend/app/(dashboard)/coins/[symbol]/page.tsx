@@ -49,7 +49,7 @@ export default function CoinDetailPage() {
         <div className="flex items-center gap-4">
           <h1 className="text-3xl font-bold uppercase">{summary.symbol}</h1>
           <Badge variant="outline" className="text-lg py-1">
-            {formatCurrency(summary.price)}
+            {formatCurrency(summary.price ?? 0)}
           </Badge>
           <span className={summary.price_change_pct >= 0 ? "text-green-500 font-bold" : "text-red-500 font-bold"}>
             {summary.price_change_pct >= 0 ? "+" : ""}{summary.price_change_pct.toFixed(2)}%
@@ -60,44 +60,10 @@ export default function CoinDetailPage() {
       <ChartAreaInteractive 
         data={history} 
         symbol={summary.symbol} 
-        price={summary.price}
+        price={summary.price ?? 0}
         change={summary.price_change_pct}
+        showAnalysis={false}
       />
-
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">24h High</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">{formatCurrency(summary.high)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">24h Low</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-red-500">{formatCurrency(summary.low)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">Open Price</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(summary.open)}</div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm font-medium text-muted-foreground">24h Volume</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{summary.volume.toLocaleString()}</div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 }

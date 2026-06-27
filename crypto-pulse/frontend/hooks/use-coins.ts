@@ -20,6 +20,10 @@ export interface CoinSummary {
   tick_count: number;
   // Computed values for convenience
   price?: number;
+  high?: number;
+  low?: number;
+  open?: number;
+  volume?: number;
 }
 
 export interface PricePoint {
@@ -53,7 +57,7 @@ export function useCoins() {
   return { coins, isLoading, error, refresh: fetchCoins };
 }
 
-export function useCoinDetail(symbol: string) {
+export function useCoinDetail(symbol: string, days: number = 30) {
   const [summary, setSummary] = useState<CoinSummary | null>(null);
   const [history, setHistory] = useState<PricePoint[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,12 +70,16 @@ export function useCoinDetail(symbol: string) {
     try {
       const [summaryData, historyData] = await Promise.all([
         apiClient<CoinSummary>(`/api/v1/coins/${symbol}/summary`),
-        apiClient<{ prices: PricePoint[] }>(`/api/v1/coins/${symbol}/prices?days=30`),
+        apiClient<{ prices: PricePoint[] }>(`/api/v1/coins/${symbol}/prices?days=${days}`),
       ]);
       // Add computed price field for backwards compatibility with UI components
       const enhancedSummary = {
         ...summaryData,
         price: summaryData.day_close,
+        high: summaryData.day_high,
+        low: summaryData.day_low,
+        open: summaryData.day_open,
+        volume: summaryData.total_volume,
       };
       setSummary(enhancedSummary);
       const mappedHistory = (historyData.prices || []).map((p: any) => ({
@@ -84,7 +92,7 @@ export function useCoinDetail(symbol: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [symbol]);
+  }, [symbol, days]);
 
   useEffect(() => {
     fetchDetail();
