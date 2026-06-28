@@ -16,7 +16,7 @@ import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, User, Lock, Mail } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
 import { useForm } from "react-hook-form";
@@ -75,33 +75,41 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
   };
 
   return (
-    <div className={cn("flex flex-col gap-6", className)} {...props}>
-      <div className="flex flex-col items-center gap-2 text-center">
-        <h1 className="text-2xl font-bold">Create an account</h1>
-        <p className="text-muted-foreground text-sm text-balance">
-          Enter your information to get started
+    <div className={cn("flex flex-col gap-5", className)} {...props}>
+      <div className="flex flex-col items-center gap-1 text-center">
+        {/* Logo */}
+        <img 
+          src="/logo.png" 
+          alt="CryptoPulse Logo" 
+          className="h-16 w-auto object-contain mb-1 drop-shadow-[0_0_12px_rgba(6,182,212,0.4)]" 
+        />
+        <h1 className="text-xl font-black tracking-wider text-white">Create Account</h1>
+        <p className="text-[10px] text-cyan-400/80 uppercase tracking-wider">
+          Join the Pro Analytics network
         </p>
       </div>
 
-      <div className="grid gap-4">
+      <div className="grid gap-3">
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-3">
             <div className="grid grid-cols-2 gap-3">
               <FormField
                 control={form.control}
                 name="firstName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>First Name</FormLabel>
+                  <FormItem className="space-y-0.5">
                     <FormControl>
-                      <Input
-                        placeholder="John"
-                        disabled={isLoading}
-                        className="h-11 bg-muted/30 border-muted-foreground/20"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-cyan-400/50" />
+                        <Input
+                          placeholder="First Name"
+                          disabled={isLoading}
+                          className="h-10 rounded-full bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 pl-10 pr-3 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-xs transition-all"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[9px]" />
                   </FormItem>
                 )}
               />
@@ -109,17 +117,19 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
                 control={form.control}
                 name="lastName"
                 render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Last Name</FormLabel>
+                  <FormItem className="space-y-0.5">
                     <FormControl>
-                      <Input
-                        placeholder="Doe"
-                        disabled={isLoading}
-                        className="h-11 bg-muted/30 border-muted-foreground/20"
-                        {...field}
-                      />
+                      <div className="relative">
+                        <User className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-cyan-400/50" />
+                        <Input
+                          placeholder="Last Name"
+                          disabled={isLoading}
+                          className="h-10 rounded-full bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 pl-10 pr-3 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-xs transition-all"
+                          {...field}
+                        />
+                      </div>
                     </FormControl>
-                    <FormMessage />
+                    <FormMessage className="text-[9px]" />
                   </FormItem>
                 )}
               />
@@ -129,18 +139,20 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
               control={form.control}
               name="email"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Email</FormLabel>
+                <FormItem className="space-y-0.5">
                   <FormControl>
-                    <Input
-                      type="email"
-                      placeholder="name@example.com"
-                      disabled={isLoading}
-                      className="h-11 bg-muted/30 border-muted-foreground/20"
-                      {...field}
-                    />
+                    <div className="relative">
+                      <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-cyan-400/50" />
+                      <Input
+                        type="email"
+                        placeholder="Email Address"
+                        disabled={isLoading}
+                        className="h-10 rounded-full bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 pl-10 pr-3 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-xs transition-all"
+                        {...field}
+                      />
+                    </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[9px]" />
                 </FormItem>
               )}
             />
@@ -149,33 +161,29 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
               control={form.control}
               name="password"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Password</FormLabel>
+                <FormItem className="space-y-0.5">
                   <FormControl>
                     <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-cyan-400/50" />
                       <Input
                         type={showPassword ? "text" : "password"}
-                        placeholder="Create a password"
+                        placeholder="Password"
                         disabled={isLoading}
-                        className="h-11 bg-muted/30 border-muted-foreground/20 pr-10"
+                        className="h-10 rounded-full bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 pl-10 pr-10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-xs transition-all"
                         onBeforeInput={blockDisallowedPasswordChars}
                         {...field}
                       />
                       <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                       >
-                        {showPassword ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
+                        {showPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                       </button>
                     </div>
                   </FormControl>
                   <PasswordRequirements password={field.value} />
-                  <FormMessage />
+                  <FormMessage className="text-[9px]" />
                 </FormItem>
               )}
             />
@@ -184,34 +192,28 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
               control={form.control}
               name="confirmPassword"
               render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Confirm Password</FormLabel>
+                <FormItem className="space-y-0.5">
                   <FormControl>
                     <div className="relative">
+                      <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 size-3.5 text-cyan-400/50" />
                       <Input
                         type={showConfirmPassword ? "text" : "password"}
-                        placeholder="Confirm your password"
+                        placeholder="Confirm Password"
                         disabled={isLoading}
-                        className="h-11 bg-muted/30 border-muted-foreground/20 pr-10"
+                        className="h-10 rounded-full bg-black/30 border border-white/10 text-white placeholder:text-zinc-500 pl-10 pr-10 focus:border-cyan-500/50 focus:ring-1 focus:ring-cyan-500/50 text-xs transition-all"
                         onBeforeInput={blockDisallowedPasswordChars}
                         {...field}
                       />
                       <button
                         type="button"
-                        onClick={() =>
-                          setShowConfirmPassword(!showConfirmPassword)
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        className="absolute right-3.5 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300 transition-colors"
                       >
-                        {showConfirmPassword ? (
-                          <EyeOff className="size-4" />
-                        ) : (
-                          <Eye className="size-4" />
-                        )}
+                        {showConfirmPassword ? <EyeOff className="size-3.5" /> : <Eye className="size-3.5" />}
                       </button>
                     </div>
                   </FormControl>
-                  <FormMessage />
+                  <FormMessage className="text-[9px]" />
                 </FormItem>
               )}
             />
@@ -220,28 +222,22 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
               control={form.control}
               name="terms"
               render={({ field }) => (
-                <FormItem className="flex items-start gap-2 space-y-0">
+                <FormItem className="flex items-start gap-2 space-y-0 pt-1">
                   <FormControl>
                     <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                       disabled={isLoading}
-                      className="mt-0.5"
+                      className="mt-0.5 border-white/20 data-[state=checked]:bg-cyan-500 data-[state=checked]:text-black"
                     />
                   </FormControl>
-                  <FormLabel className="text-sm font-normal text-muted-foreground cursor-pointer">
+                  <FormLabel className="text-[10px] font-normal text-zinc-400 cursor-pointer leading-tight">
                     I agree to the{" "}
-                    <Link
-                      href="#"
-                      className="text-violet-500 hover:text-violet-600"
-                    >
-                      Terms of Service
+                    <Link href="#" className="text-cyan-400 hover:underline">
+                      Terms
                     </Link>{" "}
                     and{" "}
-                    <Link
-                      href="#"
-                      className="text-violet-500 hover:text-violet-600"
-                    >
+                    <Link href="#" className="text-cyan-400 hover:underline">
                       Privacy Policy
                     </Link>
                   </FormLabel>
@@ -251,44 +247,19 @@ export function SignUp2({ className, ...props }: React.ComponentProps<"div">) {
 
             <Button
               type="submit"
-              className="h-11 w-full bg-linear-to-r from-violet-600 to-fuchsia-600 font-medium text-white transition-all hover:from-violet-700 hover:to-fuchsia-700 hover:shadow-lg hover:shadow-violet-500/25"
+              className="h-10 w-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 font-bold text-black rounded-full transition-all hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.45)] uppercase tracking-widest text-[11px] mt-2"
               disabled={isLoading}
             >
-              {isLoading ? (
-                <span className="flex items-center gap-2">
-                  <svg className="size-4 animate-spin" viewBox="0 0 24 24">
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
-                      stroke="currentColor"
-                      strokeWidth="4"
-                      fill="none"
-                    />
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    />
-                  </svg>
-                  Creating account...
-                </span>
-              ) : (
-                "Create account"
-              )}
+              {isLoading ? "Creating..." : "Sign Up"}
             </Button>
           </form>
         </Form>
       </div>
 
-      <div className="text-center text-sm">
-        <span className="text-muted-foreground">Already have an account? </span>
-        <Link
-          href="/sign-in-2"
-          className="text-violet-500 hover:text-violet-600 font-medium transition-colors"
-        >
-          Sign in
+      <div className="text-center text-[11px]">
+        <span className="text-zinc-400">Already have an account? </span>
+        <Link href="/sign-in" className="text-cyan-400 hover:underline font-semibold transition-colors">
+          Sign In
         </Link>
       </div>
     </div>
