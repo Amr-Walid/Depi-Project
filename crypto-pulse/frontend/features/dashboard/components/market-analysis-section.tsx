@@ -444,18 +444,18 @@ export function MarketAnalysisSection({
           {/* 14D Volume */}
           <Card className="border border-border bg-card h-full flex flex-col">
             <CardHeader className="p-3 pb-1">
-              <CardTitle className="text-sm flex items-center gap-1.5">
+              <CardTitle className="text-sm flex items-center gap-1.5 font-bold">
                 <Layers className="size-3.5 text-blue-500" />
                 {days}D Volume comparison
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2 flex-1 flex flex-col justify-between">
-              {loading ? <div className="h-[140px] flex items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div> : (
-                <ResponsiveContainer width="100%" height={140}>
+              {loading ? <div className="h-[180px] flex items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div> : (
+                <ResponsiveContainer width="100%" height={180}>
                   <BarChart data={volData} barSize={8}>
                     <CartesianGrid vertical={false} stroke="rgba(120,120,120,0.08)" />
-                    <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "#888", fontSize: 8 }} minTickGap={25} />
-                    <YAxis tickLine={false} axisLine={false} tick={{ fill: "#888", fontSize: 8 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} width={30} />
+                    <XAxis dataKey="date" tickLine={false} axisLine={false} tick={{ fill: "#888", fontSize: 9.5 }} minTickGap={25} />
+                    <YAxis tickLine={false} axisLine={false} tick={{ fill: "#888", fontSize: 9.5 }} tickFormatter={(v) => `${(v / 1000).toFixed(0)}K`} width={30} />
                     <Tooltip content={<VolumeTooltip />} />
                     {selectedCoins.slice(0, 4).map((coin, idx) => (
                       <Bar
@@ -470,7 +470,7 @@ export function MarketAnalysisSection({
                 </ResponsiveContainer>
               )}
               {!loading && (
-                <div className="pt-1.5 border-t border-border space-y-1">
+                <div className="pt-2 border-t border-border space-y-1.5">
                   {selectedCoins.slice(0, 3).map((coin) => {
                     const pts = allPrices[coin] || [];
                     const avg = pts.length > 0 ? pts.reduce((s, p) => s + p.volume, 0) / pts.length : 0;
@@ -478,8 +478,8 @@ export function MarketAnalysisSection({
                     const pct = max > 0 ? (avg / max) * 100 : 0;
                     return (
                       <div key={coin} className="space-y-0.5">
-                        <div className="flex justify-between text-[9px]">
-                          <span className="font-semibold" style={{ color: coinColors[coin] }}>{coin}</span>
+                        <div className="flex justify-between text-[11px] font-semibold">
+                          <span style={{ color: coinColors[coin] }}>{coin}</span>
                           <span className="font-mono text-muted-foreground">{avg >= 1000 ? `${(avg / 1000).toFixed(1)}K` : avg.toFixed(0)}</span>
                         </div>
                         <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
@@ -496,17 +496,17 @@ export function MarketAnalysisSection({
           {/* Asset Strength Radar */}
           <Card className="border border-border bg-card h-full flex flex-col">
             <CardHeader className="p-3 pb-1">
-              <CardTitle className="text-sm flex items-center gap-1.5">
+              <CardTitle className="text-sm flex items-center gap-1.5 font-bold">
                 <Radio className="size-3.5 text-rose-500" />
                 Asset Strength Radar
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 space-y-2 flex-1 flex flex-col justify-between">
-              {loading ? <div className="h-[140px] flex items-center justify-center"><div className="h-5 w-5 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div> : (
-                <ResponsiveContainer width="100%" height={140}>
-                  <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
+              {loading ? <div className="h-[180px] flex items-center justify-center"><div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent" /></div> : (
+                <ResponsiveContainer width="100%" height={180}>
+                  <RadarChart cx="50%" cy="50%" outerRadius="72%" data={radarData}>
                     <PolarGrid stroke="rgba(120,120,120,0.15)" />
-                    <PolarAngleAxis dataKey="metric" tick={{ fill: "#888", fontSize: 8 }} />
+                    <PolarAngleAxis dataKey="metric" tick={{ fill: "#888", fontSize: 10, fontWeight: "600" }} />
                     <Tooltip content={<RadarTooltip />} />
                     {selectedCoins.slice(0, 3).map((coin) => (
                       <Radar
@@ -516,25 +516,25 @@ export function MarketAnalysisSection({
                         stroke={coinColors[coin]}
                         fill={coinColors[coin]}
                         fillOpacity={0.15}
-                        strokeWidth={1.5}
+                        strokeWidth={2}
                       />
                     ))}
-                    <Legend iconType="circle" wrapperStyle={{ fontSize: 9 }} />
+                    <Legend iconType="circle" wrapperStyle={{ fontSize: 11, fontWeight: "600" }} />
                   </RadarChart>
                 </ResponsiveContainer>
               )}
               {!loading && radarData.length > 0 && (
-                <div className="pt-1.5 border-t border-border">
-                  <div className="grid grid-cols-4 gap-x-1 gap-y-0.5 text-[8px]">
-                    <span className="text-muted-foreground font-semibold">Metric</span>
+                <div className="pt-2 border-t border-border">
+                  <div className="grid grid-cols-4 gap-x-1 gap-y-1 text-[11px] font-medium">
+                    <span className="text-muted-foreground font-bold">Metric</span>
                     {selectedCoins.slice(0, 3).map((c) => (
-                      <span key={c} className="font-bold text-center" style={{ color: coinColors[c] }}>{c}</span>
+                      <span key={c} className="font-black text-center" style={{ color: coinColors[c] }}>{c}</span>
                     ))}
                     {radarData.slice(0, 4).map((row) => (
                       <React.Fragment key={row.metric}>
-                        <span className="text-muted-foreground truncate">{row.metric}</span>
+                        <span className="text-muted-foreground truncate font-semibold">{row.metric}</span>
                         {selectedCoins.slice(0, 3).map((c) => (
-                          <span key={c} className="font-mono text-center text-foreground">{row[c] ?? "-"}</span>
+                          <span key={c} className="font-mono text-center text-foreground font-semibold">{row[c] ?? "-"}</span>
                         ))}
                       </React.Fragment>
                     ))}
@@ -547,7 +547,7 @@ export function MarketAnalysisSection({
           {/* BTC Correlation */}
           <Card className="border border-border bg-card h-full flex flex-col">
             <CardHeader className="p-3 pb-1">
-              <CardTitle className="text-sm flex items-center gap-1.5">
+              <CardTitle className="text-sm flex items-center gap-1.5 font-bold">
                 <Activity className="size-3.5 text-cyan-500" />
                 {corrBase} Correlation ({days}D)
               </CardTitle>
@@ -555,29 +555,31 @@ export function MarketAnalysisSection({
             <CardContent className="p-3 pt-0 space-y-2 flex-1 flex flex-col justify-between">
               {loading ? [1,2,3,4].map((i) => <Skeleton key={i} className="h-6 w-full" />) : (
                 <>
-                  {correlationData.filter(({ coin }) => selectedCoins.includes(coin)).map(({ coin, correlation }) => {
-                    const pct = Math.abs(correlation) * 100;
-                    const barColor = correlation > 0.7 ? "#22c55e" : correlation > 0.4 ? "#eab308" : "#ef4444";
-                    return (
-                      <div key={coin} className="space-y-0.5">
-                        <div className="flex items-center justify-between text-[10px]">
-                          <span className="font-semibold text-foreground flex items-center gap-1">
-                            <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: coinColors[coin] || "#888" }} />
-                            {coin}/{corrBase}
-                          </span>
-                          <span className={`font-mono font-bold ${correlation > 0.6 ? "text-green-500" : correlation < 0.2 ? "text-red-500" : "text-amber-500"}`}>
-                            {correlation > 0 ? "+" : ""}{correlation.toFixed(3)}
-                          </span>
+                  <div className="space-y-2 flex-grow flex flex-col justify-center">
+                    {correlationData.filter(({ coin }) => selectedCoins.includes(coin)).map(({ coin, correlation }) => {
+                      const pct = Math.abs(correlation) * 100;
+                      const barColor = correlation > 0.7 ? "#22c55e" : correlation > 0.4 ? "#eab308" : "#ef4444";
+                      return (
+                        <div key={coin} className="space-y-1">
+                          <div className="flex items-center justify-between text-xs font-semibold">
+                            <span className="text-foreground flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: coinColors[coin] || "#888" }} />
+                              {coin}/{corrBase}
+                            </span>
+                            <span className={`font-mono font-bold ${correlation > 0.6 ? "text-green-500" : correlation < 0.2 ? "text-red-500" : "text-amber-500"}`}>
+                              {correlation > 0 ? "+" : ""}{correlation.toFixed(3)}
+                            </span>
+                          </div>
+                          <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
+                            <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: barColor }} />
+                          </div>
                         </div>
-                        <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                          <div className="h-full rounded-full transition-all duration-700" style={{ width: `${pct}%`, backgroundColor: barColor }} />
-                        </div>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                   {correlationData.length > 0 && (
                     <div className="pt-2 border-t border-border">
-                      <p className="text-[9px] text-muted-foreground">
+                      <p className="text-[11px] text-muted-foreground font-medium">
                         Avg: <span className="font-mono font-bold text-foreground">
                           {(correlationData.reduce((s, d) => s + d.correlation, 0) / correlationData.length).toFixed(3)}
                         </span>
