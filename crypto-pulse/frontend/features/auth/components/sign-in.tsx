@@ -146,11 +146,7 @@ export default function SignIn() {
                   )}
                 />
 
-                <div className="flex items-center justify-end text-[10px] pr-2">
-                  <Link href="/forgot-password" className="text-zinc-400 hover:text-cyan-400 transition-colors font-medium">
-                    Forgot?
-                  </Link>
-                </div>
+
 
                 <Button
                   className="h-11 w-full bg-gradient-to-r from-cyan-400 via-cyan-500 to-indigo-500 font-bold text-black rounded-full transition-all hover:brightness-110 active:scale-95 shadow-[0_0_20px_rgba(6,182,212,0.45)] uppercase tracking-widest text-[11px]"
