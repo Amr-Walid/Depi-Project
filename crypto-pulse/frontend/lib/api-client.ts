@@ -55,5 +55,11 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
     throw new Error(errorData.detail || "An error occurred while fetching data");
   }
 
-  return response.json() as Promise<T>;
+  // Handle 204 No Content or empty responses safely
+  if (response.status === 204) {
+    return null as any;
+  }
+
+  const text = await response.text();
+  return text ? JSON.parse(text) : (null as any);
 }
