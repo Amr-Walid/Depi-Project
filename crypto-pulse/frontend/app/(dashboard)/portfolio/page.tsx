@@ -250,7 +250,7 @@ export default function PortfolioPage() {
                   {portfolioStats.totalProfit >= 0 ? "+" : ""}${portfolioStats.totalProfit.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
                 </p>
                 <span className={`text-xs font-bold ${portfolioStats.totalProfit >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-                  {portfolioStats.totalProfit >= 0 ? "+" : ""}{portfolioStats.totalProfitPct?.toFixed(2) || portfolioStats.profitPct.toFixed(2)}%
+                  {portfolioStats.totalProfit >= 0 ? "+" : ""}{portfolioStats.profitPct.toFixed(2)}%
                 </span>
               </div>
             </div>

@@ -10,7 +10,28 @@ import { Progress } from "@/components/ui/progress";
 import { cn } from "@/lib/utils";
 import type { LanguageModelUsage } from "ai";
 import { type ComponentProps, createContext, useContext } from "react";
-import { getUsage } from "tokenlens";
+interface MockUsageArgs {
+  modelId: string;
+  usage: {
+    input?: number;
+    output?: number;
+    reasoningTokens?: number;
+    cacheReads?: number;
+  };
+}
+
+const getUsage = ({ modelId, usage }: MockUsageArgs) => {
+  const input = usage.input ?? 0;
+  const output = usage.output ?? 0;
+  const reasoning = usage.reasoningTokens ?? 0;
+  const cache = usage.cacheReads ?? 0;
+  const totalUSD = ((input + cache) / 1000000) * 15 + ((output + reasoning) / 1000000) * 60;
+  return {
+    costUSD: {
+      totalUSD,
+    },
+  };
+};
 
 const PERCENT_MAX = 100;
 const ICON_RADIUS = 10;
