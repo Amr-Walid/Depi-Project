@@ -8,13 +8,11 @@ import {
   IconWallet,
   IconBell,
 } from "@tabler/icons-react";
-import { Command } from "lucide-react";
-
 export const sidebarData: SidebarData = {
   teams: [
     {
       name: "CryptoPulse",
-      logo: Command,
+      logo: "/logo.png",
       plan: "Pro Analytics",
     },
   ],
