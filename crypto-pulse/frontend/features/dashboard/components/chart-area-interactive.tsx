@@ -299,7 +299,7 @@ export function ChartAreaInteractive({
 
   return (
     <div className="space-y-6">
-      <div className="grid gap-6 lg:grid-cols-4 items-start">
+      <div className="grid gap-6 lg:grid-cols-4 items-stretch">
         {/* Left Column (3 Columns) containing Main Chart and Market Analysis Comparison */}
         <div className="lg:col-span-3 space-y-6 self-start">
         {/* Main Chart Section */}
@@ -512,7 +512,7 @@ export function ChartAreaInteractive({
     </div>
 
       {/* Advanced Financial & Market Sentiment Panel (1 Column) */}
-      <div className="space-y-6 lg:col-span-1 self-start">
+      <div className="lg:col-span-1 flex flex-col h-full space-y-6">
         {/* Coin Statistics Card */}
         <Card className="border border-border bg-card text-card-foreground">
           <CardHeader className="pb-3">
@@ -674,7 +674,7 @@ export function ChartAreaInteractive({
         </Card>
 
         {/* Market Sentiment Gauge Card */}
-        <Card className="border border-border bg-card text-card-foreground">
+        <Card className="border border-border bg-card text-card-foreground flex-grow flex flex-col justify-between">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-semibold uppercase text-muted-foreground flex items-center gap-1.5">
               <Compass className="size-4 text-emerald-500" />
@@ -684,11 +684,11 @@ export function ChartAreaInteractive({
               Market fear & greed index based on news
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col items-center justify-center p-6 pt-2">
+          <CardContent className="flex flex-col items-center justify-center p-6 pt-2 flex-grow min-h-[220px]">
             {loadingSentiment ? (
-              <Skeleton className="h-24 w-24 rounded-full" />
+              <Skeleton className="h-32 w-32 rounded-full animate-pulse" />
             ) : (
-              <div className="relative w-full max-w-[160px] flex flex-col items-center">
+              <div className="relative w-full max-w-[220px] flex flex-col items-center my-auto">
                 <svg viewBox="0 0 100 55" className="w-full">
                   <defs>
                     <linearGradient id="gauge-grad" x1="0" y1="0" x2="1" y2="0">
@@ -719,10 +719,10 @@ export function ChartAreaInteractive({
                 </svg>
                 {/* Score display in center */}
                 <div className="absolute bottom-1 text-center">
-                  <span className="text-2xl font-black font-mono tracking-tight text-foreground block">
+                  <span className="text-3xl font-black font-mono tracking-tight text-foreground block">
                     {Math.round(((sentiment?.overall_score ?? 0) + 1) * 50)}
                   </span>
-                  <span className={`text-[10px] font-bold uppercase ${
+                  <span className={`text-xs font-black uppercase tracking-wider ${
                     (sentiment?.overall_score ?? 0) > 0.2
                       ? "text-green-500"
                       : (sentiment?.overall_score ?? 0) < -0.2
