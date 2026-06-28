@@ -138,6 +138,49 @@ const CustomTooltip = ({ active, payload, label }: any) => {
   return null;
 };
 
+const Candlestick = (props: any) => {
+  const { x, width, payload, yAxis } = props;
+  if (!payload || !yAxis || !yAxis.scale) return null;
+
+  const yScale = yAxis.scale;
+  const open = payload.open ?? payload.close ?? 0;
+  const close = payload.close ?? 0;
+  const high = payload.high ?? close;
+  const low = payload.low ?? close;
+
+  const yOpen = yScale(open);
+  const yClose = yScale(close);
+  const yHigh = yScale(high);
+  const yLow = yScale(low);
+
+  const isUp = close >= open;
+  const color = isUp ? "#22c55e" : "#ef4444";
+
+  const w = typeof width === "number" ? width : 8;
+  const startX = typeof x === "number" ? x : 0;
+  const cx = startX + w / 2;
+
+  return (
+    <g>
+      <line
+        x1={cx}
+        y1={yHigh}
+        x2={cx}
+        y2={yLow}
+        stroke={color}
+        strokeWidth={1.5}
+      />
+      <rect
+        x={startX}
+        y={Math.min(yOpen, yClose)}
+        width={w}
+        height={Math.max(Math.abs(yOpen - yClose), 1)}
+        fill={color}
+      />
+    </g>
+  );
+};
+
 export function ChartAreaInteractive({
   data = [],
   coins = [],
@@ -187,6 +230,19 @@ export function ChartAreaInteractive({
     
     return prices;
   }, [data]);
+
+  const yDomain = useMemo(() => {
+    if (!processedData || processedData.length === 0) return ["auto", "auto"];
+    const lows = processedData.map((d) => d.low).filter((val) => typeof val === "number" && !isNaN(val));
+    const highs = processedData.map((d) => d.high).filter((val) => typeof val === "number" && !isNaN(val));
+    
+    if (lows.length === 0 || highs.length === 0) return ["auto", "auto"];
+    
+    const min = Math.min(...lows);
+    const max = Math.max(...highs);
+    const padding = (max - min) * 0.05 || 10;
+    return [Math.max(0, min - padding), max + padding];
+  }, [processedData]);
 
   const technicalVerdict = useMemo(() => {
     if (processedData.length < 2) return { text: "No Data", color: "text-muted-foreground border-border bg-muted/20" };
@@ -407,7 +463,8 @@ export function ChartAreaInteractive({
                       }}
                     />
                     <YAxis
-                      domain={["auto", "auto"]}
+                      domain={yDomain}
+                      width={80}
                       tickLine={false}
                       axisLine={false}
                       tickMargin={8}
@@ -426,24 +483,12 @@ export function ChartAreaInteractive({
                         fill="url(#colorPrice)"
                       />
                     ) : (
-                      <>
-                        <Bar dataKey="wick" barSize={1.5} tooltipType="none">
-                          {processedData.map((entry, index) => (
-                            <Cell
-                              key={`wick-cell-${index}`}
-                              fill={entry.close >= entry.open ? "#22c55e" : "#ef4444"}
-                            />
-                          ))}
-                        </Bar>
-                        <Bar dataKey="body" barSize={8} tooltipType="none">
-                          {processedData.map((entry, index) => (
-                            <Cell
-                              key={`body-cell-${index}`}
-                              fill={entry.close >= entry.open ? "#22c55e" : "#ef4444"}
-                            />
-                          ))}
-                        </Bar>
-                      </>
+                      <Bar 
+                        dataKey="close" 
+                        shape={<Candlestick />} 
+                        barSize={8} 
+                        tooltipType="none" 
+                      />
                     )}
 
                     <Line
