@@ -42,10 +42,11 @@ export async function apiClient<T>(endpoint: string, options: RequestOptions = {
 
   // 5. Handle unauthorized (token expired)
   if (response.status === 401) {
-    // In a real app, we would handle token refresh here.
-    // For now, we'll just clear the token.
+    // Clear access and refresh tokens, then redirect to login page
     if (typeof window !== "undefined") {
       localStorage.removeItem("access_token");
+      localStorage.removeItem("refresh_token");
+      window.location.href = "/sign-in";
     }
   }
 
