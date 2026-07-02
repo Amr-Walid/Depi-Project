@@ -96,9 +96,119 @@ All 4 pipelines follow the same **Medallion Architecture** flow:
 | API Endpoints | 10+ |
 | Notebooks | 4 |
 
+### Medallion Dataflow
+
+```mermaid
+graph TD
+    %% Sources
+    subgraph Sources [Data Sources]
+        BWS[Binance WebSocket]
+        BAPI[Binance REST API]
+        NAPI[NewsAPI]
+        RSS[RSS Feeds]
+    end
+
+    %% Streaming & Batch Ingestion
+    subgraph Ingestion [Ingestion Layer]
+        K1[Kafka: crypto.realtime.prices]
+        K2[Kafka: crypto.news]
+        K3[Kafka: crypto.social]
+        F1[historical_fetcher.py]
+    end
+
+    %% Bronze Storage
+    subgraph Bronze [Bronze Layer - Raw Delta]
+        BC1[bronze_consumer.py]
+        BC2[bronze_news_consumer.py]
+        BC3[bronze_social_consumer.py]
+        HL[historical_loader.py]
+    end
+
+    %% Silver Processing
+    subgraph Silver [Silver Layer - Clean Delta]
+        SP1[silver_prices_processor.py]
+        SP2[silver_news_processor.py]
+        SP3[silver_social_processor.py]
+        SP4[silver_historical_processor.py]
+    end
+
+    %% FinBERT Sentiment Analysis
+    subgraph ML [Machine Learning]
+        FB[sentiment_processor.py <br> FinBERT UDF]
+    end
+
+    %% PostgreSQL DB Sync
+    subgraph Postgres [Relational Storage - Supabase]
+        PG[PostgreSQL Database]
+    end
+
+    %% Analytics and Modeling
+    subgraph Gold [Gold Layer - dbt Models]
+        DBT[dbt staging & gold tables]
+    end
+
+    %% Endpoints & UI
+    subgraph Serving [Serving Layer]
+        API[FastAPI Backend REST API]
+        UI[Next.js Web Dashboard]
+    end
+
+    BWS --> K1
+    NAPI --> K2
+    RSS --> K3
+    BAPI --> F1
+
+    K1 --> BC1
+    K2 --> BC2
+    K3 --> BC3
+    F1 --> HL
+
+    BC1 --> SP1
+    BC2 --> SP2
+    BC3 --> SP3
+    HL --> SP4
+
+    SP2 --> FB
+    SP3 --> FB
+
+    SP1 --> PG
+    SP4 --> PG
+    FB --> PG
+
+    PG --> DBT
+    DBT --> PG
+
+    PG --> API
+    API --> UI
+```
+
 ---
 
-## 2. Repository Structure
+## 2. Repository Structure & Subdirectory Index
+
+This project is modularly structured, separating the data ingestion agents, processing routines, ML models, orchestration flows, API backends, and dashboard frontends.
+
+### 📁 Subdirectory Documentation Index
+Detailed `README.md` files have been added to all 14 main directories to explain their configurations, operational guidelines, and file mappings:
+
+| Directory Link | Documentation Scope | Key Contents |
+| :--- | :--- | :--- |
+| 🛠️ [**`.github/`**](.github/README.md) | CI/CD pipelines | GitHub Actions workflows for backend pytest & frontend Next.js builds. |
+| 🌬️ [**`airflow/`**](airflow/README.md) | Airflow docker environment | Custom container config with static Docker CLI and dbt package libraries. |
+| 🚀 [**`backend/`**](backend/README.md) | REST API backend | FastAPI server setup, JWT rotation schemas, and SQLAlchemy model maps. |
+| 🕒 [**`dags/`**](dags/README.md) | Workflow orchestration | Scheduled Airflow DAGs (`daily_historical` batch and `5min_prices` sync). |
+| 📁 [**`data/`**](data/README.md) | Raw database assets | Formats & fields specifications of local daily cryptocurrency OHLCV JSON dumps. |
+| 📖 [**`docs/`**](docs/README.md) | Guides & diagrams | Systems designs, WSL2 configurations, memory optimizations, and audits. |
+| 💻 [**`frontend/`**](frontend/README.md) | Web dashboard app | Next.js App Router UI, Zustand global states, and Recharts charts widgets. |
+| 📥 [**`ingestion/`**](ingestion/README.md) | Ingestion agents | Binance WS stream, CoinGecko, NewsAPI and RSS python producers. |
+| 🧠 [**`ml/`**](ml/README.md) | Sentiment classification | FinBERT BERT-based NLP sentiment analysis and PySpark execution details. |
+| 📝 [**`notebooks/`**](notebooks/README.md) | Prototyping sandboxes | Jupyter notebooks covering historical EDA, local ML checks, and PoC Dash. |
+| 🔧 [**`orchestration/`**](orchestration/README.md) | Scheduling volume mount | Orchestration placeholder directory for future volume mounts & integrations. |
+| ⚙️ [**`processing/`**](processing/README.md) | Data processing & dbt | Medallion PySpark streaming processors & dbt analytical models. |
+| 📜 [**`scripts/`**](scripts/README.md) | Automations & tools | Shell scripts for sequential cluster runs, database seeders, and inspectors. |
+| ⚡ [**`spark-apps/`**](spark-apps/README.md) | Spark Cluster config | Custom Spark image pre-downloaded with Netty, Kafka, Delta & PG JDBC JARs. |
+
+### 📂 Directory Structure Tree
 
 ```
 crypto-pulse/

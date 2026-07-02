@@ -1,182 +1,235 @@
-# 🚀 Crypto-Pulse Backend & API Guide
+<div align="center">
 
-Welcome to the backend component of the **Crypto-Pulse** project. This directory contains the FastAPI application responsible for serving data to users, handling authentication, and managing user-specific features like watchlists, portfolios, and price alerts.
+# 🚀 Crypto-Pulse Backend & REST API
 
-**Database:** Supabase Cloud PostgreSQL (`aws-0-eu-west-1.pooler.supabase.com`)
+### The High-Performance Core Built on FastAPI & Supabase PostgreSQL
 
----
+[![FastAPI](https://img.shields.io/badge/FastAPI-005571?style=for-the-badge&logo=fastapi)](https://fastapi.tiangolo.com)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-4169E1?style=for-the-badge&logo=postgresql)](https://www.postgresql.org)
+[![JWT](https://img.shields.io/badge/JWT-black?style=for-the-badge&logo=json-web-tokens)](https://jwt.io)
+[![Pytest](https://img.shields.io/badge/Pytest-0A9EDC?style=for-the-badge&logo=pytest)](https://docs.pytest.org)
 
-## ✅ Current Status (May 2026)
-
-All 3 milestones are **complete**. The backend is fully operational and serving **real data** from the Gold layer (dbt) on Supabase Cloud PostgreSQL.
-
-- ✅ JWT Authentication with refresh token rotation
-- ✅ All data endpoints serve real OHLCV data from `gold.daily_market_summary`
-- ✅ Market sentiment endpoint with Gold → Silver → Neutral fallback
-- ✅ Alert Worker background service (60s polling interval)
-- ✅ 50 automated tests passing
+</div>
 
 ---
 
-## 🔐 Authentication (`/api/v1/auth`)
-
-JWT Authentication with **Refresh Token Rotation**:
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/auth/signup` | POST | Register a new user. Returns access + refresh tokens. |
-| `/api/v1/auth/login` | POST | Authenticate with email + password. Returns tokens. |
-| `/api/v1/auth/refresh` | POST | Exchange a valid refresh token for a new token pair. Old token is revoked. |
-| `/api/v1/auth/me` | GET | Returns the profile of the currently authenticated user. |
-
----
-
-## 📊 Data & Market APIs (`/api/v1`)
-
-All data endpoints read from the **Gold layer** (dbt materialized tables) in Supabase Cloud PostgreSQL.
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/coins` | GET | List all 20 supported coins with name and active status. |
-| `/api/v1/coins/{symbol}/summary` | GET | Daily OHLCV summary for a specific coin from `gold.daily_market_summary`. |
-| `/api/v1/coins/{symbol}/prices` | GET | Historical price data (1–365 days) from Gold layer. |
-| `/api/v1/market/overview` | GET | Market-wide stats: total volume, BTC dominance, top gainers/losers. |
-| `/api/v1/market/sentiment` | GET | Market sentiment from FinBERT analysis. Falls back: Gold → Silver → Neutral. |
-
-### User Features (Protected)
-
-| Endpoint | Method | Description |
-|----------|--------|-------------|
-| `/api/v1/watchlists` | CRUD | Manage user coin watchlists. |
-| `/api/v1/alerts` | CRUD | Price alert management (above/below threshold). |
-| `/api/v1/portfolios` | CRUD | Portfolio position tracking (symbol, quantity, buy price). |
+## 📋 Table of Contents
+1. [Overview](#-overview)
+2. [Current Status](#-current-status-june-2026)
+3. [Architecture & Folder Structure](#-architecture--folder-structure)
+4. [Database & Schema Design](#-database--schema-design)
+5. [API Endpoint Documentation](#-api-endpoint-documentation)
+6. [Security & JWT Rotation Flow](#-security--jwt-rotation-flow)
+7. [Alert Worker Background Daemon](#-alert-worker-background-daemon)
+8. [Installation & Local Setup](#-installation--local-setup)
+9. [Automated Test Suite](#-automated-test-suite)
 
 ---
 
-## 🏗️ Architecture
+## 🔍 Overview
+
+The backend of **Crypto-Pulse** is a production-grade REST API built using **FastAPI** and **SQLAlchemy (ORM)**. It serves live and historical cryptocurrency data to the user, runs background workers to track real-time price alerts, manages portfolio allocations, watchlists, and maintains strict token-based user authentication.
+
+---
+
+## ⚡ Current Status (June 2026)
+
+All backend features are fully implemented, verified, and integrated:
+- **JWT Authentication**: Full user signup/login flows with secure refresh token rotation.
+- **Production Data Delivery**: Endpoints feed live and historical OHLCV data directly from dbt Gold layers on Supabase Cloud PostgreSQL.
+- **Sentiment Analytics**: Dedicated endpoint serves sentiment reports backed by FinBERT results with automatic fallbacks.
+- **Robust Alert Daemon**: The alert worker service monitors prices and alerts user portfolios.
+- **High Test Coverage**: 50 automated unit and integration tests passing.
+
+---
+
+## 🏗️ Architecture & Folder Structure
 
 ```
 backend/
 ├── app/
-│   ├── main.py              ← FastAPI entry point, CORS, router registration
-│   ├── config.py            ← Centralized config (reads from .env, URL-encodes Supabase password)
-│   ├── database.py          ← SQLAlchemy engine + session (connected to Supabase Cloud)
-│   ├── routers/             ← API Endpoints
-│   │   ├── auth.py          ← JWT auth endpoints
-│   │   ├── coins.py         ← Coin data + market overview + sentiment
-│   │   ├── watchlists.py    ← User watchlists CRUD
-│   │   ├── alerts.py        ← Price alerts CRUD
-│   │   └── portfolios.py    ← Portfolio positions CRUD
-│   ├── models/              ← SQLAlchemy ORM models
-│   │   ├── schema.sql       ← Full DB schema (auto-creates tables on startup)
+│   ├── main.py              # FastAPI application entry point, CORS middleware, and routers
+│   ├── config.py            # Central config & validation (via Pydantic BaseSettings)
+│   ├── database.py          # SQLAlchemy connection engine & DB session factory
+│   ├── routers/             # API Endpoints (segmented by resource area)
+│   │   ├── auth.py          # Signup, Login, Profile, JWT Refresh
+│   │   ├── coins.py         # Coins list, Historical Prices, Market Overview, Sentiment
+│   │   ├── watchlists.py    # CRUD for user-specific Watchlists
+│   │   ├── alerts.py        # CRUD for Price Alerts
+│   │   └── portfolios.py    # CRUD for Portfolio Holdings
+│   ├── models/              # SQLAlchemy Database Models
+│   │   ├── schema.sql       # SQL database initialization schema
 │   │   ├── user.py, alert.py, portfolio.py, watchlist.py, refresh_token.py
-│   ├── schemas/             ← Pydantic v2 request/response schemas
-│   └── services/            ← Business logic
-│       ├── auth_service.py  ← Password hashing + JWT logic
-│       ├── data_service.py  ← Reads from Gold/Silver layer in PostgreSQL (NO mock data)
-│       └── alert_worker.py  ← Background alert polling service
-├── tests/                   ← pytest test suite (50 tests)
-├── Dockerfile               ← Docker image for FastAPI
-└── requirements.txt         ← Python dependencies
+│   ├── schemas/             # Pydantic (v2) Request/Response Schemas
+│   └── services/            # Core business logic handlers
+│       ├── auth_service.py  # Password hashing (bcrypt) & JWT operations
+│       ├── data_service.py  # Query builder interfacing Postgres views/tables
+│       └── alert_worker.py  # Background price polling and alert trigger daemon
+├── tests/                   # Automated pytest suite (50 test scenarios)
+├── Dockerfile               # Production multi-stage build manifest
+└── requirements.txt         # Package dependencies
 ```
 
 ---
 
-## 🔔 Alert Worker
+## 🗄️ Database & Schema Design
 
-A background service that monitors price alerts:
+The backend communicates with a remote **Supabase Cloud PostgreSQL** instance (`aws-0-eu-west-1.pooler.supabase.com`). 
 
-- Runs every **60 seconds**
-- Reads latest prices from `gold.daily_market_summary`
-- Compares with active alerts in the `alerts` table
-- Supports `above` and `below` conditions
-- Deactivates triggered alerts
-- Handles missing tables and DB errors gracefully
+```
+                                  DATABASE LAYOUT
+ ┌──────────────────────────┐    ┌──────────────────────────┐    ┌──────────────────────────┐
+ │      public Schema       │    │      silver Schema       │    │       gold Schema        │
+ ├──────────────────────────┤    ├──────────────────────────┤    ├──────────────────────────┤
+ │ • users                  │    │ • news                   │    │ • daily_market_summary   │
+ │ • refresh_tokens         │    │ • social                 │    │ • market_sentiment       │
+ │ • user_sessions          │    │ • news_sentiment         │    │ • gold_dashboard_stats   │
+ │ • watchlists             │    │   (Populated by Spark)   │    │   (Materialized by dbt)  │
+ │ • alerts                 │    └──────────────────────────┘    └──────────────────────────┘
+ │ • portfolios             │
+ └──────────────────────────┘
+```
 
-**Docker Compose service:**
-```yaml
-alert-worker:
-  build: ./backend
-  command: python -m app.services.alert_worker
-  env_file: .env
-  environment:
-    POSTGRES_HOST: ${POSTGRES_HOST}
-  restart: unless-stopped
+The database structures are partitioned as follows:
+*   `public`: User accounts, session metrics, configurations, watchlists, portfolio listings, and user-defined price alerts.
+*   `silver`: Ingested news headlines and RSS feeds (synchronized by Spark streaming jobs).
+*   `gold`: Business intelligence data, daily OHLCV aggregations, and sentiment indexes (materialized by dbt).
+
+---
+
+## 🔌 API Endpoint Documentation
+
+### 🔐 Authentication (`/api/v1/auth`)
+Authentication endpoints are stateless, JWT-based, and enforce rotation:
+
+| Endpoint | Method | Input Schema | Output Description |
+| :--- | :---: | :--- | :--- |
+| `/api/v1/auth/signup` | `POST` | `UserCreate` (email, password, name) | Creates user, returns Access + Refresh Token pair. |
+| `/api/v1/auth/login` | `POST` | `OAuth2PasswordRequestForm` | Verifies password; issues Access + Refresh Tokens. |
+| `/api/v1/auth/refresh` | `POST` | `TokenRefreshRequest` | Rotates Refresh Token; invalidates previous session. |
+| `/api/v1/auth/me` | `GET` | *Bearer Token Header* | Retrieves profile details of the authenticated caller. |
+
+### 📈 Market & Coin Endpoints (`/api/v1`)
+Retrieve data from the data lakehouse warehouse tables:
+
+| Endpoint | Method | Parameters | Description |
+| :--- | :---: | :--- | :--- |
+| `/api/v1/coins` | `GET` | *None* | Lists all 20 tracked cryptocurrencies (e.g. BTC, ETH). |
+| `/api/v1/coins/{symbol}/summary` | `GET` | `symbol` (e.g., `BTCUSDT`) | Fetch latest daily OHLCV summary from `gold.daily_market_summary`. |
+| `/api/v1/coins/{symbol}/prices` | `GET` | `symbol`, `days` (default 30) | Historical price candles (1 to 365 days range). |
+| `/api/v1/market/overview` | `GET` | *None* | Aggregated stats: total volume, BTC dominance index, top gainers/losers. |
+| `/api/v1/market/sentiment` | `GET` | *None* | Real-time sentiment score (FinBERT analysis) with fallbacks. |
+
+### 💼 Portfolio, Watchlists & Alerts (Authentication Required)
+User CRUD endpoints:
+
+| Endpoint | Method | Path/Description |
+| :--- | :---: | :--- |
+| `/api/v1/watchlists` | `GET`/`POST`/`DELETE` | Retrieve, add, or delete tickers from personal watchlists. |
+| `/api/v1/alerts` | `GET`/`POST`/`DELETE` | Set or remove price alerts (`above` or `below` thresholds). |
+| `/api/v1/portfolios` | `GET`/`POST`/`DELETE` | Fetch and update portfolio allocations (calculates net profit/loss). |
+
+---
+
+## 🔒 Security & JWT Rotation Flow
+
+To mitigate replay attacks and session theft, the backend implements **Refresh Token Rotation**:
+
+```
+[ Client ]                        [ Backend API ]                       [ Supabase DB ]
+    │                                    │                                     │
+    │ ─── 1. POST /auth/refresh ───────► │                                     │
+    │      (with OLD Refresh Token)      │                                     │
+    │                                    │ ─── 2. Lookup & Verify Token ─────► │
+    │                                    │ ◄─── 3. Token is Valid & Active ────│
+    │                                    │                                     │
+    │                                    │ ─── 4. Revoke OLD Token ──────────► │
+    │                                    │ ─── 5. Store NEW Token ───────────► │
+    │                                    │                                     │
+    │ ◄── 6. Return NEW Access+Refresh ─ │                                     │
+```
+
+*   **Access Token Lifespan**: 30 minutes.
+*   **Refresh Token Lifespan**: 7 days.
+*   **Safety Trigger**: If a client attempts to use a revoked/old refresh token, the backend triggers an immediate lockout of all sessions for that user as a precaution.
+
+---
+
+## 🔔 Alert Worker Background Daemon
+
+The `alert_worker.py` script is a lightweight background worker that runs concurrently with the API:
+
+```text
+               ┌──────────────────────────────────────┐
+               │         ALERT WORKER DAEMON          │
+               └──────────────────┬───────────────────┘
+                                  │ Polls every 60s
+                                  ▼
+               ┌──────────────────────────────────────┐
+               │    Query Active Alerts from DB       │
+               └──────────────────┬───────────────────┘
+                                  │
+                                  ▼
+               ┌──────────────────────────────────────┐
+               │ Query Latest Prices from Gold Layer  │
+               └──────────────────┬───────────────────┘
+                                  │
+                                  ▼
+                      Did any Price cross
+                      the Alert threshold?
+                        /            \
+                     YES              NO
+                     /                  \
+                    ▼                    ▼
+        ┌───────────────────────┐   ┌───────────────┐
+        │ Trigger Alert Notification│   │   Do Nothing  │
+        │  & Mark Alert INACTIVE │   └───────────────┘
+        └───────────────────────┘
 ```
 
 ---
 
-## 🚀 Running the API
+## 🚀 Installation & Local Setup
 
-### Option 1 — Local Development (without Docker)
+### ⚙️ Prerequisites
+*   Python 3.10+
+*   A running PostgreSQL instance (or Supabase URL credentials)
 
+### 📦 Steps
+1.  Navigate to the backend folder:
+    ```bash
+    cd backend
+    ```
+2.  Initialize virtual environment:
+    ```bash
+    python -m venv venv
+    venv\Scripts\activate      # Windows
+    source venv/bin/activate   # Linux/macOS
+    ```
+3.  Install dependencies:
+    ```bash
+    pip install -r requirements.txt
+    ```
+4.  Copy and fill the `.env` settings:
+    ```bash
+    cp .env.example .env
+    ```
+5.  Launch the server:
+    ```bash
+    uvicorn app.main:app --reload --port 8000
+    ```
+
+Navigate to `http://localhost:8000/docs` to access the interactive Swagger documentation.
+
+---
+
+## 🧪 Automated Test Suite
+
+A complete testing suite is implemented in `tests/` utilizing `pytest` and SQLite for rapid testing cycles (without mock data overlays).
+
+Execute tests locally:
 ```bash
-cd backend
-
-# Create and activate virtual environment
-python -m venv venv
-source venv/bin/activate  # or venv\Scripts\activate on Windows
-
-# Install dependencies
-pip install -r requirements.txt
-
-# Set environment variables (or create backend/.env)
-# The backend reads POSTGRES_* variables from the root .env or backend/.env
-
-# Run the server
-uvicorn app.main:app --reload --port 8000
+pytest tests/ -v
 ```
 
-### Option 2 — Docker Compose (full stack)
-
-```bash
-# From project root
-make up
-# or: docker compose up -d --build
-```
-
-**Interactive docs:** http://localhost:8000/docs
-
----
-
-## 🧪 Testing
-
-```bash
-cd backend
-
-# Run all tests (uses in-memory SQLite, no Docker needed)
-python -m pytest tests/ -q
-
-# Run specific test file
-python -m pytest tests/test_sentiment.py -q
-```
-
-**Latest results:** `50 passed, 3 warnings in 22.08s`
-
----
-
-## 🔗 Database Configuration
-
-The backend connects to **Supabase Cloud PostgreSQL** using environment variables:
-
-```env
-POSTGRES_HOST=aws-0-eu-west-1.pooler.supabase.com
-POSTGRES_PORT=5432
-POSTGRES_DB=postgres
-POSTGRES_USER=postgres.idiidwhgddbxdbnpamag
-POSTGRES_PASSWORD=your_supabase_password
-```
-
-`config.py` automatically URL-encodes the password (handles special characters like `@`) and constructs the connection string with `sslmode=require`.
-
----
-
-## 📋 Database Schema
-
-Managed in `app/models/schema.sql`:
-
-- **`public` schema:** `users`, `refresh_tokens`, `user_sessions`, `watchlists`, `alerts`, `portfolios`
-- **`silver` schema:** `news`, `social`, `news_sentiment` (populated by Spark sync jobs)
-- **`gold` schema:** `daily_market_summary`, `market_sentiment` (materialized by dbt)
-
-Tables are auto-created on application startup via `create_tables()`.
+All 50 unit and integration tests are verified.
