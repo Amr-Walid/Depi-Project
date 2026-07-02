@@ -1,10 +1,10 @@
-# 📥 Data Ingestion Layer (Producers)
+# Data Ingestion Layer (Producers)
 
 This directory houses the python-based ingestion scripts responsible for fetching real-time streams, polling market intelligence REST APIs, downloading multi-year historical candles, and publishing these payloads to Kafka event streams.
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 ingestion/
@@ -19,7 +19,7 @@ ingestion/
 
 ---
 
-## 🏗️ Ingestion Data Pipeline
+## Ingestion Data Pipeline
 
 ```
  ┌─────────────────────────┐
@@ -36,7 +36,7 @@ ingestion/
 
 ---
 
-## ⚙️ Ingestion Agent Specifications
+## Ingestion Agent Specifications
 
 ### 1. Real-Time Prices (`producers/producer_binance.py`)
 *   **Protocol**: persistent secure WebSockets (`wss://stream.binance.com:9443/ws`).
@@ -78,7 +78,7 @@ ingestion/
 
 ---
 
-## 🛡️ Failure Recovery & Connection Quality
+## Failure Recovery & Connection Quality
 
 The streaming client (`producer_binance.py`) uses an **exponential backoff policy** to handle network cuts, rate limits, or server drops:
 

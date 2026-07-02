@@ -1,10 +1,10 @@
-# 🌬️ Apache Airflow Service Configuration
+# Apache Airflow Service Configuration
 
 This directory contains the custom Dockerfile used to build the orchestration runner image for **Apache Airflow** (v2.7.3). 
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 airflow/
@@ -13,7 +13,7 @@ airflow/
 
 ---
 
-## 🏗️ Architecture Design
+## Architecture Design
 
 Running Apache Spark and PySpark libraries directly within Airflow would require a massive container image (~2GB+) and heavy JVM resource usage. To keep Airflow lightweight and highly responsive, this project uses a **Docker-in-Docker socket-sharing architecture**:
 
@@ -53,18 +53,18 @@ Running Apache Spark and PySpark libraries directly within Airflow would require
 
 ---
 
-## 🧱 Dockerfile Specifications
+## Dockerfile Specifications
 
 ### Base Image
 *   `apache/airflow:2.7.3`
 
-### 📦 Installed Python Packages (under `airflow` user)
+### Installed Python Packages (under `airflow` user)
 Installed to support dbt execution and metadata queries:
 *   `requests` — For REST API calls.
 *   `python-dotenv` — For managing environment credentials.
 *   `dbt-core==1.7.0` — To run analytic transformation pipelines.
 *   `dbt-postgres==1.7.0` — DBT adapter to connect and sync with PostgreSQL/Supabase.
 
-### 🐧 System Additions (under `root` user)
+### System Additions (under `root` user)
 *   **Docker CLI `27.4.1` (Static Binary)**: Fetched from Docker's official static releases and placed in `/usr/local/bin`.
 *   **PATH Adjustments**: Sets environment variables `PATH` and `PYTHONPATH` so the container system can locate python packages installed under the `airflow` user's home directory.

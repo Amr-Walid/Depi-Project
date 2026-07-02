@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🚀 Crypto-Pulse Backend & REST API
+# Crypto-Pulse Backend & REST API
 
 ### The High-Performance Core Built on FastAPI & Supabase PostgreSQL
 
@@ -13,7 +13,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Overview](#-overview)
 2. [Current Status](#-current-status-june-2026)
 3. [Architecture & Folder Structure](#-architecture--folder-structure)
@@ -26,13 +26,13 @@
 
 ---
 
-## 🔍 Overview
+## Overview
 
 The backend of **Crypto-Pulse** is a production-grade REST API built using **FastAPI** and **SQLAlchemy (ORM)**. It serves live and historical cryptocurrency data to the user, runs background workers to track real-time price alerts, manages portfolio allocations, watchlists, and maintains strict token-based user authentication.
 
 ---
 
-## ⚡ Current Status (June 2026)
+## Current Status (June 2026)
 
 All backend features are fully implemented, verified, and integrated:
 - **JWT Authentication**: Full user signup/login flows with secure refresh token rotation.
@@ -43,7 +43,7 @@ All backend features are fully implemented, verified, and integrated:
 
 ---
 
-## 🏗️ Architecture & Folder Structure
+## Architecture & Folder Structure
 
 ```
 backend/
@@ -72,7 +72,7 @@ backend/
 
 ---
 
-## 🗄️ Database & Schema Design
+## Database & Schema Design
 
 The backend communicates with a remote **Supabase Cloud PostgreSQL** instance (`aws-0-eu-west-1.pooler.supabase.com`). 
 
@@ -97,9 +97,9 @@ The database structures are partitioned as follows:
 
 ---
 
-## 🔌 API Endpoint Documentation
+## API Endpoint Documentation
 
-### 🔐 Authentication (`/api/v1/auth`)
+### Authentication (`/api/v1/auth`)
 Authentication endpoints are stateless, JWT-based, and enforce rotation:
 
 | Endpoint | Method | Input Schema | Output Description |
@@ -109,7 +109,7 @@ Authentication endpoints are stateless, JWT-based, and enforce rotation:
 | `/api/v1/auth/refresh` | `POST` | `TokenRefreshRequest` | Rotates Refresh Token; invalidates previous session. |
 | `/api/v1/auth/me` | `GET` | *Bearer Token Header* | Retrieves profile details of the authenticated caller. |
 
-### 📈 Market & Coin Endpoints (`/api/v1`)
+### Market & Coin Endpoints (`/api/v1`)
 Retrieve data from the data lakehouse warehouse tables:
 
 | Endpoint | Method | Parameters | Description |
@@ -120,7 +120,7 @@ Retrieve data from the data lakehouse warehouse tables:
 | `/api/v1/market/overview` | `GET` | *None* | Aggregated stats: total volume, BTC dominance index, top gainers/losers. |
 | `/api/v1/market/sentiment` | `GET` | *None* | Real-time sentiment score (FinBERT analysis) with fallbacks. |
 
-### 💼 Portfolio, Watchlists & Alerts (Authentication Required)
+### Portfolio, Watchlists & Alerts (Authentication Required)
 User CRUD endpoints:
 
 | Endpoint | Method | Path/Description |
@@ -131,7 +131,7 @@ User CRUD endpoints:
 
 ---
 
-## 🔒 Security & JWT Rotation Flow
+## Security & JWT Rotation Flow
 
 To mitigate replay attacks and session theft, the backend implements **Refresh Token Rotation**:
 
@@ -155,7 +155,7 @@ To mitigate replay attacks and session theft, the backend implements **Refresh T
 
 ---
 
-## 🔔 Alert Worker Background Daemon
+## Alert Worker Background Daemon
 
 The `alert_worker.py` script is a lightweight background worker that runs concurrently with the API:
 
@@ -189,13 +189,13 @@ The `alert_worker.py` script is a lightweight background worker that runs concur
 
 ---
 
-## 🚀 Installation & Local Setup
+## Installation & Local Setup
 
-### ⚙️ Prerequisites
+### Prerequisites
 *   Python 3.10+
 *   A running PostgreSQL instance (or Supabase URL credentials)
 
-### 📦 Steps
+### Steps
 1.  Navigate to the backend folder:
     ```bash
     cd backend
@@ -223,7 +223,7 @@ Navigate to `http://localhost:8000/docs` to access the interactive Swagger docum
 
 ---
 
-## 🧪 Automated Test Suite
+## Automated Test Suite
 
 A complete testing suite is implemented in `tests/` utilizing `pytest` and SQLite for rapid testing cycles (without mock data overlays).
 

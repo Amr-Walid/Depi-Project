@@ -1,10 +1,10 @@
-# 🛠️ GitHub Actions CI/CD Pipeline
+# GitHub Actions CI/CD Pipeline
 
 Welcome to the GitHub configurations directory. This directory holds the continuous integration (CI) and continuous deployment (CD) workflows for the **Crypto-Pulse** project.
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 .github/
@@ -14,7 +14,7 @@ Welcome to the GitHub configurations directory. This directory holds the continu
 
 ---
 
-## 🚀 Workflow Overview
+## Workflow Overview
 
 The CI/CD pipeline is defined in `.github/workflows/ci-cd.yml`. It is designed to ensure code quality and system integrity by running automated suites whenever a developer pushes code or submits a pull request.
 
@@ -27,11 +27,11 @@ The CI/CD pipeline is defined in `.github/workflows/ci-cd.yml`. It is designed t
 
 ---
 
-## 🧱 Job Details
+## Job Details
 
 The workflow is divided into two parallel, independent jobs:
 
-### 1. 🐍 Backend Test Suite (`backend-test`)
+### 1. Backend Test Suite (`backend-test`)
 Spins up a temporary database service and runs the complete FastAPI test suite.
 *   **Operating System**: `ubuntu-latest`
 *   **Database Container**: PostgreSQL 15 (`postgres:15`)
@@ -41,7 +41,7 @@ Spins up a temporary database service and runs the complete FastAPI test suite.
     2. Install python dependencies from `backend/requirements.txt` along with testing utilities (`pytest`, `httpx`).
     3. Run pytest inside the `backend` directory.
 
-### 2. ⚛️ Frontend Lint & Build (`frontend-build`)
+### 2. Frontend Lint & Build (`frontend-build`)
 Ensures Next.js frontend code is clean, linted, and builds successfully.
 *   **Operating System**: `ubuntu-latest`
 *   **Node.js Version**: `22` (cached npm)
@@ -53,7 +53,7 @@ Ensures Next.js frontend code is clean, linted, and builds successfully.
 
 ---
 
-## 🔒 Required Secret Keys
+## Required Secret Keys
 
 The frontend build job references the following secret, which should be configured in GitHub Repository Secrets (`Settings > Secrets and variables > Actions`):
 

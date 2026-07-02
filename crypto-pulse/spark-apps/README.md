@@ -1,10 +1,10 @@
-# ⚡ Spark-Apps Service Environment
+# Spark-Apps Service Environment
 
 This directory contains the custom Docker configuration used to build the **Apache Spark 3.5.0** cluster images. 
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 spark-apps/
@@ -15,7 +15,7 @@ spark-apps/
 
 ---
 
-## 🏗️ Preloaded Dependency Architecture
+## Preloaded Dependency Architecture
 
 Using standard PySpark CLI arguments like `--packages org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0` in a containerized environment causes Spark to attempt to download the dependencies from Maven Central on *every container startup*. This introduces:
 1.  **Startup Delays**: Long wait times (~30-60s) before scripts begin executing.
@@ -26,14 +26,14 @@ To solve this, this custom image **pre-downloads** all required JARs and caches 
 
 ---
 
-## 📦 Installed Packages & Driver Matrix
+## Installed Packages & Driver Matrix
 
-### 🐍 Python Packages
+### Python Packages
 *   `python-dotenv==1.0.1` — Used to load configurations from `.env`.
 *   `delta-spark==3.2.0` — Required for reading/writing Delta Tables.
 *   `transformers` & `torch` (CPU) — Enables NLP sentiment analysis using FinBERT models directly inside PySpark UDFs.
 
-### 🏛️ Pre-Cached JAR Libraries
+### Pre-Cached JAR Libraries
 The following dependencies are compiled directly into the image:
 
 | Category | Library Name | Version | Maven Source |

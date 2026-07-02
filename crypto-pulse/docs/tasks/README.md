@@ -25,23 +25,23 @@
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
 | Progress | 100% | 100% | **100%** |
-| Status | Complete | Complete ✅ | **Complete ✅** — Frontend (Next.js) + Supabase Migration + AI Chat |
+| Status | Complete | Complete | **Complete ** — Frontend (Next.js) + Supabase Migration + AI Chat |
 
 ### Yassin Mahmoud
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
 | Progress | 100% | 100% | **100%** |
-| Status | Complete | Complete ✅ | **Complete ✅** — FinBERT + Notebooks + Dashboard |
+| Status | Complete | Complete | **Complete ** — FinBERT + Notebooks + Dashboard |
 
 ### Mostafa Matar
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
 | Progress | 100% | 100% | **100%** |
-| Status | Complete | Complete ✅ | **Complete ✅** — Sentiment API + Alert Worker + Code Cleanup |
+| Status | Complete | Complete | **Complete ** — Sentiment API + Alert Worker + Code Cleanup |
 
-### Ahmed Ayman — ❌ REMOVED FROM PROJECT
+### Ahmed Ayman — REMOVED FROM PROJECT
 
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
@@ -55,7 +55,7 @@
 | | Milestone 1 | Milestone 2 | Milestone 3 |
 |--|------------|------------|------------|
 | Progress | 100% | 100% | **100%** |
-| Status | Complete | Complete ✅ | **Complete ✅** — dbt Sentiment Models + Dashboard Stats |
+| Status | Complete | Complete | **Complete ** — dbt Sentiment Models + Dashboard Stats |
 
 ---
 
@@ -65,41 +65,33 @@
 Amr (Azure infra + Kafka producers)
     |
     v
-Yassin (bronze_consumer.py — Streaming) ✅
-    |
+Yassin (bronze_consumer.py — Streaming)     |
     v
-Yassin (silver_prices_processor.py — Streaming Upsert) ✅
-    |
+Yassin (silver_prices_processor.py — Streaming Upsert)     |
     v
-Amr (sync_*_pg.py — Silver → Supabase Cloud PostgreSQL) ✅
-    |
+Amr (sync_*_pg.py — Silver → Supabase Cloud PostgreSQL)     |
     v
-Karim  (dbt staging + gold models → Supabase) ✅
-    |
+Karim  (dbt staging + gold models → Supabase)     |
     v
-Mostafa (FastAPI — data_service reads Gold layer from Supabase) ✅
-
+Mostafa (FastAPI — data_service reads Gold layer from Supabase) 
 ---
 
-Amr (producer_news.py + producer_social_rss.py) ✅
+Amr (producer_news.py + producer_social_rss.py)     |
+    v
+Amr (bronze_news_consumer + bronze_social_consumer)     |
+    v
+Amr (silver_news_processor + silver_social_processor)     |
+    v
+Yassin (FinBERT sentiment_processor.py)  ← DONE (Milestone 3)
     |
     v
-Amr (bronze_news_consumer + bronze_social_consumer) ✅
+Karim  (gold/market_sentiment.sql — FinBERT scores)  ← DONE (Milestone 3)
     |
     v
-Amr (silver_news_processor + silver_social_processor) ✅
+Mostafa (GET /api/v1/market/sentiment)  ← DONE (Milestone 3)
     |
     v
-Yassin (FinBERT sentiment_processor.py) ✅  ← DONE (Milestone 3)
-    |
-    v
-Karim  (gold/market_sentiment.sql — FinBERT scores) ✅  ← DONE (Milestone 3)
-    |
-    v
-Mostafa (GET /api/v1/market/sentiment) ✅  ← DONE (Milestone 3)
-    |
-    v
-Amr (Frontend Dashboard — Next.js) ✅  ← DONE (Milestone 3)
+Amr (Frontend Dashboard — Next.js)  ← DONE (Milestone 3)
 ```
 
 ---
@@ -114,13 +106,13 @@ Amr (Frontend Dashboard — Next.js) ✅  ← DONE (Milestone 3)
 
 ## Current Priorities
 
-1. **✅ Airflow Automation** — DONE.
-2. **✅ End-to-End Pipeline Testing** — DONE.
-3. **✅ Backend API Testing** — DONE.
-4. **✅ Yassin** — FinBERT integration in Spark + Notebooks — **DONE**.
-5. **✅ Karim** — dbt sentiment models + dashboard stats — **DONE**.
-6. **✅ Mostafa** — Sentiment API endpoint + Alert Worker — **DONE**.
-7. **✅ Amr** — Frontend Dashboard (Next.js) + Supabase Migration — **DONE**.
+1. **Airflow Automation** — DONE.
+2. **End-to-End Pipeline Testing** — DONE.
+3. **Backend API Testing** — DONE.
+4. **Yassin** — FinBERT integration in Spark + Notebooks — **DONE**.
+5. **Karim** — dbt sentiment models + dashboard stats — **DONE**.
+6. **Mostafa** — Sentiment API endpoint + Alert Worker — **DONE**.
+7. **Amr** — Frontend Dashboard (Next.js) + Supabase Migration — **DONE**.
 
 ---
 

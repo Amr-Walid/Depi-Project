@@ -1,10 +1,10 @@
-# 🛠️ Orchestration Layer Mounting Directory
+# Orchestration Layer Mounting Directory
 
 This directory acts as the staging area and placeholder volume mount for system orchestration configurations in **Crypto-Pulse**.
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 orchestration/
@@ -13,7 +13,7 @@ orchestration/
 
 ---
 
-## 🔍 Purpose & Future Extensions
+## Purpose & Future Extensions
 
 Currently, the orchestration in the project is driven by **Apache Airflow** (which utilizes the `dags/` folder for workflow definitions and `airflow/` for Docker image creation). 
 
@@ -24,7 +24,7 @@ This `orchestration/` directory is designed to serve as:
 
 ---
 
-## ⚙️ How Workflows are Currently Executed
+## How Workflows are Currently Executed
 
 *   **DAG Definition Location**: [dags/](file:///C:/Users/Kemosky/./.gemini/antigravity/scratch/Depi-Project-92cdc3272ac4d8d1cd4a8c199c95269eed3e43bc/crypto-pulse/dags)
 *   **Orchestration Environment**: [airflow/](file:///C:/Users/Kemosky/./.gemini/antigravity/scratch/Depi-Project-92cdc3272ac4d8d1cd4a8c199c95269eed3e43bc/crypto-pulse/airflow)

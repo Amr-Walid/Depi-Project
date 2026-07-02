@@ -1,10 +1,10 @@
-# 📖 Project Documentation Directory
+# Project Documentation Directory
 
 This directory contains the central architectural assets, design documents, milestone guidelines, and engineering logs for **Crypto-Pulse**.
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 docs/
@@ -21,7 +21,7 @@ docs/
 
 ---
 
-## 📝 Document Index & Directory Reference
+## Document Index & Directory Reference
 
 Here is a summary of the major documentation files and guides available:
 

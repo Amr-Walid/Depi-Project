@@ -4,7 +4,7 @@ This directory contains Jupyter notebooks used for exploratory data analysis (ED
 
 ---
 
-## 📂 Notebook Index
+## Notebook Index
 
 The directory contains four structured notebooks designed to trace the development and verification phases of the project:
 
@@ -17,15 +17,15 @@ The directory contains four structured notebooks designed to trace the developme
 
 ---
 
-## 🚀 How to Run the Notebooks
+## How to Run the Notebooks
 
-### ⚙️ Prerequisites
+### Prerequisites
 Ensure you have Jupyter installed alongside the required analysis libraries:
 ```bash
 pip install jupyter pandas matplotlib seaborn plotly dash transformers torch
 ```
 
-### 🏃‍♂️ Running
+### Running
 Start the Jupyter Notebook server from this directory:
 ```bash
 cd notebooks

@@ -1,10 +1,10 @@
-# 📜 Utility & Automation Scripts Directory
+# Utility & Automation Scripts Directory
 
 This directory contains a suite of automation, seeding, validation, database inspection, and orchestrator runner scripts used to manage the **Crypto-Pulse** pipeline lifecycle.
 
 ---
 
-## 📂 Directory Structure & Script Index
+## Directory Structure & Script Index
 
 Here is a summary of all utility scripts:
 
@@ -25,7 +25,7 @@ Here is a summary of all utility scripts:
 
 ---
 
-## 🏃‍♂️ Key Execution Workflows
+## Key Execution Workflows
 
 ### 1. Launching the Sequential Pipeline (`run_pipeline_spark_sequential.sh`)
 This shell script is optimized for local environments to prevent Docker memory overflow:

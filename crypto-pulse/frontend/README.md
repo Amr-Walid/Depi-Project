@@ -1,6 +1,6 @@
 <div align="center">
 
-# 💻 Crypto-Pulse Frontend Dashboard
+# Crypto-Pulse Frontend Dashboard
 
 ### Premium Real-Time Analytics Web Application Built on Next.js, Zustand & Shadcn UI
 
@@ -13,7 +13,7 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 1. [Overview](#-overview)
 2. [Key Features](#-key-features)
 3. [Technology Stack](#-technology-stack)
@@ -25,25 +25,25 @@
 
 ---
 
-## 🔍 Overview
+## Overview
 
 The frontend of **Crypto-Pulse** is an interactive, fully responsive analytical dashboard built using the **Next.js App Router** architecture. It displays real-time price updates (connected to the FastAPI backend), charts historical trends, manages user watchlists/portfolios, and features an integrated AI Assistant powered by **Google Gemini** via the Vercel AI SDK.
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-- 📊 **Real-time Price Grid**: Updates dynamically as live data aggregates in the Supabase PostgreSQL database.
-- 📈 **Advanced Analytics Engine**: High-fidelity charts showing historical open, high, low, close, and volume (OHLCV) metrics with custom range selections.
-- 🤖 **Interactive AI Assistant**: Real-time market analysis chatbot powered by Gemini models for instant market research and advisory logs.
-- ⭐ **Custom Watchlists**: Add or remove monitored cryptocurrency pairs on the fly.
-- 💼 **Portfolio Accounting**: Input purchases (shares, entry price) to track profit margins and live valuation.
-- 🔔 **Threshold Price Alerts**: Add above/below value monitors that trigger updates once crossed.
-- 🌓 **Adaptive Theming**: Beautiful dark/light mode toggle utilizing Tailwind CSS.
+- **Real-time Price Grid**: Updates dynamically as live data aggregates in the Supabase PostgreSQL database.
+- **Advanced Analytics Engine**: High-fidelity charts showing historical open, high, low, close, and volume (OHLCV) metrics with custom range selections.
+- **Interactive AI Assistant**: Real-time market analysis chatbot powered by Gemini models for instant market research and advisory logs.
+- **Custom Watchlists**: Add or remove monitored cryptocurrency pairs on the fly.
+- **Portfolio Accounting**: Input purchases (shares, entry price) to track profit margins and live valuation.
+- **Threshold Price Alerts**: Add above/below value monitors that trigger updates once crossed.
+- **Adaptive Theming**: Beautiful dark/light mode toggle utilizing Tailwind CSS.
 
 ---
 
-## 🛠️ Technology Stack
+## Technology Stack
 
 | Library / Tool | Role | Version |
 | :--- | :--- | :---: |
@@ -56,7 +56,7 @@ The frontend of **Crypto-Pulse** is an interactive, fully responsive analytical 
 
 ---
 
-## 🏗️ Folder Architecture
+## Folder Architecture
 
 ```
 frontend/
@@ -82,7 +82,7 @@ frontend/
 
 ---
 
-## 📊 User Interface Modules
+## User Interface Modules
 
 ### 1. Market Tickers Grid
 Displays a clean table listing the 20 tracked cryptocurrencies with real-time updates. Highlights 24h percent changes in red or green.
@@ -95,7 +95,7 @@ A floating sidebar component housing a conversational chatbot UI. It provides ma
 
 ---
 
-## 🔌 API & AI Chat Integration
+## API & AI Chat Integration
 
 The frontend links to the backend REST API endpoints via a centralized Axios client.
 
@@ -116,13 +116,13 @@ The system secures standard HTTP queries and routes prompts to Gemini to provide
 
 ---
 
-## 🚀 Installation & Development Setup
+## Installation & Development Setup
 
-### ⚙️ Prerequisites
+### Prerequisites
 *   Node.js 22+
 *   npm or pnpm package manager
 
-### 📦 Steps
+### Steps
 1.  Navigate to the frontend folder:
     ```bash
     cd frontend
@@ -144,7 +144,7 @@ The system secures standard HTTP queries and routes prompts to Gemini to provide
 
 ---
 
-## 🐳 Docker Production Build
+## Docker Production Build
 
 To containerize and run the frontend inside a Docker network:
 

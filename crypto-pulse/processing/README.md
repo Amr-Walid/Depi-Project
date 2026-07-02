@@ -1,4 +1,4 @@
-# ⚙️ Data Processing & Modeling Layer
+# Data Processing & Modeling Layer
 
 This directory forms the core data engineering hub of the **Crypto-Pulse** pipeline. It is divided into two primary sub-components:
 1.  **`spark_jobs/`**: Data ingestion, cleansing, structured stream merges, and ML sentiment application using **Apache Spark / PySpark**.
@@ -6,7 +6,7 @@ This directory forms the core data engineering hub of the **Crypto-Pulse** pipel
 
 ---
 
-## 📂 Directory Structure
+## Directory Structure
 
 ```
 processing/
@@ -26,7 +26,7 @@ processing/
 
 ---
 
-## 🛡️ Medallion Architecture & Spark Pipelines
+## Medallion Architecture & Spark Pipelines
 
 The pipeline implements a **Medallion Lakehouse Architecture** on **Azure ADLS Gen2** stored as **Delta Tables**:
 
@@ -60,7 +60,7 @@ Reads Delta tables from ADLS Gen2 and writes them to PostgreSQL.
 
 ---
 
-## 📊 Analytics Modeling with dbt
+## Analytics Modeling with dbt
 
 Once data lands in the relational store, **dbt** is triggered to build staging views and materialize gold models.
 
@@ -105,7 +105,7 @@ Materialized reporting tables optimized for backend API and frontend dashboard c
 
 ---
 
-## 🧪 Data Quality Tests (Folder `dbt/tests/`)
+## Data Quality Tests (Folder `dbt/tests/`)
 Asserts database integrity guidelines at build-time:
 *   `assert_low_price_less_than_high_price.sql`: Validates that low prices are always smaller than or equal to high prices.
 *   `assert_no_duplicate_symbol_date.sql`: Guarantees daily uniqueness for coin history.

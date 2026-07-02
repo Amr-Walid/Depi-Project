@@ -52,17 +52,17 @@ All 4 pipelines follow the same **Medallion Architecture** flow:
 │                 │     │          │     │   (Raw — Delta)      │     │  (Clean — Delta)     │     │  → PG    │     │           │     │         │
 ├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     ├─────────┤
 │                 │     │          │     │                      │     │                      │     │          │     │           │     │         │
-│ 🔴 Binance WS   │────►│ .prices  │────►│ bronze_consumer      │────►│ silver_prices_proc   │────►│sync_price│────►│gold_ohlcv │────►│ /coins  │
+│ Binance WS   │────►│ .prices  │────►│ bronze_consumer      │────►│ silver_prices_proc   │────►│sync_price│────►│gold_ohlcv │────►│ /coins  │
 │   (Streaming)   │     │          │     │                      │     │  (Delta MERGE)       │     │          │     │gold_latest│     │ /prices │
 │                 │     │          │     │                      │     │                      │     │          │     │daily_mkt  │     │ /market │
 ├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
-│ 🟡 Binance API  │────►│ (batch)  │────►│ historical_loader    │────►│ silver_hist_proc     │────►│sync_hist │────►│           │     │         │
+│ Binance API  │────►│ (batch)  │────►│ historical_loader    │────►│ silver_hist_proc     │────►│sync_hist │────►│           │     │         │
 │   (Daily)       │     │          │     │                      │     │                      │     │          │     │           │     │         │
 ├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     │         │
-│ 🟢 NewsAPI      │────►│ .news    │────►│ bronze_news_consumer │────►│ silver_news_proc     │────►│sync_news │────►│market_    │     │         │
+│ NewsAPI      │────►│ .news    │────►│ bronze_news_consumer │────►│ silver_news_proc     │────►│sync_news │────►│market_    │     │         │
 │   (15 min)      │     │          │     │                      │     │                      │     │          │     │sentiment  │     │         │
 ├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
-│ 🔵 RSS Feeds    │────►│ .social  │────►│ bronze_social_cons   │────►│ silver_social_proc   │────►│sync_socl │────►│           │     │         │
+│ RSS Feeds    │────►│ .social  │────►│ bronze_social_cons   │────►│ silver_social_proc   │────►│sync_socl │────►│           │     │         │
 │   (10 min)      │     │          │     │                      │     │                      │     │          │     │           │     │         │
 └─────────────────┘     └──────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┘     └───────────┘     └─────────┘
                                                    │                            │                                          │
@@ -188,27 +188,27 @@ graph TD
 
 This project is modularly structured, separating the data ingestion agents, processing routines, ML models, orchestration flows, API backends, and dashboard frontends.
 
-### 📁 Subdirectory Documentation Index
+### Subdirectory Documentation Index
 Detailed `README.md` files have been added to all 14 main directories to explain their configurations, operational guidelines, and file mappings:
 
 | Directory Link | Documentation Scope | Key Contents |
 | :--- | :--- | :--- |
-| 🛠️ [**`.github/`**](.github/README.md) | CI/CD pipelines | GitHub Actions workflows for backend pytest & frontend Next.js builds. |
-| 🌬️ [**`airflow/`**](airflow/README.md) | Airflow docker environment | Custom container config with static Docker CLI and dbt package libraries. |
-| 🚀 [**`backend/`**](backend/README.md) | REST API backend | FastAPI server setup, JWT rotation schemas, and SQLAlchemy model maps. |
-| 🕒 [**`dags/`**](dags/README.md) | Workflow orchestration | Scheduled Airflow DAGs (`daily_historical` batch and `5min_prices` sync). |
-| 📁 [**`data/`**](data/README.md) | Raw database assets | Formats & fields specifications of local daily cryptocurrency OHLCV JSON dumps. |
-| 📖 [**`docs/`**](docs/README.md) | Guides & diagrams | Systems designs, WSL2 configurations, memory optimizations, and audits. |
-| 💻 [**`frontend/`**](frontend/README.md) | Web dashboard app | Next.js App Router UI, Zustand global states, and Recharts charts widgets. |
-| 📥 [**`ingestion/`**](ingestion/README.md) | Ingestion agents | Binance WS stream, CoinGecko, NewsAPI and RSS python producers. |
-| 🧠 [**`ml/`**](ml/README.md) | Sentiment classification | FinBERT BERT-based NLP sentiment analysis and PySpark execution details. |
-| 📝 [**`notebooks/`**](notebooks/README.md) | Prototyping sandboxes | Jupyter notebooks covering historical EDA, local ML checks, and PoC Dash. |
-| 🔧 [**`orchestration/`**](orchestration/README.md) | Scheduling volume mount | Orchestration placeholder directory for future volume mounts & integrations. |
-| ⚙️ [**`processing/`**](processing/README.md) | Data processing & dbt | Medallion PySpark streaming processors & dbt analytical models. |
-| 📜 [**`scripts/`**](scripts/README.md) | Automations & tools | Shell scripts for sequential cluster runs, database seeders, and inspectors. |
-| ⚡ [**`spark-apps/`**](spark-apps/README.md) | Spark Cluster config | Custom Spark image pre-downloaded with Netty, Kafka, Delta & PG JDBC JARs. |
+| [**`.github/`**](.github/README.md) | CI/CD pipelines | GitHub Actions workflows for backend pytest & frontend Next.js builds. |
+| [**`airflow/`**](airflow/README.md) | Airflow docker environment | Custom container config with static Docker CLI and dbt package libraries. |
+| [**`backend/`**](backend/README.md) | REST API backend | FastAPI server setup, JWT rotation schemas, and SQLAlchemy model maps. |
+| [**`dags/`**](dags/README.md) | Workflow orchestration | Scheduled Airflow DAGs (`daily_historical` batch and `5min_prices` sync). |
+| [**`data/`**](data/README.md) | Raw database assets | Formats & fields specifications of local daily cryptocurrency OHLCV JSON dumps. |
+| [**`docs/`**](docs/README.md) | Guides & diagrams | Systems designs, WSL2 configurations, memory optimizations, and audits. |
+| [**`frontend/`**](frontend/README.md) | Web dashboard app | Next.js App Router UI, Zustand global states, and Recharts charts widgets. |
+| [**`ingestion/`**](ingestion/README.md) | Ingestion agents | Binance WS stream, CoinGecko, NewsAPI and RSS python producers. |
+| [**`ml/`**](ml/README.md) | Sentiment classification | FinBERT BERT-based NLP sentiment analysis and PySpark execution details. |
+| [**`notebooks/`**](notebooks/README.md) | Prototyping sandboxes | Jupyter notebooks covering historical EDA, local ML checks, and PoC Dash. |
+| [**`orchestration/`**](orchestration/README.md) | Scheduling volume mount | Orchestration placeholder directory for future volume mounts & integrations. |
+| [**`processing/`**](processing/README.md) | Data processing & dbt | Medallion PySpark streaming processors & dbt analytical models. |
+| [**`scripts/`**](scripts/README.md) | Automations & tools | Shell scripts for sequential cluster runs, database seeders, and inspectors. |
+| [**`spark-apps/`**](spark-apps/README.md) | Spark Cluster config | Custom Spark image pre-downloaded with Netty, Kafka, Delta & PG JDBC JARs. |
 
-### 📂 Directory Structure Tree
+### Directory Structure Tree
 
 ```
 crypto-pulse/
