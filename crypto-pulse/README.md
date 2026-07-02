@@ -46,33 +46,86 @@ The system handles four distinct data streams:
 
 All 4 pipelines follow the same **Medallion Architecture** flow:
 
-```
-┌─────────────────┐     ┌──────────┐     ┌──────────────────────┐     ┌──────────────────────┐     ┌──────────┐     ┌───────────┐     ┌─────────┐
-│   DATA SOURCES  │     │  KAFKA   │     │    BRONZE LAYER      │     │    SILVER LAYER      │     │   SYNC   │     │ GOLD (dbt)│     │   API   │
-│                 │     │          │     │   (Raw — Delta)      │     │  (Clean — Delta)     │     │  → PG    │     │           │     │         │
-├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     ├─────────┤
-│                 │     │          │     │                      │     │                      │     │          │     │           │     │         │
-│ Binance WS   │────►│ .prices  │────►│ bronze_consumer      │────►│ silver_prices_proc   │────►│sync_price│────►│gold_ohlcv │────►│ /coins  │
-│   (Streaming)   │     │          │     │                      │     │  (Delta MERGE)       │     │          │     │gold_latest│     │ /prices │
-│                 │     │          │     │                      │     │                      │     │          │     │daily_mkt  │     │ /market │
-├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
-│ Binance API  │────►│ (batch)  │────►│ historical_loader    │────►│ silver_hist_proc     │────►│sync_hist │────►│           │     │         │
-│   (Daily)       │     │          │     │                      │     │                      │     │          │     │           │     │         │
-├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     ├───────────┤     │         │
-│ NewsAPI      │────►│ .news    │────►│ bronze_news_consumer │────►│ silver_news_proc     │────►│sync_news │────►│market_    │     │         │
-│   (15 min)      │     │          │     │                      │     │                      │     │          │     │sentiment  │     │         │
-├─────────────────┤     ├──────────┤     ├──────────────────────┤     ├──────────────────────┤     ├──────────┤     │           │     │         │
-│ RSS Feeds    │────►│ .social  │────►│ bronze_social_cons   │────►│ silver_social_proc   │────►│sync_socl │────►│           │     │         │
-│   (10 min)      │     │          │     │                      │     │                      │     │          │     │           │     │         │
-└─────────────────┘     └──────────┘     └──────────────────────┘     └──────────────────────┘     └──────────┘     └───────────┘     └─────────┘
-                                                   │                            │                                          │
-                                                   ▼                            ▼                                          ▼
-                                          Azure ADLS Gen2               Azure ADLS Gen2                          Supabase Cloud
-                                          (stcryptopulsedev2)           (stcryptopulsedev2)                       (PostgreSQL DB)
-                                                                                                                      │
-                                                                                                                      ▼
-                                                                                                              Frontend Dashboard
-                                                                                                              (Next.js App)
+```mermaid
+graph TD
+    %% Sources
+    subgraph Data Sources
+        S1[Binance WebSocket]
+        S2[Binance Klines API]
+        S3[NewsAPI]
+        S4[RSS Feeds]
+    end
+
+    %% Kafka
+    subgraph Apache Kafka Brokers
+        K1[(Topic: crypto.realtime.prices)]
+        K3[(Topic: crypto.news)]
+        K4[(Topic: crypto.social)]
+    end
+
+    %% Bronze
+    subgraph ADLS Gen2: Bronze Layer
+        B1[bronze_consumer]
+        B2[historical_loader]
+        B3[bronze_news_consumer]
+        B4[bronze_social_consumer]
+    end
+
+    %% Silver
+    subgraph ADLS Gen2: Silver Layer
+        SL1[silver_prices_processor]
+        SL2[silver_historical_processor]
+        SL3[silver_news_processor]
+        SL4[silver_social_processor]
+        SL5[sentiment_processor FinBERT]
+    end
+
+    %% Supabase
+    subgraph Supabase Cloud PostgreSQL
+        PG1[(silver.prices)]
+        PG2[(silver.historical)]
+        PG3[(silver.news)]
+        PG4[(silver.social)]
+        PG5[(silver.news_sentiment)]
+        
+        DBT1[(gold.daily_market_summary)]
+        DBT2[(gold.market_sentiment)]
+        DBT3[(gold.gold_dashboard_stats)]
+    end
+
+    %% Frontend & Backend
+    subgraph Presentation & APIs
+        API[FastAPI Backend]
+        FE[Next.js Frontend]
+    end
+
+    %% Connections
+    S1 -->|Streaming| K1
+    S2 -->|Batch JSON| B2
+    S3 -->|15 min poll| K3
+    S4 -->|10 min poll| K4
+
+    K1 -->|Spark Stream| B1
+    K3 -->|Spark Stream| B3
+    K4 -->|Spark Stream| B4
+
+    B1 -->|Delta Merge| SL1
+    B2 -->|Delta Batch| SL2
+    B3 -->|Delta Batch| SL3
+    B4 -->|Delta Batch| SL4
+
+    SL1 -->|Spark JDBC Sync| PG1
+    SL2 -->|Spark JDBC Sync| PG2
+    SL3 -->|Spark JDBC Sync| PG3
+    SL4 -->|Spark JDBC Sync| PG4
+
+    PG3 --> SL5
+    SL5 -->|Write Sentiment| PG5
+
+    PG1 & PG2 & PG3 & PG4 & PG5 -->|dbt compiles Models| DBT1 & DBT2 & DBT3
+    
+    DBT3 --> API
+    API -->|REST API & JWT| FE
 ```
 
 ### Pipeline Summary

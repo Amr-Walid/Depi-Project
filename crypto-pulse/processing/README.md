@@ -30,14 +30,19 @@ processing/
 
 The pipeline implements a **Medallion Lakehouse Architecture** on **Azure ADLS Gen2** stored as **Delta Tables**:
 
-```
- ┌────────────────┐       ┌────────────────┐       ┌────────────────┐       ┌────────────────┐
- │  KAFKA TOPICS  │       │  BRONZE LAYER  │       │  SILVER LAYER  │       │  POSTGRESQL DB │
- ├────────────────┤       ├────────────────┤       ├────────────────┤       ├────────────────┤
- │ Prices, News,  │ ───►  │ Raw Event Logs │ ───►  │ Cleaned, Typed │ ───►  │ Relational DB  │
- │ Social Streams │ (Spark│ (Delta Format) │ (Spark│ and Merged     │ (Spark│ (Supabase      │
- │                │  Stream)               │  Stream)                │  JDBC)│  Cloud)        │
- └────────────────┘       └────────────────┘       └────────────────┘       └────────────────┘
+```mermaid
+graph LR
+    subgraph ADLS Gen2 Delta Lake
+        B[Bronze Layer: Raw Event Logs] -->|Spark Stream / Batch| S[Silver Layer: Cleaned, Typed & Merged]
+    end
+    subgraph Data Sources
+        K[Kafka Topics: Prices, News, Social] -->|Spark Stream| B
+        F[Binance REST API / Local JSON] -->|Spark Batch| B
+    end
+    subgraph Supabase Cloud
+        S -->|Spark JDBC Sync| P[(PostgreSQL: Silver Schema)]
+        P -->|dbt compiles Models| G[(PostgreSQL: Gold Schema)]
+    end
 ```
 
 ### 1. The Bronze Layer (Raw Storage)
@@ -64,30 +69,11 @@ Reads Delta tables from ADLS Gen2 and writes them to PostgreSQL.
 
 Once data lands in the relational store, **dbt** is triggered to build staging views and materialize gold models.
 
-```
-                  ┌───────────────────────────────┐
-                  │      Silver Schema Tables     │
-                  │   (Prices, News, Sentiment)   │
-                  └───────────────┬───────────────┘
-                                  │
-                                  ▼
-                  ┌───────────────────────────────┐
-                  │        Staging Views          │
-                  │ (stg_prices.sql, stg_news...) │
-                  └───────────────┬───────────────┘
-                                  │
-                                  ▼
-                  ┌───────────────────────────────┐
-                  │          Gold Models          │
-                  │  (daily_market_summary.sql,   │
-                  │      market_sentiment.sql)    │
-                  └───────────────┬───────────────┘
-                                  │
-                                  ▼
-                  ┌───────────────────────────────┐
-                  │      gold_dashboard_stats     │
-                  │    (Frontend API Target)      │
-                  └───────────────────────────────┘
+```mermaid
+graph TD
+    S[Silver Schema Tables: Prices, News, Sentiment] --> ST[Staging Views: stg_prices, stg_news, etc.]
+    ST --> GM[Gold Models: daily_market_summary, market_sentiment]
+    GM --> DS[gold_dashboard_stats: Frontend API Target]
 ```
 
 ### Staging Views (Folder `dbt/models/staging/`)

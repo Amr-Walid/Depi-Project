@@ -21,24 +21,14 @@ To analyze market news sentiment, the pipeline implements **FinBERT** (`ProsusAI
 
 To run NLP inference at scale, FinBERT is wrapped in a **PySpark User Defined Function (UDF)** inside `processing/spark_jobs/sentiment_processor.py`.
 
-```
-                    ┌─────────────────────────┐
-                    │      Driver Node        │
-                    │                         │
-                    │   Defines UDF Schema    │
-                    └────────────┬────────────┘
-                                 │
-                 UDF Broadcasted to Executors
-                                 │
-                                 ▼
-                    ┌─────────────────────────┐
-                    │  Spark Executor Worker  │
-                    ├─────────────────────────┤
-                    │   • Imports transformers│
-                    │   • Downloads Model     │
-                    │     (Cached to /tmp)    │
-                    │   • Runs CPU Inference  │
-                    └─────────────────────────┘
+```mermaid
+graph TD
+    A[Driver Node: Defines UDF Schema] -->|UDF Broadcasted to Executors| B[Spark Executor Worker]
+    subgraph Spark Executor Worker
+        B --> C[Imports Hugging Face transformers]
+        C --> D[Downloads Model and Caches to /tmp]
+        D --> E[Runs CPU Inference on News Headlines]
+    end
 ```
 
 ### Execution Details:

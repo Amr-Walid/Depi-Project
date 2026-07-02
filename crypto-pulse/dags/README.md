@@ -20,45 +20,15 @@ This DAG is scheduled to run once every day (`@daily`) and is responsible for pu
 
 ### Workflow Sequence
 
-```
- ┌──────────────────────────┐
- │  fetch_historical_data   │   Downloads multi-year raw candles from Binance API
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │ ingest_historical_bronze │   Loads local JSON files to ADLS Gen2 raw Bronze Delta Lake
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │ process_historical_silver│   Cleans, types, and merges data into Silver Delta Lake
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │ sync_historical_postgres │   Copies historical records to PostgreSQL using PySpark JDBC
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │  sync_news_to_postgres   │   Copies Silver news entries from ADLS to PostgreSQL
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │ sync_social_to_postgres  │   Copies Silver social entries from ADLS to PostgreSQL
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │  run_sentiment_analysis  │   Executes FinBERT UDF over raw news titles (CPU)
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │       run_dbt_gold       │   Executes and tests gold_daily_ohlcv and daily_market_summary
- └──────────────────────────┘
+```mermaid
+graph TD
+    A[fetch_historical_data] -->|Downloads raw candles| B[ingest_historical_to_bronze]
+    B -->|Loads JSON to Delta| C[process_historical_to_silver]
+    C -->|Cleans & Merges| D[sync_historical_to_postgres]
+    D -->|JDBC Sync| E[sync_news_to_postgres]
+    E -->|JDBC Sync| F[sync_social_to_postgres]
+    F -->|JDBC Sync| G[run_sentiment_analysis]
+    G -->|FinBERT UDF| H[run_dbt_gold]
 ```
 
 ---
@@ -69,15 +39,9 @@ This DAG triggers every 5 minutes (`*/5 * * * *`) to keep the frontend dashboard
 
 ### Workflow Sequence
 
-```
- ┌──────────────────────────┐
- │ sync_prices_to_postgres  │   Syncs the latest 5-minute price stream to Postgres
- └─────────────┬────────────┘
-               │
-               ▼
- ┌──────────────────────────┐
- │      run_dbt_prices      │   Executes gold_latest_prices and daily_market_summary dbt models
- └──────────────────────────┘
+```mermaid
+graph TD
+    A[sync_prices_to_postgres] -->|JDBC Sync 5m Stream| B[run_dbt_prices]
 ```
 
 ---

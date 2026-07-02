@@ -21,17 +21,37 @@ ingestion/
 
 ## Ingestion Data Pipeline
 
-```
- ┌─────────────────────────┐
- │      DATA SOURCES       │
- └────────────┬────────────┘
-              │
-              ├─► Binance WebSocket ──► [ producer_binance.py ] ──► Kafka: `crypto.realtime.prices`
-              ├─► CoinGecko API ──────► [ producer_coingecko.py ] ─► Kafka: `crypto.market.data`
-              ├─► NewsAPI ────────────► [ producer_news.py ] ─────► Kafka: `crypto.news`
-              ├─► RSS Publication ────► [ producer_social_rss.py ] ► Kafka: `crypto.social`
-              │
-              └─► Binance REST API ───► [ historical_fetcher.py ] ──► JSON Data Files
+```mermaid
+graph TD
+    subgraph Data Sources
+        DS1[Binance WebSocket]
+        DS2[CoinGecko API]
+        DS3[NewsAPI]
+        DS4[RSS Publication]
+        DS5[Binance REST API]
+    end
+
+    subgraph Ingestion Agents
+        A1[producer_binance.py]
+        A2[producer_coingecko.py]
+        A3[producer_news.py]
+        A4[producer_social_rss.py]
+        A5[historical_fetcher.py]
+    end
+
+    subgraph Targets
+        T1[(Kafka: crypto.realtime.prices)]
+        T2[(Kafka: crypto.market.data)]
+        T3[(Kafka: crypto.news)]
+        T4[(Kafka: crypto.social)]
+        T5[data/historical/ JSON Files]
+    end
+
+    DS1 --> A1 --> T1
+    DS2 --> A2 --> T2
+    DS3 --> A3 --> T3
+    DS4 --> A4 --> T4
+    DS5 --> A5 --> T5
 ```
 
 ---
@@ -82,16 +102,16 @@ ingestion/
 
 The streaming client (`producer_binance.py`) uses an **exponential backoff policy** to handle network cuts, rate limits, or server drops:
 
-```text
-[ WebSocket Disconnected ]
-          │
-          ├──► Wait 1 second ──► Retry Connection ──► [Success] -> Normal Execution
-          │                                                │
-          │                                             [Failed]
-          ▼                                                ▼
-     Double Wait Time (2s) ──────────────────────────► Retry Connection
-          │                                                │
-          ▼                                                ▼
-     Double Wait Time (4s, 8s, 16s...) ──────────────► Retry Connection (up to max 60s cap)
+```mermaid
+stateDiagram-v2
+    [*] --> Disconnected : WebSocket Disconnected
+    Disconnected --> Wait1s : Wait 1 Second
+    Wait1s --> Retry1 : Retry Connection
+    Retry1 --> Connected : Success
+    Retry1 --> DoubleWait : Failed
+    DoubleWait --> RetryN : Double Wait Time (2s, 4s, 8s... up to 60s)
+    RetryN --> Connected : Success
+    RetryN --> DoubleWait : Failed
+    Connected --> [*] : Normal Execution
 ```
 This guarantees that the producers recover automatically without requiring a restart.

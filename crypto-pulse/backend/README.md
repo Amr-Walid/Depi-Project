@@ -90,6 +90,60 @@ The backend communicates with a remote **Supabase Cloud PostgreSQL** instance (`
  └──────────────────────────┘
 ```
 
+### Entity-Relationship Diagram (ERD)
+
+```mermaid
+erDiagram
+    users ||--o{ refresh_tokens : owns
+    users ||--o{ user_sessions : creates
+    users ||--o{ watchlists : monitors
+    users ||--o{ alerts : configures
+    users ||--o{ portfolios : tracks
+
+    users {
+        int id PK
+        string email
+        string password_hash
+        timestamp created_at
+    }
+    refresh_tokens {
+        int id PK
+        int user_id FK
+        string token
+        timestamp expires_at
+        boolean revoked
+    }
+    user_sessions {
+        int id PK
+        int user_id FK
+        string session_token
+        string ip_address
+        text user_agent
+        timestamp last_active
+    }
+    watchlists {
+        int id PK
+        int user_id FK
+        string symbol
+        timestamp added_at
+    }
+    alerts {
+        int id PK
+        int user_id FK
+        string symbol
+        string condition
+        decimal threshold
+        boolean is_active
+    }
+    portfolios {
+        int id PK
+        int user_id FK
+        string symbol
+        decimal quantity
+        decimal avg_buy_price
+    }
+```
+
 The database structures are partitioned as follows:
 *   `public`: User accounts, session metrics, configurations, watchlists, portfolio listings, and user-defined price alerts.
 *   `silver`: Ingested news headlines and RSS feeds (synchronized by Spark streaming jobs).
